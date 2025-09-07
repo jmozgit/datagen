@@ -1,0 +1,14 @@
+version: 1
+connection:
+  type: sql
+  driver: postgres
+  host: localhost
+  port: 5432
+  user: postgres
+  password: ""
+  dbname: postgres
+target:
+  - type: table
+    name: table_1
+  - type: table
+    name: table_2
