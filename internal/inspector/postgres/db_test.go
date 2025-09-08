@@ -1,14 +1,18 @@
 package postgres_test
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
+	"github.com/viktorkomarov/datagen/internal/inspector"
 	"github.com/viktorkomarov/datagen/internal/inspector/postgres"
 	"github.com/viktorkomarov/datagen/internal/model"
-	testpg "github.com/viktorkomarov/datagen/pkg/testconn/postgres"
+	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
+	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 )
 
 type pgInspectorTestSetup struct {
@@ -16,39 +20,7 @@ type pgInspectorTestSetup struct {
 	connect  *postgres.Connect
 }
 
-type Table struct {
-	Name        string
-	Columns     [][2]string
-	PK          []string
-	Constraints [][]string
-}
-
-func (t Table) UniqueConstraints() []model.UniqueConstraints {
-	fromConstraints := lo.Map(t.Constraints, func(c []string, _ int) model.UniqueConstraints {
-		group := lo.Map(c, func(s string, _ int) model.Identifier {
-			return model.Identifier(s)
-		})
-		return model.UniqueConstraints(group)
-	})
-
-	pk := lo.Map(t.PK, func(g string, _ int) model.Identifier {
-		return model.Identifier(g)
-	})
-
-	return append(fromConstraints, model.UniqueConstraints(pk))
-}
-
-func toColumns(columns [][2]string) []model.Column {
-	return lo.Map(columns, func(c [2]string, _ int) model.Column {
-		return model.Column{
-			Name:       model.Identifier(c[0]),
-			Type:       c[1],
-			IsNullable: true,
-		}
-	})
-}
-
-func newPgInspectorTestSetup(t *testing.T, table Table) *pgInspectorTestSetup {
+func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.CreateTableOption) *pgInspectorTestSetup {
 	connStr := os.Getenv("TEST_DATAGEN_PG_CONN")
 	if connStr == "" {
 		t.Skipf("test pg env host isn't set")
@@ -56,7 +28,10 @@ func newPgInspectorTestSetup(t *testing.T, table Table) *pgInspectorTestSetup {
 
 	conn, err := testpg.New(t.Context(), t, connStr)
 	require.NoError(t, err)
-	require.NoError(t, conn.CreateTable(t.Context(), table.Name, table.Columns, table.PK))
+
+	if table != nil {
+		require.NoError(t, conn.CreateTable(t.Context(), *table, opts...))
+	}
 
 	return &pgInspectorTestSetup{
 		testConn: conn,
@@ -64,50 +39,173 @@ func newPgInspectorTestSetup(t *testing.T, table Table) *pgInspectorTestSetup {
 	}
 }
 
+func (p *pgInspectorTestSetup) createUniqueConstraints(t *testing.T, table model.Table) {
+	conn := p.testConn.Raw()
+
+	for i := range table.UniqueConstraints {
+		constraint := lo.Map(
+			table.UniqueConstraints[i],
+			func(m model.Identifier, _ int) string {
+				return string(m)
+			},
+		)
+
+		query := fmt.Sprintf(
+			"CREATE UNIQUE INDEX %s ON %s (%s)",
+			xrand.LowerCaseString(5),
+			table.Name.String(),
+			strings.Join(constraint, ","),
+		)
+
+		_, err := conn.Exec(t.Context(), query)
+		require.NoError(t, err)
+	}
+}
+
 func Test_PrimaryKeyMustBeSeen(t *testing.T) {
 	t.Parallel()
 
-	table := Table{
-		Name: "test_1",
-		Columns: [][2]string{
-			{"foo", "integer"},
-			{"bat", "text"},
-			{"created_at", "timestamptz"},
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "test_1",
 		},
-		PK:          []string{"foo"},
-		Constraints: [][]string{},
+		Columns: []model.Column{
+			{Name: "bat", Type: "text", IsNullable: true},
+			{Name: "created_at", Type: "timestamptz", IsNullable: true},
+			{Name: "foo", Type: "int4", IsNullable: false},
+		},
+		UniqueConstraints: []model.UniqueConstraints{
+			{"foo"},
+		},
 	}
 
-	setup := newPgInspectorTestSetup(t, table)
+	setup := newPgInspectorTestSetup(t, &table, testpg.WithPKs([]string{"foo"}))
 
-	name := model.TableName{
-		Schema: "public",
-		Table:  model.Identifier(table.Name),
-	}
-
-	actual, err := setup.connect.Table(t.Context(), name)
+	actual, err := setup.connect.Table(t.Context(), table.Name)
 	require.NoError(t, err)
-	tableEqual(t, name, table, actual)
+	tableEqual(t, table, actual)
 }
 
 func Test_UnknownTable(t *testing.T) {
 	t.Parallel()
+
+	setup := newPgInspectorTestSetup(t, nil)
+	_, err := setup.connect.Table(t.Context(), model.TableName{
+		Schema: "public",
+		Table:  "unknown",
+	})
+	require.ErrorIs(t, err, inspector.ErrEntityNotFound)
 }
 
 func Test_NoColumns(t *testing.T) {
 	t.Parallel()
-}
 
-func Test_NoConstraints(t *testing.T) {
-	t.Parallel()
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "no_columns",
+		},
+		Columns:           []model.Column{},
+		UniqueConstraints: []model.UniqueConstraints{},
+	}
+
+	setup := newPgInspectorTestSetup(t, &table)
+	actual, err := setup.connect.Table(t.Context(), table.Name)
+	require.NoError(t, err)
+	tableEqual(t, table, actual)
 }
 
 func Test_OverlappingConstraints(t *testing.T) {
 	t.Parallel()
+
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "overlapping_constraints",
+		},
+		Columns: []model.Column{
+			{Name: "col1", Type: "int8", IsNullable: true},
+			{Name: "col2", Type: "int8", IsNullable: true},
+			{Name: "col3", Type: "int8", IsNullable: true},
+			{Name: "col4", Type: "int8", IsNullable: true},
+		},
+		UniqueConstraints: []model.UniqueConstraints{
+			{"col1", "col2"},
+			{"col2", "col3", "col4"},
+			{"col3"},
+			{"col1", "col2", "col3", "col4"},
+		},
+	}
+
+	setup := newPgInspectorTestSetup(t, &table)
+	setup.createUniqueConstraints(t, table)
+
+	actual, err := setup.connect.Table(t.Context(), table.Name)
+	require.NoError(t, err)
+	tableEqual(t, table, actual)
 }
 
-func tableEqual(t *testing.T, name model.TableName, expected Table, actual model.Table) {
-	require.Equal(t, name, actual)
-	require.ElementsMatch(t, toColumns(expected.Columns), actual.Columns)
-	require.ElementsMatch(t, expected.UniqueConstraints(), actual.UniqueConstraints)
+func Test_PartitionParentTable(t *testing.T) {
+	t.Parallel()
+
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "parent",
+		},
+		Columns: []model.Column{
+			{Name: "col1", Type: "int8", IsNullable: false},
+			{Name: "col2", Type: "int8", IsNullable: true},
+			{Name: "col3", Type: "int8", IsNullable: true},
+		},
+		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
+	}
+
+	setup := newPgInspectorTestSetup(t,
+		&table,
+		testpg.WithPKs([]string{"col1"}),
+		testpg.WithHashPartitions(5, "col1"),
+	)
+	actual, err := setup.connect.Table(t.Context(), table.Name)
+	require.NoError(t, err)
+	tableEqual(t, table, actual)
+}
+
+func Test_PartitionChildTable(t *testing.T) {
+	t.Parallel()
+
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "child",
+		},
+		Columns: []model.Column{
+			{Name: "col1", Type: "int8", IsNullable: false},
+			{Name: "col2", Type: "int8", IsNullable: true},
+			{Name: "col3", Type: "int8", IsNullable: true},
+		},
+		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
+	}
+
+	setup := newPgInspectorTestSetup(t,
+		&table,
+		testpg.WithPKs([]string{"col1"}),
+		testpg.WithHashPartitions(5, "col1"),
+	)
+	table.Name = model.TableName{
+		Schema: "public",
+		Table:  "child_part_0",
+	}
+	actual, err := setup.connect.Table(t.Context(), table.Name)
+	require.NoError(t, err)
+	tableEqual(t, table, actual)
+}
+
+func tableEqual(t *testing.T, expected, actual model.Table) {
+	t.Helper()
+
+	require.Equal(t, expected.Name, actual.Name)
+	require.Equal(t, expected.Columns, actual.Columns)
+	require.ElementsMatch(t, expected.UniqueConstraints, actual.UniqueConstraints)
 }

@@ -22,13 +22,18 @@ func New(conn *pgx.Conn) *Connect {
 }
 
 func (c *Connect) Table(ctx context.Context, name model.TableName) (model.Table, error) {
-	columns, err := c.selectTableColumns(ctx, name)
+	exists, err := c.doesTableExist(ctx, name)
 	if err != nil {
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
 
-	if len(columns) == 0 {
-		return model.Table{}, fmt.Errorf("%w: table %s", inspector.ErrEmptySchema, name)
+	if !exists {
+		return model.Table{}, fmt.Errorf("%w: table %s", inspector.ErrEntityNotFound, err)
+	}
+
+	columns, err := c.selectTableColumns(ctx, name)
+	if err != nil {
+		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
 
 	constraints, err := c.selectUniqueConstraints(ctx, name)
@@ -43,6 +48,25 @@ func (c *Connect) Table(ctx context.Context, name model.TableName) (model.Table,
 	}, nil
 }
 
+func (c *Connect) doesTableExist(ctx context.Context, name model.TableName) (bool, error) {
+	const query = `
+		SELECT 
+			EXISTS (
+   				SELECT FROM 
+					information_schema.tables 
+   				WHERE  
+					table_schema = $1 AND table_name = $2
+   			)
+	`
+
+	var exists bool
+	if err := c.conn.QueryRow(ctx, query, name.Schema, name.Table).Scan(&exists); err != nil {
+		return false, fmt.Errorf("%w: does table exist", err)
+	}
+
+	return exists, nil
+}
+
 func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) ([]model.Column, error) {
 	const query = `
 		SELECT 
@@ -51,9 +75,9 @@ func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) 
 			information_schema.columns
 		WHERE
 			table_schema = $1 AND table_name = $2
+		ORDER BY
+			column_name
 	`
-	schema := safeIdentifier(name.Schema)
-	table := safeIdentifier(name.Table)
 
 	type Column struct {
 		ColumnName string `db:"column_name"`
@@ -62,7 +86,7 @@ func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) 
 	}
 
 	var columns []Column
-	if err := pgxscan.Select(ctx, c.conn, &columns, query, schema, table); err != nil {
+	if err := pgxscan.Select(ctx, c.conn, &columns, query, name.Schema, name.Table); err != nil {
 		return nil, fmt.Errorf("%w: selectTableColumns", err)
 	}
 
@@ -78,26 +102,34 @@ func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) 
 func (c *Connect) selectUniqueConstraints(ctx context.Context, name model.TableName) ([]model.UniqueConstraints, error) {
 	const query = `
 		SELECT
-    		kcu.column_name, tc.constraint_name
-		FROM
-    		information_schema.table_constraints AS tc
+    		i.relname AS index_name,
+    		a.attname AS column_name
+		FROM 
+			pg_class t
 		JOIN 
-    		information_schema.key_column_usage AS kcu
-		ON 
-    		tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+			pg_index ix ON t.oid = ix.indrelid
+		JOIN 
+			pg_class i ON i.oid = ix.indexrelid
+		JOIN 
+			pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+		JOIN 
+			pg_namespace n ON n.oid = t.relnamespace
 		WHERE
-    		tc.constraint_type = 'UNIQUE' AND tc.table_schema = $1 AND tc.table_name = $2
+			n.nspname = $1
+			AND
+			t.relname = $2
+  			AND 
+			ix.indisunique = true
+		ORDER BY 
+			index_name, column_name
 	`
-	schema := safeIdentifier(name.Schema)
-	table := safeIdentifier(name.Table)
-
 	type Pair struct {
 		ColumnName     string `db:"column_name"`
-		ConstraintName string `db:"constraint_name"`
+		ConstraintName string `db:"index_name"`
 	}
 
 	var cols []Pair
-	if err := pgxscan.Select(ctx, c.conn, &cols, query, schema, table); err != nil {
+	if err := pgxscan.Select(ctx, c.conn, &cols, query, name.Schema, name.Table); err != nil {
 		return nil, fmt.Errorf("%w: selectUniqueConstraints", err)
 	}
 
@@ -112,8 +144,4 @@ func (c *Connect) selectUniqueConstraints(ctx context.Context, name model.TableN
 
 		return model.UniqueConstraints(columns)
 	}), nil
-}
-
-func safeIdentifier(id model.Identifier) string {
-	return pgx.Identifier([]string{string(id)}).Sanitize()
 }

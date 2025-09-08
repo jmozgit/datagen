@@ -1,0 +1,1 @@
+1. Support case-insensitive identifiers names
