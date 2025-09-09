@@ -1,4 +1,4 @@
-package postgres_test
+package postgres
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/inspector"
-	"github.com/viktorkomarov/datagen/internal/inspector/postgres"
 	"github.com/viktorkomarov/datagen/internal/model"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
@@ -17,7 +16,7 @@ import (
 
 type pgInspectorTestSetup struct {
 	testConn *testpg.Conn
-	connect  *postgres.Connect
+	connect  *connect
 }
 
 func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.CreateTableOption) *pgInspectorTestSetup {
@@ -35,7 +34,7 @@ func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.Cr
 
 	return &pgInspectorTestSetup{
 		testConn: conn,
-		connect:  postgres.New(conn.Raw()),
+		connect:  newConnect(conn.Raw()),
 	}
 }
 

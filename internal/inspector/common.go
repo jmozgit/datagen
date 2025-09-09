@@ -3,6 +3,7 @@ package inspector
 import "errors"
 
 var (
-	ErrEntityNotFound = errors.New("not found")
-	ErrEmptySchema    = errors.New("empty working schema")
+	ErrEntityNotFound  = errors.New("not found")
+	ErrEmptySchema     = errors.New("empty working schema")
+	ErrUnsupportedType = errors.New("unsupported type")
 )

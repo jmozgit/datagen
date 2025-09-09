@@ -13,15 +13,15 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
-type Connect struct {
+type connect struct {
 	conn *pgx.Conn
 }
 
-func New(conn *pgx.Conn) *Connect {
-	return &Connect{conn: conn}
+func newConnect(conn *pgx.Conn) *connect {
+	return &connect{conn: conn}
 }
 
-func (c *Connect) Table(ctx context.Context, name model.TableName) (model.Table, error) {
+func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table, error) {
 	exists, err := c.doesTableExist(ctx, name)
 	if err != nil {
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
@@ -48,7 +48,7 @@ func (c *Connect) Table(ctx context.Context, name model.TableName) (model.Table,
 	}, nil
 }
 
-func (c *Connect) doesTableExist(ctx context.Context, name model.TableName) (bool, error) {
+func (c *connect) doesTableExist(ctx context.Context, name model.TableName) (bool, error) {
 	const query = `
 		SELECT 
 			EXISTS (
@@ -67,7 +67,7 @@ func (c *Connect) doesTableExist(ctx context.Context, name model.TableName) (boo
 	return exists, nil
 }
 
-func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) ([]model.Column, error) {
+func (c *connect) selectTableColumns(ctx context.Context, name model.TableName) ([]model.Column, error) {
 	const query = `
 		SELECT 
 			column_name, is_nullable, udt_name
@@ -99,7 +99,7 @@ func (c *Connect) selectTableColumns(ctx context.Context, name model.TableName) 
 	}), nil
 }
 
-func (c *Connect) selectUniqueConstraints(ctx context.Context, name model.TableName) ([]model.UniqueConstraints, error) {
+func (c *connect) selectUniqueConstraints(ctx context.Context, name model.TableName) ([]model.UniqueConstraints, error) {
 	const query = `
 		SELECT
     		i.relname AS index_name,
