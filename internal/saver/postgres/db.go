@@ -13,10 +13,15 @@ type Connector struct {
 }
 
 func (c *Connector) RunSave(ctx context.Context, schema model.DatasetSchema) error {
-	name, err := model.TableNameFromIdentifier(schema.ID)
+	_, err := model.TableNameFromIdentifier(schema.ID)
 	if err != nil {
 		return fmt.Errorf("%w: save", err)
 	}
 
-	// only insert row by row to handle constraints
+	/*
+		first copy
+		then split to figure out where is broken row
+	*/
+
+	return nil
 }

@@ -2,27 +2,48 @@ package generator
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
-type Generator interface {
-	Register(r *Registry) model.DomainContextKey
-	Generate(ctx context.Context, req any) (any, error)
-}
+var (
+	ErrGeneratorAlreadyRegistered = errors.New("generator is already registered")
+	ErrUnknowDomainContextKey     = errors.New("unknown domain context key")
+)
 
 type Registry struct {
-	generators map[model.DomainContextKey]any
+	generators map[model.DomainContextKey]model.Generator
 }
 
-func NewRegistry(gens ...Generator) *Registry {
+type TypedGenerator interface {
+	model.Generator
+	Type() model.DomainContextKey
+}
+
+func NewRegistry(gens ...TypedGenerator) (*Registry, error) {
 	r := &Registry{
-		generators: make(map[model.DomainContextKey]any),
+		generators: make(map[model.DomainContextKey]model.Generator),
 	}
 
 	for _, gen := range gens {
-		r.generators[gen.Register(r)] = gen
+		key := gen.Type()
+
+		if _, ok := r.generators[key]; ok {
+			return nil, fmt.Errorf("%w: new registry %s", ErrGeneratorAlreadyRegistered, key)
+		}
+		r.generators[key] = gen
 	}
 
-	return r
+	return r, nil
+}
+
+func (r *Registry) PickGenerator(ctx context.Context, key model.DomainContextKey) (model.Generator, error) {
+	gen, ok := r.generators[key]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrUnknowDomainContextKey, key)
+	}
+
+	return gen, nil
 }
