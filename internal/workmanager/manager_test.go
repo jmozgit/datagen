@@ -2,6 +2,7 @@ package workmanager
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,21 @@ type notifyWhenStart struct {
 func (w notifyWhenStart) Gen(ctx context.Context) (any, error) {
 	close(w.closeCh)
 	return nil, ctx.Err()
+}
+
+type returnErr struct {
+	err error
+}
+
+func (w returnErr) Gen(ctx context.Context) (any, error) {
+	return nil, w.err
+}
+
+type noError struct {
+}
+
+func (w noError) Gen(ctx context.Context) (any, error) {
+	return nil, nil
 }
 
 func Test_ManagerExecuteStopByCtx(t *testing.T) {
@@ -58,4 +74,66 @@ func Test_ManagerExecuteStopByCtx(t *testing.T) {
 	<-executionFinished
 
 	require.ErrorIs(t, err, context.Canceled)
+}
+
+func Test_ManagerExecuteStopByJobError(t *testing.T) {
+	t.Parallel()
+
+	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
+		_, err := task.Generators[0].Gen(ctx)
+		return err
+	}
+
+	jobErr := fmt.Errorf("job error")
+
+	mng := New(2, forwardToGeneratorFunc)
+
+	executionFinished := make(chan struct{})
+	tasks := []model.TaskGenerators{
+		{Generators: []model.Generator{noError{}}},
+		{Generators: []model.Generator{returnErr{jobErr}}},
+		{Generators: []model.Generator{waitCtxGenerator{}}},
+		{Generators: []model.Generator{waitCtxGenerator{}}},
+	}
+
+	var err error
+	go func() {
+		defer close(executionFinished)
+
+		err = mng.Execute(t.Context(), tasks)
+	}()
+
+	<-executionFinished
+
+	require.ErrorIs(t, err, jobErr)
+}
+
+func Test_ManagerExecuteNoError(t *testing.T) {
+	t.Parallel()
+
+	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
+		_, err := task.Generators[0].Gen(ctx)
+		return err
+	}
+
+	mng := New(2, forwardToGeneratorFunc)
+
+	executionFinished := make(chan struct{})
+	tasks := []model.TaskGenerators{
+		{Generators: []model.Generator{noError{}}},
+		{Generators: []model.Generator{noError{}}},
+		{Generators: []model.Generator{noError{}}},
+		{Generators: []model.Generator{noError{}}},
+	}
+
+	var err error
+	go func() {
+		defer close(executionFinished)
+
+		err = mng.Execute(t.Context(), tasks)
+	}()
+
+	<-executionFinished
+
+	require.NoError(t, err)
 }

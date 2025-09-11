@@ -102,7 +102,10 @@ func (m *Manager) work(ctx context.Context, tasks <-chan model.TaskGenerators, e
 		select {
 		case <-ctx.Done():
 			return
-		case task := <-tasks:
+		case task, ok := <-tasks:
+			if !ok {
+				return
+			}
 			if err := m.job(ctx, task); err != nil {
 				errCh <- err
 				return
