@@ -16,107 +16,118 @@ type GenPicker interface {
 	PickGenerator(ctx context.Context, req any) (model.Generator, error)
 }
 
+type Job func(ctx context.Context, task model.TaskGenerators) error
+
 type Manager struct {
-	picker    GenPicker
-	saver     Saver
 	workerCnt int
+	job       Job
 }
 
-func (m *Manager) pickGeneratorsForSchema(ctx context.Context, schema model.DatasetSchema) ([]model.Generator, error) {
-	gens := make([]model.Generator, len(schema.DataTypes))
-	for i, cellType := range schema.DataTypes {
-		gen, err := m.picker.PickGenerator(ctx, cellType)
-		if err != nil {
-			return nil, fmt.Errorf("%w: pick generators for type %s", err, cellType)
-		}
-		gens[i] = gen
+func New(workerCnt int, job Job) *Manager {
+	return &Manager{
+		workerCnt: workerCnt,
+		job:       job,
 	}
-
-	return gens, nil
 }
 
-func (m *Manager) Execute(ctx context.Context, tasks []model.Task) error {
-	taskGens := make([]model.TaskGenerators, len(tasks))
-	for i, task := range tasks {
-		gen, err := m.pickGeneratorsForSchema(ctx, task.Schema)
-		if err != nil {
-			return fmt.Errorf("%w: execute", err)
-		}
-		taskGens[i] = model.TaskGenerators{
-			Task:       task,
-			Generators: gen,
-		}
-	}
+// func (m *Manager) pickGeneratorsForSchema(ctx context.Context, schema model.DatasetSchema) ([]model.Generator, error) {
+// 	gens := make([]model.Generator, len(schema.DataTypes))
+// 	for i, cellType := range schema.DataTypes {
+// 		gen, err := m.picker.PickGenerator(ctx, cellType)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("%w: pick generators for type %s", err, cellType)
+// 		}
+// 		gens[i] = gen
+// 	}
+
+// 	return gens, nil
+// }
+
+func (m *Manager) Execute(ctx context.Context, tasks []model.TaskGenerators) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	taskCh := make(chan model.TaskGenerators)
-	stopAndWaitWorkers := m.startWorkers(ctx, taskCh)
-	defer stopAndWaitWorkers()
+	closeTaskCh := func() { close(taskCh) }
 
-	for _, task := range taskGens {
+	errCh := make(chan error)
+	defer close(errCh)
+
+	wgWorkers := m.startWorkers(ctx, taskCh, errCh)
+
+	finishWithErr := func(err error) error {
+		cancel()
+		closeTaskCh()
+		_ = waitFinish(wgWorkers, errCh)
+
+		return fmt.Errorf("%w: execute", err)
+	}
+
+	for _, task := range tasks {
 		select {
 		case <-ctx.Done():
-			return nil
+			return finishWithErr(ctx.Err())
+		case err := <-errCh:
+			return finishWithErr(err)
 		case taskCh <- task:
 		}
+	}
+
+	closeTaskCh()
+
+	if err := waitFinish(wgWorkers, errCh); err != nil {
+		return fmt.Errorf("%w: execute", err)
 	}
 
 	return nil
 }
 
-func (m *Manager) startWorkers(ctx context.Context, taskCh <-chan model.TaskGenerators) func() {
+func (m *Manager) startWorkers(ctx context.Context, taskCh <-chan model.TaskGenerators, errCh chan<- error) *sync.WaitGroup {
 	var wg sync.WaitGroup
 
-	ctx, cancel := context.WithCancel(ctx)
 	for range m.workerCnt {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			m.work(ctx, taskCh)
+			m.work(ctx, taskCh, errCh)
 		}()
 	}
-	return func() {
-		cancel()
-		wg.Wait()
-	}
+
+	return &wg
 }
 
-func (m *Manager) work(ctx context.Context, tasks <-chan model.TaskGenerators) {
+func (m *Manager) work(ctx context.Context, tasks <-chan model.TaskGenerators, errCh chan<- error) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case task := <-tasks:
-			m.executeTask(ctx, task)
+			if err := m.job(ctx, task); err != nil {
+				errCh <- err
+				return
+			}
 		}
 	}
 }
 
-func (m *Manager) executeTask(ctx context.Context, task model.TaskGenerators) error {
-	collected := model.TaskProgress{
-		Bytes: 0, Rows: 0,
-	}
-	shouldContinue := func() bool {
-		return !(task.Limit.Bytes > collected.Bytes && task.Limit.Rows > collected.Rows)
-	}
+func waitFinish(wg *sync.WaitGroup, errCh <-chan error) error {
+	finish := make(chan struct{})
+	go func() {
+		defer close(finish)
 
-	for shouldContinue() {
-		data := make([]any, len(task.Generators))
+		wg.Wait()
+	}()
 
-		for i, gen := range task.Generators {
-			cell, err := gen.Gen(ctx)
-			if err != nil {
-				return fmt.Errorf("%w: generate for %s", err, task.Schema.DataTypes[i])
+	var err error
+	for {
+		select {
+		case <-finish:
+			return err
+		case wErr := <-errCh:
+			if err == nil {
+				err = wErr
 			}
-			data[i] = cell
-		}
-
-		saved := m.saver.Save(ctx, task.Schema, data)
-		collected = model.TaskProgress{
-			Bytes: collected.Bytes + uint64(saved.BytesSaved),
-			Rows:  collected.Rows + uint64(saved.RowsSaved),
 		}
 	}
-
-	return nil
 }
