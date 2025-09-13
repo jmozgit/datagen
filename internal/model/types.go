@@ -13,16 +13,17 @@ const (
 	TimeDate
 )
 
-type BaseType struct {
+type TargetType struct {
 	SourceName Identifier
 	Type       CommonType
 	SourceType string
+	FixedSize  int
 	IsNullable bool
 }
 
-func (b BaseType) String() string {
+func (b TargetType) String() string {
 	return fmt.Sprintf(
-		"BaseType[Type %d, SourceType %s]",
+		"TargetType[Type %d, SourceType %s]",
 		b.Type, b.SourceType,
 	)
 }

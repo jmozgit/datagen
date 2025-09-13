@@ -1,14 +1,24 @@
 version: 1
 connection:
-  type: sql
-  driver: postgres
-  host: localhost
-  port: 5432
-  user: postgres
-  password: ""
-  dbname: postgres
-target:
-  - type: table
-    name: table_1
-  - type: table
-    name: table_2
+  type: postgresql
+  postgresql:
+    host: localhost
+    port: 5432
+    user: postgres
+    password: ""
+    options:
+      - sslmode=disable
+targets:
+  - table:
+      schema: public
+      table: test_table
+      limit_rows: 10000
+      limit_size: 2Gib
+      generators:
+        - column: age
+          type: integer
+          integer:
+            format: random
+            bit_size: 16
+            min_value: 1
+            max_value: 190

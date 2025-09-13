@@ -6,7 +6,7 @@ type Identifier string
 
 type DatasetSchema struct {
 	ID                Identifier
-	DataTypes         []BaseType
+	DataTypes         []TargetType
 	UniqueConstraints []UniqueConstraints
 }
 

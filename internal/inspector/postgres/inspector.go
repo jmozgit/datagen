@@ -32,14 +32,14 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 		return model.DatasetSchema{}, fmt.Errorf("%w: data source", err)
 	}
 
-	dataTypes := make([]model.BaseType, len(table.Columns))
+	dataTypes := make([]model.TargetType, len(table.Columns))
 	for i, col := range table.Columns {
 		tp, ok := pgRegistryTypes[col.Type]
 		if !ok {
 			return model.DatasetSchema{}, fmt.Errorf("%w: %s in %s", inspector.ErrUnsupportedType, col.Name, name)
 		}
 
-		dataTypes[i] = model.BaseType{
+		dataTypes[i] = model.TargetType{
 			SourceName: col.Name,
 			SourceType: col.Type,
 			Type:       tp,
