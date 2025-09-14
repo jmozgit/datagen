@@ -30,19 +30,6 @@ func New(workerCnt int, job Job) *Manager {
 	}
 }
 
-// func (m *Manager) pickGeneratorsForSchema(ctx context.Context, schema model.DatasetSchema) ([]model.Generator, error) {
-// 	gens := make([]model.Generator, len(schema.DataTypes))
-// 	for i, cellType := range schema.DataTypes {
-// 		gen, err := m.picker.PickGenerator(ctx, cellType)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("%w: pick generators for type %s", err, cellType)
-// 		}
-// 		gens[i] = gen
-// 	}
-
-// 	return gens, nil
-// }
-
 func (m *Manager) Execute(ctx context.Context, tasks []model.TaskGenerators) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

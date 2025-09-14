@@ -5,21 +5,35 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/viktorkomarov/datagen/internal/inspector"
+	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/schema"
 )
 
 type Inspector struct {
 	connect *connect
 }
 
-func NewInspector(conn *pgx.Conn) *Inspector {
-	return &Inspector{
-		connect: newConnect(conn),
+func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
+	pgxConf, err := pgx.ParseConfig(conn.ConnString("postgresql"))
+	if err != nil {
+		return nil, fmt.Errorf("%w: new inspector", err)
 	}
+
+	return &Inspector{
+		connect: newConnect(pgxConf),
+	}, nil
 }
 
 var pgRegistryTypes = map[string]model.CommonType{}
+
+func (i *Inspector) TargetIdentifier(target config.Target) (model.Identifier, error) {
+	return model.Identifier(""), nil
+}
+
+func (i *Inspector) GeneratorIdentifier(gen config.Generator) (model.Identifier, error) {
+	return model.Identifier(""), nil
+}
 
 func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.DatasetSchema, error) {
 	name, err := model.TableNameFromIdentifier(id)
@@ -36,7 +50,7 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 	for i, col := range table.Columns {
 		tp, ok := pgRegistryTypes[col.Type]
 		if !ok {
-			return model.DatasetSchema{}, fmt.Errorf("%w: %s in %s", inspector.ErrUnsupportedType, col.Name, name)
+			return model.DatasetSchema{}, fmt.Errorf("%w: %s in %s", schema.ErrUnsupportedType, col.Name, name)
 		}
 
 		dataTypes[i] = model.TargetType{

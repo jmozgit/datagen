@@ -8,10 +8,10 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/inspector"
 	"github.com/viktorkomarov/datagen/internal/model"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
+	"github.com/viktorkomarov/datagen/internal/schema"
 )
 
 type pgInspectorTestSetup struct {
@@ -34,7 +34,7 @@ func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.Cr
 
 	return &pgInspectorTestSetup{
 		testConn: conn,
-		connect:  newConnect(conn.Raw()),
+		connect:  newConnect(conn.Raw().Config()),
 	}
 }
 
@@ -94,7 +94,7 @@ func Test_UnknownTable(t *testing.T) {
 		Schema: "public",
 		Table:  "unknown",
 	})
-	require.ErrorIs(t, err, inspector.ErrEntityNotFound)
+	require.ErrorIs(t, err, schema.ErrEntityNotFound)
 }
 
 func Test_NoColumns(t *testing.T) {

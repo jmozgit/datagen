@@ -2,6 +2,12 @@ package config
 
 import "github.com/alecthomas/units"
 
+type ConnectionType string
+
+const (
+	PostgresqlConnection ConnectionType = "postgresql"
+)
+
 type Config struct {
 	Version    int        `yaml:"version" koanf:"version"`
 	Connection Connection `yaml:"connection" koanf:"connection"`
@@ -9,16 +15,8 @@ type Config struct {
 }
 
 type Connection struct {
-	Type       string         `yaml:"type" koanf:"type"`
+	Type       ConnectionType `yaml:"type" koanf:"type"`
 	Postgresql *SQLConnection `yaml:"postgresql" koanf:"posgtresql"`
-}
-
-type SQLConnection struct {
-	Host     string   `yaml:"host" koanf:"host"`
-	Port     int      `yaml:"port" koanf:"port"`
-	User     string   `yaml:"user" koanf:"user"`
-	Password string   `yaml:"password" koanf:"password"`
-	Options  []string `yaml:"options" koanf:"options"`
 }
 
 type Target struct {

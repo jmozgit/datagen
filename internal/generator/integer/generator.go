@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"github.com/samber/lo"
+	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
@@ -124,7 +125,8 @@ func (g Generator) Gen(ctx context.Context) (any, error) {
 	return nil, nil
 }
 
-func Accept(userValues any, baseType model.TargetType) (model.Generator, error) {
+func Accept(ctx context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error) {
+	baseType := optBaseType.OrEmpty()
 	userCfg, ok := userValues.(*config.Integer)
 	if !ok || baseType.Type != model.Integer {
 		return nil, generator.ErrGeneratorDeclined

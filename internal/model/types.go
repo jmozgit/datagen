@@ -5,7 +5,7 @@ import "fmt"
 type CommonType int
 
 const (
-	Integer CommonType = iota
+	Integer CommonType = iota + 1
 	Float
 	Text
 	Time

@@ -9,34 +9,40 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/samber/lo"
-	"github.com/viktorkomarov/datagen/internal/inspector"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/schema"
 )
 
 type connect struct {
-	conn *pgx.Conn
+	cfg *pgx.ConnConfig
 }
 
-func newConnect(conn *pgx.Conn) *connect {
-	return &connect{conn: conn}
+func newConnect(cfg *pgx.ConnConfig) *connect {
+	return &connect{cfg: cfg}
 }
 
 func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table, error) {
-	exists, err := c.doesTableExist(ctx, name)
+	conn, err := pgx.ConnectConfig(ctx, c.cfg)
+	if err != nil {
+		return model.Table{}, fmt.Errorf("%w: table", err)
+	}
+	defer conn.Close(ctx)
+
+	exists, err := c.doesTableExist(ctx, conn, name)
 	if err != nil {
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
 
 	if !exists {
-		return model.Table{}, fmt.Errorf("%w: table %s", inspector.ErrEntityNotFound, err)
+		return model.Table{}, fmt.Errorf("%w: table %s", schema.ErrEntityNotFound, err)
 	}
 
-	columns, err := c.selectTableColumns(ctx, name)
+	columns, err := c.selectTableColumns(ctx, conn, name)
 	if err != nil {
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
 
-	constraints, err := c.selectUniqueConstraints(ctx, name)
+	constraints, err := c.selectUniqueConstraints(ctx, conn, name)
 	if err != nil {
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
@@ -48,7 +54,7 @@ func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table,
 	}, nil
 }
 
-func (c *connect) doesTableExist(ctx context.Context, name model.TableName) (bool, error) {
+func (c *connect) doesTableExist(ctx context.Context, conn *pgx.Conn, name model.TableName) (bool, error) {
 	const query = `
 		SELECT 
 			EXISTS (
@@ -60,14 +66,14 @@ func (c *connect) doesTableExist(ctx context.Context, name model.TableName) (boo
 	`
 
 	var exists bool
-	if err := c.conn.QueryRow(ctx, query, name.Schema, name.Table).Scan(&exists); err != nil {
+	if err := conn.QueryRow(ctx, query, name.Schema, name.Table).Scan(&exists); err != nil {
 		return false, fmt.Errorf("%w: does table exist", err)
 	}
 
 	return exists, nil
 }
 
-func (c *connect) selectTableColumns(ctx context.Context, name model.TableName) ([]model.Column, error) {
+func (c *connect) selectTableColumns(ctx context.Context, conn *pgx.Conn, name model.TableName) ([]model.Column, error) {
 	const query = `
 		SELECT 
 			column_name, is_nullable, udt_name
@@ -86,7 +92,7 @@ func (c *connect) selectTableColumns(ctx context.Context, name model.TableName) 
 	}
 
 	var columns []Column
-	if err := pgxscan.Select(ctx, c.conn, &columns, query, name.Schema, name.Table); err != nil {
+	if err := pgxscan.Select(ctx, conn, &columns, query, name.Schema, name.Table); err != nil {
 		return nil, fmt.Errorf("%w: selectTableColumns", err)
 	}
 
@@ -99,7 +105,7 @@ func (c *connect) selectTableColumns(ctx context.Context, name model.TableName) 
 	}), nil
 }
 
-func (c *connect) selectUniqueConstraints(ctx context.Context, name model.TableName) ([]model.UniqueConstraints, error) {
+func (c *connect) selectUniqueConstraints(ctx context.Context, conn *pgx.Conn, name model.TableName) ([]model.UniqueConstraints, error) {
 	const query = `
 		SELECT
     		i.relname AS index_name,
@@ -129,7 +135,7 @@ func (c *connect) selectUniqueConstraints(ctx context.Context, name model.TableN
 	}
 
 	var cols []Pair
-	if err := pgxscan.Select(ctx, c.conn, &cols, query, name.Schema, name.Table); err != nil {
+	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema, name.Table); err != nil {
 		return nil, fmt.Errorf("%w: selectUniqueConstraints", err)
 	}
 

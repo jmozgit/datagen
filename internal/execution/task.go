@@ -1,13 +1,18 @@
-package workmanager
+package execution
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/saver/factory"
 )
 
-func GenerateForTask(ctx context.Context, task model.TaskGenerators, saver Saver) error {
+type Saver interface {
+	factory.Saver
+}
+
+func TaskGeneration(ctx context.Context, task model.TaskGenerators, saver Saver) error {
 	collected := model.TaskProgress{
 		Bytes: 0, Rows: 0,
 	}
