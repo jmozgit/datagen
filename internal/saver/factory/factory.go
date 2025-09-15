@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/saver/postgres"
 )
 
@@ -14,6 +15,7 @@ var (
 )
 
 type Saver interface {
+	Save(ctx context.Context, schema model.DatasetSchema, data [][]any) (model.SaveReport, error)
 }
 
 func GetSaver(ctx context.Context, cfg config.Config) (Saver, error) {

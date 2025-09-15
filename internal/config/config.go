@@ -12,6 +12,7 @@ type Config struct {
 	Version    int        `yaml:"version" koanf:"version"`
 	Connection Connection `yaml:"connection" koanf:"connection"`
 	Targets    []Target   `yaml:"targerts" koanf:"targets"`
+	Options    Options    `yaml:"options" koanf:"options"`
 }
 
 type Connection struct {
@@ -21,6 +22,10 @@ type Connection struct {
 
 type Target struct {
 	Table *Table `yaml:"table" koanf:"table"`
+}
+
+type Options struct {
+	BatchSize int
 }
 
 type Table struct {

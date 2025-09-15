@@ -1,6 +1,9 @@
 package config
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type SQLConnection struct {
 	Host     string   `yaml:"host" koanf:"host"`
@@ -21,6 +24,10 @@ func (s SQLConnection) ConnString(protocol string) string {
 		builder.WriteRune(':')
 		builder.WriteString(s.Password)
 	}
+	builder.WriteByte('@')
+	builder.WriteString(s.Host)
+	builder.WriteByte(':')
+	builder.WriteString(fmt.Sprint(s.Port))
 	builder.WriteByte('/')
 	builder.WriteString(s.DBName)
 	if len(s.Options) > 0 {

@@ -16,7 +16,9 @@ type Conn struct {
 	conn *pgx.Conn
 }
 
-func New(ctx context.Context, t *testing.T, connStr string) (*Conn, error) {
+func New(t *testing.T, connStr string) (*Conn, error) {
+	ctx := t.Context()
+
 	cfg, err := pgx.ParseConfig(connStr)
 	if err != nil {
 		return nil, fmt.Errorf("%w parse config", err)

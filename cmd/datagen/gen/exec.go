@@ -1,13 +1,11 @@
 package gen
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/viktorkomarov/datagen/internal/execution"
 	"github.com/viktorkomarov/datagen/internal/generator/registry"
-	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 	"github.com/viktorkomarov/datagen/internal/taskbuilder"
 	"github.com/viktorkomarov/datagen/internal/workmanager"
@@ -27,13 +25,9 @@ func (c *cmd) exec(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("%w: exec", err)
 	}
 
-	manager := workmanager.New(
-		c.flags.workCnt,
-		func(ctx context.Context, task model.TaskGenerators) error {
-			return execution.TaskGeneration(ctx, task, saver)
-		},
-	)
+	batchExecutor := execution.NewBatchExecutor(saver, c.cfg.Options.BatchSize)
 
+	manager := workmanager.New(c.flags.workCnt, batchExecutor.Execute)
 	if err := manager.Execute(ctx, tasks); err != nil {
 		return fmt.Errorf("%w: exec", err)
 	}

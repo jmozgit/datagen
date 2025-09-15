@@ -25,7 +25,7 @@ func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.Cr
 		t.Skipf("test pg env host isn't set")
 	}
 
-	conn, err := testpg.New(t.Context(), t, connStr)
+	conn, err := testpg.New(t, connStr)
 	require.NoError(t, err)
 
 	if table != nil {

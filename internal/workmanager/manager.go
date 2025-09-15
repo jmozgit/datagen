@@ -8,14 +8,6 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
-type Saver interface {
-	Save(ctx context.Context, schema model.DatasetSchema, data []any) model.SaveReport
-}
-
-type GenPicker interface {
-	PickGenerator(ctx context.Context, req any) (model.Generator, error)
-}
-
 type Job func(ctx context.Context, task model.TaskGenerators) error
 
 type Manager struct {
