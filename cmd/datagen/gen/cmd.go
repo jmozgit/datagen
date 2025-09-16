@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/spf13/cobra"
 	"github.com/viktorkomarov/datagen/internal/config"
+
+	"github.com/spf13/cobra"
 )
 
 type cmd struct {
@@ -19,12 +20,13 @@ type flags struct {
 }
 
 func New() *cobra.Command {
-	cmd := &cmd{}
+	cmd := new(cmd)
 
+	//nolint:exhaustruct // it's okay for now
 	c := &cobra.Command{
 		Use:   "datagen gen -f config.yaml",
 		Short: "generate data",
-		PreRunE: func(_ *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cmd.flags.path)
 			if err != nil {
 				return fmt.Errorf("%w: pre run", err)

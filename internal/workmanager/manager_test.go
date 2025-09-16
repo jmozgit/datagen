@@ -1,19 +1,22 @@
-package workmanager
+package workmanager_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/workmanager"
+
+	"github.com/stretchr/testify/require"
 )
 
-type waitCtxGenerator struct {
-}
+type waitCtxGenerator struct{}
 
 func (w waitCtxGenerator) Gen(ctx context.Context) (any, error) {
 	<-ctx.Done()
+
 	return nil, ctx.Err()
 }
 
@@ -23,6 +26,7 @@ type notifyWhenStart struct {
 
 func (w notifyWhenStart) Gen(ctx context.Context) (any, error) {
 	close(w.closeCh)
+
 	return nil, ctx.Err()
 }
 
@@ -30,15 +34,14 @@ type returnErr struct {
 	err error
 }
 
-func (w returnErr) Gen(ctx context.Context) (any, error) {
+func (w returnErr) Gen(_ context.Context) (any, error) {
 	return nil, w.err
 }
 
-type noError struct {
-}
+type noError struct{}
 
-func (w noError) Gen(ctx context.Context) (any, error) {
-	return nil, nil
+func (w noError) Gen(_ context.Context) (any, error) {
+	return nil, nil //nolint:nilnil // it's ok
 }
 
 func Test_ManagerExecuteStopByCtx(t *testing.T) {
@@ -46,17 +49,22 @@ func Test_ManagerExecuteStopByCtx(t *testing.T) {
 
 	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
 		_, err := task.Generators[0].Gen(ctx)
+
 		return err
 	}
 
-	mng := New(2, forwardToGeneratorFunc)
+	mng := workmanager.New(2, forwardToGeneratorFunc)
 
 	executionStarted := make(chan struct{})
 	executionFinished := make(chan struct{})
 	tasks := []model.TaskGenerators{
+		//nolint:exhaustruct // ok for tests
 		{Generators: []model.Generator{notifyWhenStart{executionStarted}}},
+		//nolint:exhaustruct // ok for tests
 		{Generators: []model.Generator{waitCtxGenerator{}}},
+		//nolint:exhaustruct // ok for tests
 		{Generators: []model.Generator{waitCtxGenerator{}}},
+		//nolint:exhaustruct // ok for tests
 		{Generators: []model.Generator{waitCtxGenerator{}}},
 	}
 
@@ -76,23 +84,31 @@ func Test_ManagerExecuteStopByCtx(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 }
 
+var errJob = errors.New("job error")
+
 func Test_ManagerExecuteStopByJobError(t *testing.T) {
 	t.Parallel()
 
 	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
 		_, err := task.Generators[0].Gen(ctx)
+		if err != nil {
+			return fmt.Errorf("%w: forward", err)
+		}
+
 		return err
 	}
 
-	jobErr := fmt.Errorf("job error")
-
-	mng := New(2, forwardToGeneratorFunc)
+	mng := workmanager.New(2, forwardToGeneratorFunc)
 
 	executionFinished := make(chan struct{})
 	tasks := []model.TaskGenerators{
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
-		{Generators: []model.Generator{returnErr{jobErr}}},
+		//nolint:exhaustruct // it's okay here
+		{Generators: []model.Generator{returnErr{errJob}}},
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{waitCtxGenerator{}}},
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{waitCtxGenerator{}}},
 	}
 
@@ -105,7 +121,7 @@ func Test_ManagerExecuteStopByJobError(t *testing.T) {
 
 	<-executionFinished
 
-	require.ErrorIs(t, err, jobErr)
+	require.ErrorIs(t, err, errJob)
 }
 
 func Test_ManagerExecuteNoError(t *testing.T) {
@@ -113,16 +129,24 @@ func Test_ManagerExecuteNoError(t *testing.T) {
 
 	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
 		_, err := task.Generators[0].Gen(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("%w: forward", err)
+		}
+
+		return nil
 	}
 
-	mng := New(2, forwardToGeneratorFunc)
+	mng := workmanager.New(2, forwardToGeneratorFunc)
 
 	executionFinished := make(chan struct{})
 	tasks := []model.TaskGenerators{
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
+		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
 	}
 

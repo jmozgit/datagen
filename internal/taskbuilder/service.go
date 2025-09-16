@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema/postgres"
+
+	"github.com/samber/mo"
 )
 
 var (
@@ -29,7 +30,12 @@ type generatorRegistry interface {
 func makeSchemaProvider(cfg config.Config) (schemaProvider, error) {
 	switch cfg.Connection.Type {
 	case config.PostgresqlConnection:
-		return postgres.NewInspector(cfg.Connection.Postgresql)
+		inspector, err := postgres.NewInspector(cfg.Connection.Postgresql)
+		if err != nil {
+			return nil, fmt.Errorf("%w: make schema provider", err)
+		}
+
+		return inspector, nil
 	default:
 		return nil, fmt.Errorf("%w: make schema provider", ErrUnknownConnectionType)
 	}

@@ -11,5 +11,6 @@ func IsConstraintViolatesErr(err error) bool {
 	if errors.As(err, &pgxErr) {
 		return pgxErr.Code == "23514" || pgxErr.Code == "23505"
 	}
+
 	return false
 }

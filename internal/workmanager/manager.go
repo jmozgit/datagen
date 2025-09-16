@@ -22,7 +22,10 @@ func New(workerCnt int, job Job) *Manager {
 	}
 }
 
-func (m *Manager) Execute(ctx context.Context, tasks []model.TaskGenerators) error {
+func (m *Manager) Execute(
+	ctx context.Context,
+	tasks []model.TaskGenerators,
+) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -61,7 +64,11 @@ func (m *Manager) Execute(ctx context.Context, tasks []model.TaskGenerators) err
 	return nil
 }
 
-func (m *Manager) startWorkers(ctx context.Context, taskCh <-chan model.TaskGenerators, errCh chan<- error) *sync.WaitGroup {
+func (m *Manager) startWorkers(
+	ctx context.Context,
+	taskCh <-chan model.TaskGenerators,
+	errCh chan<- error,
+) *sync.WaitGroup {
 	var wg sync.WaitGroup
 
 	for range m.workerCnt {
@@ -76,7 +83,11 @@ func (m *Manager) startWorkers(ctx context.Context, taskCh <-chan model.TaskGene
 	return &wg
 }
 
-func (m *Manager) work(ctx context.Context, tasks <-chan model.TaskGenerators, errCh chan<- error) {
+func (m *Manager) work(
+	ctx context.Context,
+	tasks <-chan model.TaskGenerators,
+	errCh chan<- error,
+) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -85,15 +96,20 @@ func (m *Manager) work(ctx context.Context, tasks <-chan model.TaskGenerators, e
 			if !ok {
 				return
 			}
+
 			if err := m.job(ctx, task); err != nil {
 				errCh <- err
+
 				return
 			}
 		}
 	}
 }
 
-func waitFinish(wg *sync.WaitGroup, errCh <-chan error) error {
+func waitFinish(
+	wg *sync.WaitGroup,
+	errCh <-chan error,
+) error {
 	finish := make(chan struct{})
 	go func() {
 		defer close(finish)

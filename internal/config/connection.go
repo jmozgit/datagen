@@ -10,7 +10,7 @@ type SQLConnection struct {
 	Port     int      `yaml:"port" koanf:"port"`
 	User     string   `yaml:"user" koanf:"user"`
 	Password string   `yaml:"password" koanf:"password"`
-	DBName   string   `yaml:"dbname" koanf:"dbname"`
+	DBName   string   `yaml:"dbName" koanf:"dbName"`
 	Options  []string `yaml:"options" koanf:"options"`
 }
 

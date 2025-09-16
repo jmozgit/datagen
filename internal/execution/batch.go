@@ -12,15 +12,15 @@ type Saver interface {
 	factory.Saver
 }
 
-type batchExecutor struct {
+type BatchExecutor struct {
 	saver     Saver
 	collected model.TaskProgress
 	batchID   int
 	batch     [][]any
 }
 
-func NewBatchExecutor(saver Saver, cnt int) *batchExecutor {
-	return &batchExecutor{
+func NewBatchExecutor(saver Saver, cnt int) *BatchExecutor {
+	return &BatchExecutor{
 		saver:   saver,
 		batchID: 0,
 		collected: model.TaskProgress{
@@ -32,10 +32,10 @@ func NewBatchExecutor(saver Saver, cnt int) *batchExecutor {
 }
 
 func shouldContinue(collected, task model.TaskProgress) bool {
-	return !(task.Bytes > collected.Bytes && task.Rows > collected.Rows)
+	return task.Bytes > collected.Bytes && task.Rows > collected.Rows
 }
 
-func (b *batchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {
+func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {
 	if !shouldContinue(b.collected, task.Limit) {
 		return fmt.Errorf("%w: execute", ErrTaskIsExecuted)
 	}

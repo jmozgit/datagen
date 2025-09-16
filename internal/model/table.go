@@ -1,19 +1,25 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
+
+var ErrIncorrectTableName = errors.New("table name format schema.table")
 
 type TableName struct {
 	Schema Identifier
 	Table  Identifier
 }
 
+// it's incorrect, `.` might be in schema/table name.
 func TableNameFromIdentifier(id Identifier) (TableName, error) {
+	const sep = 2
+
 	split := strings.Split(string(id), ".")
-	if len(split) != 2 {
-		return TableName{}, fmt.Errorf("invalid table name identifier: %s", id) // make it typed
+	if len(split) != sep {
+		return TableName{}, fmt.Errorf("%w, invalid table name identifier: %s", ErrIncorrectTableName, id)
 	}
 
 	return TableName{
@@ -37,6 +43,6 @@ type UniqueConstraints []Identifier
 type Table struct {
 	Name    TableName
 	Columns []Column
-	// TODO::it might be others constraints
+	// delete it? We check it in savers anyway
 	UniqueConstraints []UniqueConstraints
 }

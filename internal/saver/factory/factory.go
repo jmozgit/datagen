@@ -10,9 +10,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/saver/postgres"
 )
 
-var (
-	ErrUnknownConnectionType = errors.New("unknown connection type")
-)
+var ErrUnknownConnectionType = errors.New("unknown connection type")
 
 type Saver interface {
 	Save(ctx context.Context, schema model.DatasetSchema, data [][]any) (model.SaveReport, error)

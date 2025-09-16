@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/samber/lo"
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/samber/lo"
+	"github.com/samber/mo"
 )
 
 var (
@@ -34,15 +35,15 @@ func WithFormat(format Format) Option {
 	}
 }
 
-func WithMinValue(min int64) Option {
+func WithMinValue(minV int64) Option {
 	return func(g *Generator) {
-		g.min = min
+		g.min = minV
 	}
 }
 
-func WithMaxValue(max uint64) Option {
+func WithMaxValue(maxV uint64) Option {
 	return func(g *Generator) {
-		g.max = max
+		g.max = maxV
 	}
 }
 
@@ -53,6 +54,7 @@ type Generator struct {
 	max    uint64
 }
 
+//nolint:gochecknoglobals // more convenient that constants here
 var minValidIntegerForSize = map[string]int64{
 	"8":   math.MinInt8,
 	"8u":  0,
@@ -64,6 +66,7 @@ var minValidIntegerForSize = map[string]int64{
 	"64u": 0,
 }
 
+//nolint:gochecknoglobals // more convenient that constants here
 var maxValidIntergerForSize = map[string]uint64{
 	"8":   math.MaxInt8,
 	"8u":  math.MaxUint8,
@@ -78,12 +81,12 @@ var maxValidIntergerForSize = map[string]uint64{
 func defaultOptions(size int8) (Generator, error) {
 	key := fmt.Sprint(size)
 
-	min, ok := minValidIntegerForSize[key]
+	minV, ok := minValidIntegerForSize[key]
 	if !ok {
 		return Generator{}, fmt.Errorf("%w: %d is unknown for min value", ErrUnsupportedSize, size)
 	}
 
-	max, ok := maxValidIntergerForSize[key]
+	maxV, ok := maxValidIntergerForSize[key]
 	if !ok {
 		return Generator{}, fmt.Errorf("%w: %d is unknown for max value", ErrUnsupportedSize, size)
 	}
@@ -91,8 +94,8 @@ func defaultOptions(size int8) (Generator, error) {
 	return Generator{
 		format: FormatRandom,
 		size:   size,
-		min:    min,
-		max:    max,
+		min:    minV,
+		max:    maxV,
 	}, nil
 }
 
@@ -108,24 +111,24 @@ func (g Generator) validate() error {
 		key += "u"
 	}
 
-	min, max := minValidIntegerForSize[key], maxValidIntergerForSize[key]
+	minV, maxV := minValidIntegerForSize[key], maxValidIntergerForSize[key]
 
-	if g.min >= min && g.max <= max {
+	if g.min >= minV && g.max <= maxV {
 		return nil
 	}
 
 	return fmt.Errorf(
 		"%w: valid range for size %d is [%d, %d], not [%d %d]",
 		ErrIncorrectMinMaxValue,
-		g.size, min, max, g.min, g.max,
+		g.size, minV, maxV, g.min, g.max,
 	)
 }
 
-func (g Generator) Gen(ctx context.Context) (any, error) {
-	return nil, nil
+func (g Generator) Gen(_ context.Context) (any, error) {
+	return nil, nil //nolint:nilnil // come back later
 }
 
-func Accept(ctx context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error) {
+func Accept(_ context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error) {
 	baseType := optBaseType.OrEmpty()
 	userCfg, ok := userValues.(*config.Integer)
 	if !ok || baseType.Type != model.Integer {

@@ -5,12 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/samber/mo"
 )
 
-type AcceptFn func(ctx context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error)
+type AcceptFn func(
+	ctx context.Context,
+	userValues any,
+	optBaseType mo.Option[model.TargetType],
+) (model.Generator, error)
 
 type Registry struct {
 	builders []AcceptFn
@@ -22,7 +27,11 @@ func New() *Registry {
 	}
 }
 
-func (r *Registry) GetGenerator(ctx context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error) {
+func (r *Registry) GetGenerator(
+	ctx context.Context,
+	userValues any,
+	optBaseType mo.Option[model.TargetType],
+) (model.Generator, error) {
 	for _, buildFn := range r.builders {
 		gen, err := buildFn(ctx, userValues, optBaseType)
 		if err == nil {

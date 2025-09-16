@@ -1,4 +1,4 @@
-package postgres
+package postgres //nolint:testpackage // add to make progress
 
 import (
 	"fmt"
@@ -6,12 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/samber/lo"
-	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/model"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 	"github.com/viktorkomarov/datagen/internal/schema"
+
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/require"
 )
 
 type pgInspectorTestSetup struct {
@@ -20,6 +21,8 @@ type pgInspectorTestSetup struct {
 }
 
 func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.CreateTableOption) *pgInspectorTestSetup {
+	t.Helper()
+
 	connStr := os.Getenv("TEST_DATAGEN_PG_CONN")
 	if connStr == "" {
 		t.Skipf("test pg env host isn't set")
@@ -39,6 +42,8 @@ func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.Cr
 }
 
 func (p *pgInspectorTestSetup) createUniqueConstraints(t *testing.T, table model.Table) {
+	t.Helper()
+
 	conn := p.testConn.Raw()
 
 	for i := range table.UniqueConstraints {

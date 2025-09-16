@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Inspector struct {
@@ -25,13 +26,14 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 	}, nil
 }
 
+//nolint:gochecknoglobals // more convenient that constants here
 var pgRegistryTypes = map[string]model.CommonType{}
 
-func (i *Inspector) TargetIdentifier(target config.Target) (model.Identifier, error) {
+func (i *Inspector) TargetIdentifier(_ config.Target) (model.Identifier, error) {
 	return model.Identifier(""), nil
 }
 
-func (i *Inspector) GeneratorIdentifier(gen config.Generator) (model.Identifier, error) {
+func (i *Inspector) GeneratorIdentifier(_ config.Generator) (model.Identifier, error) {
 	return model.Identifier(""), nil
 }
 
@@ -58,6 +60,7 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 			SourceType: col.Type,
 			Type:       tp,
 			IsNullable: col.IsNullable,
+			FixedSize:  -1,
 		}
 	}
 

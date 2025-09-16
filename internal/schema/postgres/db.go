@@ -6,11 +6,12 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/schema"
+
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/samber/lo"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/schema"
 )
 
 type connect struct {
@@ -34,7 +35,7 @@ func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table,
 	}
 
 	if !exists {
-		return model.Table{}, fmt.Errorf("%w: table %s", schema.ErrEntityNotFound, err)
+		return model.Table{}, fmt.Errorf("%w: table %s", schema.ErrEntityNotFound, name)
 	}
 
 	columns, err := c.selectTableColumns(ctx, conn, name)
@@ -54,7 +55,11 @@ func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table,
 	}, nil
 }
 
-func (c *connect) doesTableExist(ctx context.Context, conn *pgx.Conn, name model.TableName) (bool, error) {
+func (c *connect) doesTableExist(
+	ctx context.Context,
+	conn *pgx.Conn,
+	name model.TableName,
+) (bool, error) {
 	const query = `
 		SELECT 
 			EXISTS (
@@ -73,7 +78,11 @@ func (c *connect) doesTableExist(ctx context.Context, conn *pgx.Conn, name model
 	return exists, nil
 }
 
-func (c *connect) selectTableColumns(ctx context.Context, conn *pgx.Conn, name model.TableName) ([]model.Column, error) {
+func (c *connect) selectTableColumns(
+	ctx context.Context,
+	conn *pgx.Conn,
+	name model.TableName,
+) ([]model.Column, error) {
 	const query = `
 		SELECT 
 			column_name, is_nullable, udt_name
@@ -105,7 +114,11 @@ func (c *connect) selectTableColumns(ctx context.Context, conn *pgx.Conn, name m
 	}), nil
 }
 
-func (c *connect) selectUniqueConstraints(ctx context.Context, conn *pgx.Conn, name model.TableName) ([]model.UniqueConstraints, error) {
+func (c *connect) selectUniqueConstraints(
+	ctx context.Context,
+	conn *pgx.Conn,
+	name model.TableName,
+) ([]model.UniqueConstraints, error) {
 	const query = `
 		SELECT
     		i.relname AS index_name,
@@ -130,8 +143,8 @@ func (c *connect) selectUniqueConstraints(ctx context.Context, conn *pgx.Conn, n
 			index_name, column_name
 	`
 	type Pair struct {
-		ColumnName     string `db:"column_name"`
-		ConstraintName string `db:"index_name"`
+		ColumnName string `db:"column_name"`
+		IndexName  string `db:"index_name"`
 	}
 
 	var cols []Pair
@@ -140,7 +153,7 @@ func (c *connect) selectUniqueConstraints(ctx context.Context, conn *pgx.Conn, n
 	}
 
 	groups := slices.Collect(maps.Values(lo.GroupBy(cols, func(p Pair) string {
-		return p.ConstraintName
+		return p.IndexName
 	})))
 
 	return lo.Map(groups, func(group []Pair, _ int) model.UniqueConstraints {

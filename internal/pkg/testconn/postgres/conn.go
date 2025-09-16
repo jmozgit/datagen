@@ -6,10 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/samber/lo"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/samber/lo"
 )
 
 type Conn struct {
@@ -17,6 +18,8 @@ type Conn struct {
 }
 
 func New(t *testing.T, connStr string) (*Conn, error) {
+	t.Helper()
+
 	ctx := t.Context()
 
 	cfg, err := pgx.ParseConfig(connStr)
@@ -29,9 +32,10 @@ func New(t *testing.T, connStr string) (*Conn, error) {
 		return nil, fmt.Errorf("%w: postgres new", err)
 	}
 
-	dbname, err := createTempDb(ctx, conn)
+	dbname, err := createTempDB(ctx, conn)
 	if err != nil {
 		conn.Close(ctx)
+
 		return nil, fmt.Errorf("%w: postgres new", err)
 	}
 
@@ -39,6 +43,7 @@ func New(t *testing.T, connStr string) (*Conn, error) {
 	tempConn, err := pgx.ConnectConfig(ctx, cfg)
 	if err != nil {
 		conn.Close(ctx)
+
 		return nil, fmt.Errorf("%w: connect config", err)
 	}
 
@@ -61,8 +66,8 @@ func New(t *testing.T, connStr string) (*Conn, error) {
 	return &Conn{conn: tempConn}, nil
 }
 
-func createTempDb(ctx context.Context, conn *pgx.Conn) (string, error) {
-	dbname := genDbName()
+func createTempDB(ctx context.Context, conn *pgx.Conn) (string, error) {
+	dbname := genDBName()
 	_, err := conn.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s", dbname))
 	if err != nil {
 		return "", fmt.Errorf("%w: create temp db", err)
@@ -109,7 +114,14 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...Creat
 		return fmt.Errorf("%w: ensure unexistence %s", err, table.Name)
 	}
 
-	params := CreateTableOptions{}
+	params := CreateTableOptions{
+		pks: make([]string, 0),
+		partPolicy: partPolicy{
+			Method: "",
+			Cnt:    0,
+			Field:  "",
+		},
+	}
 	for _, opt := range opts {
 		opt(&params)
 	}
@@ -128,7 +140,7 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...Creat
 	if params.partPolicy.Method != "" {
 		query += fmt.Sprintf("partition by hash(%s)", params.partPolicy.Field)
 		if _, err := c.conn.Exec(ctx, query); err != nil {
-			return err
+			return fmt.Errorf("%w: create table", err)
 		}
 
 		for i := range params.partPolicy.Cnt {
@@ -138,22 +150,31 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...Creat
 			)
 
 			if _, err := c.conn.Exec(ctx, part); err != nil {
-				return err
+				return fmt.Errorf("%w: create table", err)
 			}
 		}
 
 		return nil
-	} else {
-		_, err := c.conn.Exec(ctx, query)
-		return err
 	}
+
+	if _, err := c.conn.Exec(ctx, query); err != nil {
+		return fmt.Errorf("%w: create table", err)
+	}
+
+	return nil
 }
 
 func (c *Conn) ensureUnexistence(ctx context.Context, name model.TableName) error {
 	_, err := c.conn.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", name))
-	return err
+	if err != nil {
+		return fmt.Errorf("%w: ensure unexistence", err)
+	}
+
+	return nil
 }
 
-func genDbName() string {
-	return xrand.LowerCaseString(10)
+func genDBName() string {
+	const dbNameLen = 10
+
+	return xrand.LowerCaseString(dbNameLen)
 }

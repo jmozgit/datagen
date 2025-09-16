@@ -1,0 +1,190 @@
+version: "2"
+run:
+  concurrency: 4
+  issues-exit-code: 1
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - cyclop
+    - decorder
+    # - depguard
+    - dogsled
+    - dupl
+    # - dupword
+    - durationcheck
+    - err113
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exhaustruct
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    # - funcorder
+    - funlen
+    # - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    # - gosmopolitan
+    - govet
+    - grouper
+    - iface
+    - importas
+    - inamedparam
+    - ineffassign
+    - interfacebloat
+    - intrange
+    # - ireturn # buggy
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - mnd
+    # - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    # - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    # - tagalign
+    - tagliatelle
+    # - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    # - usetesting
+    # - varnamelen
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    # - wsl
+    # - zerologlint
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - dupImport # https://github.com/go-critic/go-critic/issues/845
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+        - wrapperFunc
+        - rangeValCopy
+        - hugeParam
+        - unnamedResult
+    cyclop:
+      max-complexity: 15
+    funlen:
+      lines: 80
+    gosec:
+      excludes:
+        - G115
+    lll:
+      line-length: 120
+    nolintlint:
+      require-explanation: true
+    sloglint:
+      context: scope
+    tagliatelle:
+      case:
+        rules:
+          db: snake
+          json: camel
+        use-field-name: true
+    staticcheck:
+      checks:
+        - all
+        - "-QF1012" # Use fmt.Fprintf(...) instead of WriteString(fmt.Sprintf(...))
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - cyclop
+          - wrapcheck
+        path: (.+)_test\.go
+    paths:
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - prefix(github.com/viktorkomarov/datagen)
+        - default
+      custom-order: true
+    gofumpt:
+      module-path: github.com/viktorkomarov/datagen
+  exclusions:
+    generated: lax
+    paths:
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$

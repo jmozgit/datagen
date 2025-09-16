@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/samber/mo"
 )
 
 func buildTableTask(

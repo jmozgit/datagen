@@ -4,10 +4,12 @@ import (
 	"math"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/generator/integer"
+
+	"github.com/stretchr/testify/require"
 )
 
+//nolint:funlen // it's a long test :)
 func Test_GeneratorValidation(t *testing.T) {
 	t.Parallel()
 
@@ -21,9 +23,10 @@ func Test_GeneratorValidation(t *testing.T) {
 			desc: "incorrect_format",
 			size: 8,
 			options: []integer.Option{
-				integer.WithFormat(integer.Format(145)),
+				integer.WithFormat(integer.Format("145")),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.ErrorIs(t, err, integer.ErrUnknownFormat)
 			},
 		},
@@ -32,6 +35,7 @@ func Test_GeneratorValidation(t *testing.T) {
 			size:    5,
 			options: []integer.Option{},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.ErrorIs(t, err, integer.ErrUnsupportedSize)
 			},
 		},
@@ -42,6 +46,7 @@ func Test_GeneratorValidation(t *testing.T) {
 				integer.WithMaxValue(256),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.ErrorIs(t, err, integer.ErrIncorrectMinMaxValue)
 			},
 		},
@@ -52,6 +57,7 @@ func Test_GeneratorValidation(t *testing.T) {
 				integer.WithMinValue(math.MinInt8 - 1),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.ErrorIs(t, err, integer.ErrIncorrectMinMaxValue)
 			},
 		},
@@ -63,6 +69,7 @@ func Test_GeneratorValidation(t *testing.T) {
 				integer.WithMaxValue(math.MaxUint16 - 1),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 		},
@@ -74,6 +81,7 @@ func Test_GeneratorValidation(t *testing.T) {
 				integer.WithMaxValue(math.MaxUint64),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 		},
@@ -85,6 +93,7 @@ func Test_GeneratorValidation(t *testing.T) {
 				integer.WithMaxValue(math.MaxInt32),
 			},
 			assertErrFn: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 		},
