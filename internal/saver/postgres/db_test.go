@@ -6,6 +6,7 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 	"github.com/viktorkomarov/datagen/internal/saver/postgres"
@@ -21,7 +22,7 @@ type saveSetup struct {
 func newSaveSetup(
 	t *testing.T,
 	table model.Table,
-	opts ...testpg.CreateTableOption,
+	opts ...options.CreateTableOption,
 ) *saveSetup {
 	t.Helper()
 
@@ -114,7 +115,7 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 			{Name: "id", Type: "integer", IsNullable: false},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
-	}, testpg.WithPKs([]string{"id"}))
+	}, options.WithPKs([]string{"id"}))
 
 	data := make([][]any, 0, 26)
 	for i := range cap(data) / 2 {
@@ -153,7 +154,7 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 			{Name: "id", Type: "integer", IsNullable: false},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
-	}, testpg.WithPKs([]string{"id"}))
+	}, options.WithPKs([]string{"id"}))
 
 	data := make([][]any, 0, 26)
 	for range cap(data) {

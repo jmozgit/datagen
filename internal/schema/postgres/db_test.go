@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 	"github.com/viktorkomarov/datagen/internal/schema"
@@ -20,7 +21,11 @@ type pgInspectorTestSetup struct {
 	connect  *connect
 }
 
-func newPgInspectorTestSetup(t *testing.T, table *model.Table, opts ...testpg.CreateTableOption) *pgInspectorTestSetup {
+func newPgInspectorTestSetup(
+	t *testing.T,
+	table *model.Table,
+	opts ...options.CreateTableOption,
+) *pgInspectorTestSetup {
 	t.Helper()
 
 	connStr := os.Getenv("TEST_DATAGEN_PG_CONN")
@@ -84,7 +89,7 @@ func Test_PrimaryKeyMustBeSeen(t *testing.T) {
 		},
 	}
 
-	setup := newPgInspectorTestSetup(t, &table, testpg.WithPKs([]string{"foo"}))
+	setup := newPgInspectorTestSetup(t, &table, options.WithPKs([]string{"foo"}))
 
 	actual, err := setup.connect.Table(t.Context(), table.Name)
 	require.NoError(t, err)
@@ -168,8 +173,8 @@ func Test_PartitionParentTable(t *testing.T) {
 
 	setup := newPgInspectorTestSetup(t,
 		&table,
-		testpg.WithPKs([]string{"col1"}),
-		testpg.WithHashPartitions(5, "col1"),
+		options.WithPKs([]string{"col1"}),
+		options.WithHashPartitions(5, "col1"),
 	)
 	actual, err := setup.connect.Table(t.Context(), table.Name)
 	require.NoError(t, err)
@@ -194,8 +199,8 @@ func Test_PartitionChildTable(t *testing.T) {
 
 	setup := newPgInspectorTestSetup(t,
 		&table,
-		testpg.WithPKs([]string{"col1"}),
-		testpg.WithHashPartitions(5, "col1"),
+		options.WithPKs([]string{"col1"}),
+		options.WithHashPartitions(5, "col1"),
 	)
 	table.Name = model.TableName{
 		Schema: "public",
