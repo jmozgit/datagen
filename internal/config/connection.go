@@ -31,9 +31,8 @@ func (s SQLConnection) ConnString(protocol string) string {
 	builder.WriteByte('/')
 	builder.WriteString(s.DBName)
 	if len(s.Options) > 0 {
-		builder.WriteByte('&')
+		builder.WriteByte('?')
+		builder.WriteString(strings.Join(s.Options, "&"))
 	}
-	builder.WriteString(strings.Join(s.Options, "&"))
-
 	return builder.String()
 }

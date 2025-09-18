@@ -24,7 +24,11 @@ type schemaProvider interface {
 }
 
 type generatorRegistry interface {
-	GetGenerator(ctx context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error)
+	GetGenerator(
+		ctx context.Context,
+		userValues config.Generator,
+		optBaseType mo.Option[model.TargetType],
+	) (model.Generator, error)
 }
 
 func makeSchemaProvider(cfg config.Config) (schemaProvider, error) {

@@ -14,7 +14,6 @@ import (
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 )
@@ -30,6 +29,7 @@ type BaseSuite struct {
 	conn           connection
 	connOption     ConfigOption
 	binPath        string
+	workPath       string
 	Config         config.Config
 	ConnectionType string
 }
@@ -60,29 +60,23 @@ func WithBatchSize(batchSize int) ConfigOption {
 	}
 }
 
-func postgresqlConnectionOption(t *testing.T, connStr string) ConfigOption {
+func postgresqlConnectionOption(t *testing.T, conn connection) ConfigOption {
 	t.Helper()
 
-	pgxConf, err := pgx.ParseConfig(connStr)
-	require.NoError(t, err)
-
 	return withConnection(config.Connection{
-		Type: "postgresql",
-		Postgresql: &config.SQLConnection{
-			Host:     pgxConf.Host,
-			Port:     int(pgxConf.Port),
-			User:     pgxConf.User,
-			Password: pgxConf.Password,
-			DBName:   pgxConf.Database,
-			Options: []string{
-				"sslmode=disabled",
-			},
-		},
+		Type:       "postgresql",
+		Postgresql: conn.SQLConnection(),
 	})
 }
 
 func NewBaseSuite(t *testing.T) *BaseSuite {
 	t.Helper()
+
+	workPath, err := filepath.Abs(filepath.Join(testLogsPath, t.Name()))
+	require.NoError(t, err)
+
+	err = os.MkdirAll(workPath, os.ModePerm) //nolint:mnd // ok for tests
+	require.NoError(t, err)
 
 	connType := curConnType(t)
 	switch connType {
@@ -96,9 +90,10 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 		return &BaseSuite{
 			t:              t,
 			conn:           conn,
-			connOption:     postgresqlConnectionOption(t, connStr),
+			connOption:     postgresqlConnectionOption(t, conn),
 			Config:         config.Config{}, //nolint:exhaustruct // ok
 			ConnectionType: connType,
+			workPath:       workPath,
 			binPath:        binPath(t),
 		}
 	default:
@@ -130,7 +125,7 @@ func (b *BaseSuite) SaveConfig(opts ...ConfigOption) {
 
 	savedConfigPath := b.configFileName()
 
-	data, err := yaml.Marshal(savedConfigPath)
+	data, err := yaml.Marshal(cfg)
 	require.NoError(b.t, err)
 
 	err = os.WriteFile(savedConfigPath, data, 0o644) //nolint:gosec,mnd // ok for tests
@@ -138,7 +133,7 @@ func (b *BaseSuite) SaveConfig(opts ...ConfigOption) {
 }
 
 func (b *BaseSuite) configFileName() string {
-	return path.Join(b.binPath, configFileName)
+	return path.Join(b.workPath, configFileName)
 }
 
 func (b *BaseSuite) datagenBin() string {
@@ -150,16 +145,11 @@ func (b *BaseSuite) RunDatagen(ctx context.Context) error {
 
 	cmd := exec.CommandContext(ctx, b.datagenBin(), args...) //nolint:gosec // ok for tests
 
-	workPath := filepath.Join(testLogsPath, b.t.Name())
-
-	err := os.MkdirAll(workPath, 0o666) //nolint:mnd // ok for tests
-	require.NoError(b.t, err)
-
-	stdout, err := os.Create(filepath.Join(workPath, "stdou"))
+	stdout, err := os.Create(filepath.Join(b.workPath, "stdout"))
 	require.NoError(b.t, err)
 	defer stdout.Close()
 
-	stderr, err := os.Create(filepath.Join(workPath, "stdou"))
+	stderr, err := os.Create(filepath.Join(b.workPath, "stderr"))
 	require.NoError(b.t, err)
 	defer stderr.Close()
 

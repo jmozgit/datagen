@@ -59,7 +59,7 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	require.NoError(t, err)
 
 	baseSuite.OnEachRow(table, func(row []any) {
-		require.Len(t, len(row), 1)
+		require.Len(t, row, 1)
 		number, ok := row[0].(int64)
 		require.True(t, ok)
 		require.True(t, number >= -10 && number <= 98)

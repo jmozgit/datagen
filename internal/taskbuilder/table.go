@@ -38,12 +38,8 @@ func buildTableTask(
 
 	gens := make([]model.Generator, 0, len(schema.DataTypes))
 	for _, targetType := range schema.DataTypes {
-		var userVal any
-		if gen, ok := userSettingsByID[targetType.SourceName]; ok {
-			userVal = gen
-		}
-
-		gen, err := registry.GetGenerator(ctx, userVal, mo.Some(targetType))
+		// make user settings optional too
+		gen, err := registry.GetGenerator(ctx, userSettingsByID[targetType.SourceName], mo.Some(targetType))
 		if err != nil {
 			return model.TaskGenerators{}, fmt.Errorf("%w: build table task", err)
 		}

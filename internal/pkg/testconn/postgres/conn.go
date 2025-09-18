@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
@@ -177,6 +178,17 @@ func (c *Conn) OnEachRow(ctx context.Context, table model.Table, fn func(row []a
 	}
 
 	return nil
+}
+
+func (c *Conn) SQLConnection() *config.SQLConnection {
+	return &config.SQLConnection{
+		Host:     c.conn.Config().Host,
+		Port:     int(c.conn.Config().Port),
+		User:     c.conn.Config().User,
+		Password: c.conn.Config().Password,
+		DBName:   c.conn.Config().Database,
+		Options:  make([]string, 0),
+	}
 }
 
 func (c *Conn) ensureUnexistence(ctx context.Context, name model.TableName) error {

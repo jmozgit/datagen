@@ -9,46 +9,42 @@ const (
 )
 
 type Config struct {
-	Version    int        `yaml:"version" koanf:"version"`
-	Connection Connection `yaml:"connection" koanf:"connection"`
-	Targets    []Target   `yaml:"targets" koanf:"targets"`
-	Options    Options    `yaml:"options" koanf:"options"`
+	Version    int        `yaml:"version"`
+	Connection Connection `yaml:"connection"`
+	Targets    []Target   `yaml:"targets"`
+	Options    Options    `yaml:"options"`
 }
 
 type Connection struct {
-	Type       ConnectionType `yaml:"type" koanf:"type"`
-	Postgresql *SQLConnection `yaml:"postgresql" koanf:"posgtresql"`
+	Type       ConnectionType `yaml:"type"`
+	Postgresql *SQLConnection `yaml:"postgresql"`
 }
 
 type Target struct {
-	Table *Table `yaml:"table" koanf:"table"`
+	Table *Table `yaml:"table"`
 }
 
 type Options struct {
-	BatchSize int
+	BatchSize int `yaml:"batchSize"`
 }
 
 type Table struct {
-	Schema     string           `yaml:"schema" koanf:"schema"`
-	Table      string           `yaml:"table" koanf:"table"`
-	LimitRows  uint64           `yaml:"limitRows" koanf:"limit_rows"`
-	LimitBytes units.Base2Bytes `yaml:"limitBytes" koanf:"limit_bytes"`
-	Generators []Generator      `yaml:"generators" koanf:"generators"`
+	Schema     string           `yaml:"schema"`
+	Table      string           `yaml:"table"`
+	LimitRows  uint64           `yaml:"limitRows"`
+	LimitBytes units.Base2Bytes `yaml:"limitBytes"`
+	Generators []Generator      `yaml:"generators"`
 }
 
 type Generator struct {
-	Column  string   `yaml:"column" koanf:"column"`
-	Type    string   `yaml:"type" koanf:"type"`
-	Integer *Integer `yaml:"integer" koanf:"integer"`
+	Column  string        `yaml:"column"`
+	Type    GeneratorType `yaml:"type"`
+	Integer *Integer      `yaml:"integer"`
 }
 
 type Integer struct {
-	Format   *string `yaml:"format" koanf:"format"`
-	BitSize  *int8   `yaml:"bitSize" koanf:"bit_size"`
-	MinValue *int64  `yaml:"minValue" koanf:"min_value"`
-	MaxValue *uint64 `yaml:"maxValue" koanf:"max_value"`
-}
-
-func defaultKoanfConfigValues() map[string]any {
-	return map[string]any{}
+	Format   *string `yaml:"format"`
+	BitSize  *int8   `yaml:"bitSize"`
+	MinValue *int64  `yaml:"minValue"`
+	MaxValue *uint64 `yaml:"maxValue"`
 }

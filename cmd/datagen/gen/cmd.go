@@ -24,7 +24,7 @@ func New() *cobra.Command {
 
 	//nolint:exhaustruct // it's okay for now
 	c := &cobra.Command{
-		Use:   "datagen gen -f config.yaml",
+		Use:   "gen",
 		Short: "generate data",
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cmd.flags.path)

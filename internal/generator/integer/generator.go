@@ -23,7 +23,7 @@ var (
 type Format string
 
 const (
-	FormatRandom Format = "eandom"
+	FormatRandom Format = "random"
 	FormatSerial Format = "serial"
 )
 
@@ -128,26 +128,44 @@ func (g Generator) Gen(_ context.Context) (any, error) {
 	return nil, nil //nolint:nilnil // come back later
 }
 
-func Accept(_ context.Context, userValues any, optBaseType mo.Option[model.TargetType]) (model.Generator, error) {
+func Accept(
+	_ context.Context,
+	userSettings config.Generator,
+	optBaseType mo.Option[model.TargetType],
+) (generator.AcceptanceDecision, error) {
 	baseType := optBaseType.OrEmpty()
-	userCfg, ok := userValues.(*config.Integer)
-	if !ok || baseType.Type != model.Integer {
-		return nil, generator.ErrGeneratorDeclined
+
+	if userSettings.Type != config.GeneratorTypeInteger {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
 	}
 
-	size := lo.FromPtrOr(userCfg.BitSize, int8(baseType.FixedSize))
+	if baseType.Type != model.Integer {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: integer generator isn't comparable with %s", generator.ErrSupportOnlyDirectMappings, baseType.SourceType)
+	}
+
+	integerCfg := userSettings.Integer
+
+	size := lo.FromPtrOr(integerCfg.BitSize, int8(baseType.FixedSize))
 	opts := make([]Option, 0)
-	if userCfg.Format != nil {
-		opts = append(opts, WithFormat(Format(*userCfg.Format)))
+	if integerCfg.Format != nil {
+		opts = append(opts, WithFormat(Format(*integerCfg.Format)))
 	}
-	if userCfg.MaxValue != nil {
-		opts = append(opts, WithMaxValue(*userCfg.MaxValue))
+	if integerCfg.MaxValue != nil {
+		opts = append(opts, WithMaxValue(*integerCfg.MaxValue))
 	}
-	if userCfg.MinValue != nil {
-		opts = append(opts, WithMinValue(*userCfg.MinValue))
+	if integerCfg.MinValue != nil {
+		opts = append(opts, WithMinValue(*integerCfg.MinValue))
 	}
 
-	return New(size, opts...)
+	gen, err := New(size, opts...)
+	if err != nil {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
+	}
+
+	return generator.AcceptanceDecision{
+		Generator:  gen,
+		AcceptedBy: generator.AcceptanceReasonColumnType,
+	}, nil
 }
 
 func New(size int8, opts ...Option) (model.Generator, error) {

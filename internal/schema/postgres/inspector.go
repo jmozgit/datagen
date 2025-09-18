@@ -27,14 +27,17 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 }
 
 //nolint:gochecknoglobals // more convenient that constants here
-var pgRegistryTypes = map[string]model.CommonType{}
-
-func (i *Inspector) TargetIdentifier(_ config.Target) (model.Identifier, error) {
-	return model.Identifier(""), nil
+var pgRegistryTypes = map[string]model.CommonType{
+	"int4": model.Integer,
 }
 
-func (i *Inspector) GeneratorIdentifier(_ config.Generator) (model.Identifier, error) {
-	return model.Identifier(""), nil
+// it's incorrect
+func (i *Inspector) TargetIdentifier(target config.Target) (model.Identifier, error) {
+	return model.Identifier(fmt.Sprintf("%s.%s", target.Table.Schema, target.Table.Table)), nil
+}
+
+func (i *Inspector) GeneratorIdentifier(gen config.Generator) (model.Identifier, error) {
+	return model.Identifier(gen.Column), nil
 }
 
 func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.DatasetSchema, error) {
@@ -52,7 +55,7 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 	for i, col := range table.Columns {
 		tp, ok := pgRegistryTypes[col.Type]
 		if !ok {
-			return model.DatasetSchema{}, fmt.Errorf("%w: %s in %s", schema.ErrUnsupportedType, col.Name, name)
+			return model.DatasetSchema{}, fmt.Errorf("%w: %s (%s) in %s", schema.ErrUnsupportedType, col.Name, col.Type, name)
 		}
 
 		dataTypes[i] = model.TargetType{

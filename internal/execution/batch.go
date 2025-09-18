@@ -35,7 +35,7 @@ func NewBatchExecutor(saver Saver, cnt int) *BatchExecutor {
 }
 
 func shouldContinue(collected, task model.TaskProgress) bool {
-	return task.Bytes > collected.Bytes && task.Rows > collected.Rows
+	return task.Bytes > collected.Bytes || task.Rows > collected.Rows
 }
 
 func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {

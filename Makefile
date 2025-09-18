@@ -10,7 +10,7 @@ test-env-var: .env
 	$(eval export)
 
 test: test-env-var
-	go test -timeout 5m -count 1 -cover ./...
+	TEST_DATAGEN_CONNECTION_TYPE=postgresql go test -timeout 5m -count 1 -cover ./...
 
 lint:
 	$(BIN)/golangci-lint run -c .golangci.yaml
