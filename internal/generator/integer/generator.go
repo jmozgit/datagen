@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand/v2"
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
@@ -125,7 +126,13 @@ func (g Generator) validate() error {
 }
 
 func (g Generator) Gen(_ context.Context) (any, error) {
-	return nil, nil //nolint:nilnil // come back later
+	diff := g.max - uint64(g.min)
+	if diff == 0 {
+		return g.max, nil
+	}
+	val := rand.Int64N(int64(diff)) //nolint:gosec // ok
+
+	return g.min + val, nil
 }
 
 func Accept(
@@ -140,7 +147,11 @@ func Accept(
 	}
 
 	if baseType.Type != model.Integer {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: integer generator isn't comparable with %s", generator.ErrSupportOnlyDirectMappings, baseType.SourceType)
+		return generator.AcceptanceDecision{},
+			fmt.Errorf(
+				"%w: integer generator isn't comparable with %s",
+				generator.ErrSupportOnlyDirectMappings, baseType.SourceType,
+			)
 	}
 
 	integerCfg := userSettings.Integer

@@ -5,7 +5,6 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
 	"github.com/samber/lo"
@@ -31,11 +30,11 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}
 
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(1),
-		//nolint:exhaustruct // ok
+		//nolint:exhaustruct // ok for tests
 		suite.WithTableTarget(config.Table{
 			Schema:    string(table.Name.Schema),
 			Table:     string(table.Name.Table),
@@ -60,8 +59,38 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 
 	baseSuite.OnEachRow(table, func(row []any) {
 		require.Len(t, row, 1)
-		number, ok := row[0].(int64)
-		require.True(t, ok)
+		number := toInteger(t, row[0])
 		require.True(t, number >= -10 && number <= 98)
 	})
+}
+
+func toInteger(t *testing.T, val any) int64 {
+	t.Helper()
+
+	switch v := val.(type) {
+	case int:
+		return int64(v)
+	case int8:
+		return int64(v)
+	case int16:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	case uint8:
+		return int64(v)
+	case uint16:
+		return int64(v)
+	case uint32:
+		return int64(v)
+	case uint64:
+		return int64(v)
+	case uint:
+		return int64(v)
+	default:
+		require.Failf(t, "integer mismatched", "expected integer type, not %T (%v)", val, val)
+
+		return 0
+	}
 }

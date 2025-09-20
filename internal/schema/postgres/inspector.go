@@ -31,7 +31,7 @@ var pgRegistryTypes = map[string]model.CommonType{
 	"int4": model.Integer,
 }
 
-// it's incorrect
+// it's incorrect, but ok for now.
 func (i *Inspector) TargetIdentifier(target config.Target) (model.Identifier, error) {
 	return model.Identifier(fmt.Sprintf("%s.%s", target.Table.Schema, target.Table.Table)), nil
 }

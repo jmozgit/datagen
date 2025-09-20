@@ -75,7 +75,7 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 	workPath, err := filepath.Abs(filepath.Join(testLogsPath, t.Name()))
 	require.NoError(t, err)
 
-	err = os.MkdirAll(workPath, os.ModePerm) //nolint:mnd // ok for tests
+	err = os.MkdirAll(workPath, os.ModePerm)
 	require.NoError(t, err)
 
 	connType := curConnType(t)

@@ -34,5 +34,6 @@ func (s SQLConnection) ConnString(protocol string) string {
 		builder.WriteByte('?')
 		builder.WriteString(strings.Join(s.Options, "&"))
 	}
+
 	return builder.String()
 }
