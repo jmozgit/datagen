@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:paralleltest // change it globally later
 func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 

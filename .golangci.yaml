@@ -159,6 +159,7 @@ linters:
     rules:
       - linters:
           - cyclop
+          - paralleltest
           - wrapcheck
         path: (.+)_test\.go
     paths:
