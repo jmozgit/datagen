@@ -9,6 +9,12 @@ test-env-var: .env
 	$(eval include .env)
 	$(eval export)
 
+build:
+	go build -o $(BIN)/datagen cmd/datagen/main.go
+
+e2e: test-env-var build
+	TEST_DATAGEN_CONNECTION_TYPE=postgresql go test -timeout 5m -count 1 -cover tests/...
+
 test: test-env-var
 	TEST_DATAGEN_CONNECTION_TYPE=postgresql go test -timeout 5m -count 1 -cover ./...
 

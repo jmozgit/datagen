@@ -22,16 +22,16 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 			Table:  "test_all_integers",
 		},
 		Columns: []model.Column{
-			{Name: "smallint", Type: "smallint", IsNullable: false, FixedSize: 2},
-			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4},
-			{Name: "bigint", Type: "bigint", IsNullable: false, FixedSize: 8},
-			{Name: "int2", Type: "int2", IsNullable: false, FixedSize: 2},
-			{Name: "int4", Type: "int4", IsNullable: false, FixedSize: 4},
-			{Name: "int8", Type: "int8", IsNullable: false, FixedSize: 8},
+			{Name: "smallint", Type: "smallint", IsNullable: false, FixedSize: 2, IsSerial: false, ColumnDefault: ""},
+			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "bigint", Type: "bigint", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "int2", Type: "int2", IsNullable: false, FixedSize: 2, IsSerial: false, ColumnDefault: ""},
+			{Name: "int4", Type: "int4", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "int8", Type: "int8", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(7),
 		//nolint:exhaustruct // ok
@@ -57,6 +57,123 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 	require.Equal(t, 39, cnt)
 }
 
+func Test_SerialPostgresqlDefault(t *testing.T) {
+	suite.TestOnlyFor(t, "postgresql")
+
+	baseSuite := suite.NewBaseSuite(t)
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "test_default_serial",
+		},
+		Columns: []model.Column{
+			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2, IsSerial: true, ColumnDefault: ""},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4, IsSerial: true, ColumnDefault: ""},
+			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8, IsSerial: true, ColumnDefault: ""},
+		},
+		UniqueConstraints: make([]model.UniqueConstraints, 0),
+	}
+
+	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.SaveConfig(
+		suite.WithBatchSize(11),
+		//nolint:exhaustruct // ok
+		suite.WithTableTarget(config.Table{
+			Schema:     string(table.Name.Schema),
+			Table:      string(table.Name.Table),
+			Generators: []config.Generator{},
+			LimitRows:  12,
+		}),
+	)
+
+	err := baseSuite.RunDatagen(t.Context())
+	require.NoError(t, err)
+
+	cnt := 0
+
+	curValues := []int64{0, 0, 0}
+	baseSuite.OnEachRow(table, func(row []any) {
+		require.Len(t, row, len(table.Columns))
+		for i, val := range row {
+			v := toInteger(t, val)
+			if cnt != 0 {
+				require.Equal(t, curValues[cnt]+1, v)
+			}
+			curValues[i] = v
+		}
+		cnt++
+	})
+	require.Equal(t, 12, cnt)
+}
+
+func Test_SerialGeneratorFromConfig(t *testing.T) {
+	baseSuite := suite.NewBaseSuite(t)
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "test_serial",
+		},
+		Columns: []model.Column{
+			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2, IsSerial: true, ColumnDefault: ""},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4, IsSerial: true, ColumnDefault: ""},
+			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8, IsSerial: true, ColumnDefault: ""},
+		},
+		UniqueConstraints: make([]model.UniqueConstraints, 0),
+	}
+	minValues := [3]int64{-10, 5, 0}
+
+	baseSuite.CreateTable(table)
+	baseSuite.SaveConfig(
+		suite.WithBatchSize(13),
+		//nolint:exhaustruct // ok
+		suite.WithTableTarget(config.Table{
+			Schema: string(table.Name.Schema),
+			Table:  string(table.Name.Table),
+			Generators: []config.Generator{
+				{
+					Column: "smallserial",
+					Type:   config.GeneratorTypeInteger,
+					Integer: &config.Integer{
+						Format:   lo.ToPtr("serial"),
+						MinValue: lo.ToPtr(minValues[0]),
+					},
+				},
+				{
+					Column: "serial",
+					Type:   config.GeneratorTypeInteger,
+					Integer: &config.Integer{
+						Format:   lo.ToPtr("serial"),
+						MinValue: lo.ToPtr(minValues[1]),
+					},
+				},
+				{
+					Column: "bigserial",
+					Type:   config.GeneratorTypeInteger,
+					Integer: &config.Integer{
+						Format:   lo.ToPtr("serial"),
+						MinValue: lo.ToPtr(minValues[2]),
+					},
+				},
+			},
+			LimitRows: 56,
+		}),
+	)
+
+	err := baseSuite.RunDatagen(t.Context())
+	require.NoError(t, err)
+
+	cnt := 0
+	baseSuite.OnEachRow(table, func(row []any) {
+		require.Len(t, row, len(table.Columns))
+		for i, val := range row {
+			v := toInteger(t, val)
+			require.Equal(t, minValues[i]+int64(cnt), v)
+		}
+		cnt++
+	})
+	require.Equal(t, 56, cnt)
+}
+
 func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 
@@ -67,10 +184,12 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 		},
 		Columns: []model.Column{
 			{
-				Name:       "gen_col",
-				Type:       "integer",
-				IsNullable: false,
-				FixedSize:  4,
+				Name:          "gen_col",
+				Type:          "integer",
+				IsNullable:    false,
+				FixedSize:     4,
+				IsSerial:      false,
+				ColumnDefault: "",
 			},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),

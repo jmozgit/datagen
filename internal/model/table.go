@@ -33,10 +33,12 @@ func (t TableName) String() string {
 }
 
 type Column struct {
-	Name       Identifier
-	IsNullable bool
-	Type       string
-	FixedSize  int
+	Name          Identifier
+	IsNullable    bool
+	Type          string
+	FixedSize     int
+	IsSerial      bool
+	ColumnDefault string
 }
 
 type UniqueConstraints []Identifier

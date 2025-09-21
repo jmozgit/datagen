@@ -59,11 +59,13 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 		}
 
 		dataTypes[i] = model.TargetType{
-			SourceName: col.Name,
-			SourceType: col.Type,
-			Type:       tp,
-			IsNullable: col.IsNullable,
-			FixedSize:  col.FixedSize,
+			SourceName:             col.Name,
+			SourceType:             col.Type,
+			Type:                   tp,
+			IsNullable:             col.IsNullable,
+			FixedSize:              col.FixedSize,
+			IsSerial:               col.IsSerial,
+			SourceSpecifiedDefault: col.ColumnDefault,
 		}
 	}
 

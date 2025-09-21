@@ -80,9 +80,9 @@ func Test_PrimaryKeyMustBeSeen(t *testing.T) {
 			Table:  "test_1",
 		},
 		Columns: []model.Column{
-			{Name: "bat", Type: "text", IsNullable: true, FixedSize: -1},
-			{Name: "created_at", Type: "timestamptz", IsNullable: true, FixedSize: 8},
-			{Name: "foo", Type: "int4", IsNullable: false, FixedSize: 4},
+			{Name: "bat", Type: "text", IsNullable: true, FixedSize: -1, IsSerial: false, ColumnDefault: ""},
+			{Name: "created_at", Type: "timestamptz", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "foo", Type: "int4", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
 		},
 		UniqueConstraints: []model.UniqueConstraints{
 			{"foo"},
@@ -134,10 +134,10 @@ func Test_OverlappingConstraints(t *testing.T) {
 			Table:  "overlapping_constraints",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col4", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: "col1", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col4", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
 		},
 		UniqueConstraints: []model.UniqueConstraints{
 			{"col1", "col2"},
@@ -164,9 +164,9 @@ func Test_PartitionParentTable(t *testing.T) {
 			Table:  "parent",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
 		},
 		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
 	}
@@ -190,9 +190,9 @@ func Test_PartitionChildTable(t *testing.T) {
 			Table:  "child",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
 		},
 		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
 	}

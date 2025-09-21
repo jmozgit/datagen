@@ -14,11 +14,13 @@ const (
 )
 
 type TargetType struct {
-	SourceName Identifier
-	Type       CommonType
-	SourceType string
-	FixedSize  int
-	IsNullable bool
+	SourceName             Identifier
+	Type                   CommonType
+	SourceType             string
+	FixedSize              int
+	IsNullable             bool
+	IsSerial               bool
+	SourceSpecifiedDefault string
 }
 
 func (b TargetType) String() string {

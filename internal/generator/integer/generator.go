@@ -22,8 +22,9 @@ var (
 type Format string
 
 const (
-	FormatRandom Format = "random"
-	FormatSerial Format = "serial"
+	FormatUnspecified Format = ""
+	FormatRandom      Format = "random"
+	FormatSerial      Format = "serial"
 )
 
 type Option func(g *options)
@@ -82,7 +83,7 @@ func Accept(
 		opts = append(opts, WithMinValue(*userSettings.Integer.MinValue))
 	}
 
-	gen, err := newGenerator(size, opts...)
+	gen, err := newGenerator(size, optBaseType, opts...)
 	if err != nil {
 		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
 	}
@@ -93,7 +94,11 @@ func Accept(
 	}, nil
 }
 
-func newGenerator(size int8, opts ...Option) (model.Generator, error) {
+func newGenerator(
+	size int8,
+	optBaseType mo.Option[model.TargetType],
+	opts ...Option,
+) (model.Generator, error) {
 	genOpts, err := defaultOptions(size)
 	if err != nil {
 		return nil, fmt.Errorf("%w: new", err)
@@ -108,6 +113,17 @@ func newGenerator(size int8, opts ...Option) (model.Generator, error) {
 	}
 
 	switch genOpts.format {
+	case FormatUnspecified:
+		baseType, ok := optBaseType.Get()
+		if ok && baseType.IsSerial {
+			if baseType.SourceSpecifiedDefault != "" {
+				return newSourceSpecifiedGenerator(baseType.SourceSpecifiedDefault), nil
+			}
+
+			return newSerialGenerator(1), nil
+		}
+
+		return newRandomGenerator(genOpts.min, genOpts.max), nil
 	case FormatRandom:
 		return newRandomGenerator(genOpts.min, genOpts.max), nil
 	case FormatSerial:
@@ -155,7 +171,7 @@ func defaultOptions(size int8) (options, error) {
 	}
 
 	return options{
-		format: FormatRandom,
+		format: FormatUnspecified,
 		size:   size,
 		min:    minV,
 		max:    maxV,
