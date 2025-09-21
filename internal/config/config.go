@@ -44,7 +44,7 @@ type Generator struct {
 
 type Integer struct {
 	Format   *string `yaml:"format"`
-	BitSize  *int8   `yaml:"bitSize"`
+	ByteSize *int8   `yaml:"byteSize"`
 	MinValue *int64  `yaml:"minValue"`
-	MaxValue *uint64 `yaml:"maxValue"`
+	MaxValue *int64  `yaml:"maxValue"`
 }

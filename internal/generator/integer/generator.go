@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/rand/v2"
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
 
-	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
@@ -28,71 +26,135 @@ const (
 	FormatSerial Format = "serial"
 )
 
-type Option func(g *Generator)
+type Option func(g *options)
 
 func WithFormat(format Format) Option {
-	return func(g *Generator) {
+	return func(g *options) {
 		g.format = format
 	}
 }
 
 func WithMinValue(minV int64) Option {
-	return func(g *Generator) {
+	return func(g *options) {
 		g.min = minV
 	}
 }
 
-func WithMaxValue(maxV uint64) Option {
-	return func(g *Generator) {
+func WithMaxValue(maxV int64) Option {
+	return func(g *options) {
 		g.max = maxV
 	}
 }
 
-type Generator struct {
+type options struct {
 	format Format
 	size   int8
 	min    int64
-	max    uint64
+	max    int64
+}
+
+func Accept(
+	_ context.Context,
+	optUserSettings mo.Option[config.Generator],
+	optBaseType mo.Option[model.TargetType],
+) (generator.AcceptanceDecision, error) {
+	userSettings, userPresented := optUserSettings.Get()
+	if userPresented && userSettings.Type != config.GeneratorTypeInteger {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
+	}
+	baseType, baseTypePresented := optBaseType.Get()
+	if !userPresented && baseTypePresented && baseType.Type != model.Integer {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
+	}
+	size := int8(baseType.FixedSize)
+	if userPresented && userSettings.Integer.ByteSize != nil {
+		size = *userSettings.Integer.ByteSize
+	}
+
+	opts := make([]Option, 0)
+	if userPresented && userSettings.Integer.Format != nil {
+		opts = append(opts, WithFormat(Format(*userSettings.Integer.Format)))
+	}
+	if userPresented && userSettings.Integer.MaxValue != nil {
+		opts = append(opts, WithMaxValue(*userSettings.Integer.MaxValue))
+	}
+	if userPresented && userSettings.Integer.MinValue != nil {
+		opts = append(opts, WithMinValue(*userSettings.Integer.MinValue))
+	}
+
+	gen, err := newGenerator(size, opts...)
+	if err != nil {
+		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
+	}
+
+	return generator.AcceptanceDecision{
+		Generator:  gen,
+		AcceptedBy: generator.AcceptanceReasonColumnType,
+	}, nil
+}
+
+func newGenerator(size int8, opts ...Option) (model.Generator, error) {
+	genOpts, err := defaultOptions(size)
+	if err != nil {
+		return nil, fmt.Errorf("%w: new", err)
+	}
+
+	for _, opt := range opts {
+		opt(&genOpts)
+	}
+
+	if err := genOpts.validate(); err != nil {
+		return nil, fmt.Errorf("%w: new", err)
+	}
+
+	switch genOpts.format {
+	case FormatRandom:
+		return newRandomGenerator(genOpts.min, genOpts.max), nil
+	case FormatSerial:
+		return newSerialGenerator(genOpts.min), nil
+	default:
+		return nil, fmt.Errorf("%w: %s new generator", ErrUnknownFormat, genOpts.format)
+	}
 }
 
 //nolint:gochecknoglobals // more convenient that constants here
 var minValidIntegerForSize = map[string]int64{
-	"8":   math.MinInt8,
-	"8u":  0,
-	"16":  math.MinInt16,
-	"16u": 0,
-	"32":  math.MinInt32,
-	"32u": 0,
-	"64":  math.MinInt64,
-	"64u": 0,
+	"1":  math.MinInt8,
+	"1u": 0,
+	"2":  math.MinInt16,
+	"2u": 0,
+	"4":  math.MinInt32,
+	"4u": 0,
+	"8":  math.MinInt64,
+	"8u": 0,
 }
 
 //nolint:gochecknoglobals // more convenient that constants here
-var maxValidIntergerForSize = map[string]uint64{
-	"8":   math.MaxInt8,
-	"8u":  math.MaxUint8,
-	"16":  math.MaxInt16,
-	"16u": math.MaxUint16,
-	"32":  math.MaxInt32,
-	"32u": math.MaxUint32,
-	"64":  math.MaxInt64,
-	"64u": math.MaxUint64,
+var maxValidIntergerForSize = map[string]int64{
+	"1":  math.MaxInt8,
+	"1u": math.MaxUint8,
+	"2":  math.MaxInt16,
+	"2u": math.MaxUint16,
+	"4":  math.MaxInt32,
+	"4u": math.MaxUint32,
+	"8":  math.MaxInt64,
+	"8u": math.MaxInt64,
 }
 
-func defaultOptions(size int8) (Generator, error) {
+func defaultOptions(size int8) (options, error) {
 	key := fmt.Sprint(size)
 
 	minV, ok := minValidIntegerForSize[key]
 	if !ok {
-		return Generator{}, fmt.Errorf("%w: %d is unknown for min value", ErrUnsupportedSize, size)
+		return options{}, fmt.Errorf("%w: %d is unknown for min value", ErrUnsupportedSize, size)
 	}
 
 	maxV, ok := maxValidIntergerForSize[key]
 	if !ok {
-		return Generator{}, fmt.Errorf("%w: %d is unknown for max value", ErrUnsupportedSize, size)
+		return options{}, fmt.Errorf("%w: %d is unknown for max value", ErrUnsupportedSize, size)
 	}
 
-	return Generator{
+	return options{
 		format: FormatRandom,
 		size:   size,
 		min:    minV,
@@ -100,13 +162,7 @@ func defaultOptions(size int8) (Generator, error) {
 	}, nil
 }
 
-func (g Generator) validate() error {
-	switch g.format {
-	case FormatRandom, FormatSerial:
-	default:
-		return fmt.Errorf("%w: validate", ErrUnknownFormat)
-	}
-
+func (g options) validate() error {
 	key := fmt.Sprint(g.size)
 	if g.min >= 0 {
 		key += "u"
@@ -123,75 +179,4 @@ func (g Generator) validate() error {
 		ErrIncorrectMinMaxValue,
 		g.size, minV, maxV, g.min, g.max,
 	)
-}
-
-func (g Generator) Gen(_ context.Context) (any, error) {
-	diff := g.max - uint64(g.min)
-	if diff == 0 {
-		return g.max, nil
-	}
-	val := rand.Int64N(int64(diff)) //nolint:gosec // ok
-
-	return g.min + val, nil
-}
-
-func Accept(
-	_ context.Context,
-	userSettings config.Generator,
-	optBaseType mo.Option[model.TargetType],
-) (generator.AcceptanceDecision, error) {
-	baseType := optBaseType.OrEmpty()
-
-	if userSettings.Type != config.GeneratorTypeInteger {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
-	}
-
-	if baseType.Type != model.Integer {
-		return generator.AcceptanceDecision{},
-			fmt.Errorf(
-				"%w: integer generator isn't comparable with %s",
-				generator.ErrSupportOnlyDirectMappings, baseType.SourceType,
-			)
-	}
-
-	integerCfg := userSettings.Integer
-
-	size := lo.FromPtrOr(integerCfg.BitSize, int8(baseType.FixedSize))
-	opts := make([]Option, 0)
-	if integerCfg.Format != nil {
-		opts = append(opts, WithFormat(Format(*integerCfg.Format)))
-	}
-	if integerCfg.MaxValue != nil {
-		opts = append(opts, WithMaxValue(*integerCfg.MaxValue))
-	}
-	if integerCfg.MinValue != nil {
-		opts = append(opts, WithMinValue(*integerCfg.MinValue))
-	}
-
-	gen, err := New(size, opts...)
-	if err != nil {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
-	}
-
-	return generator.AcceptanceDecision{
-		Generator:  gen,
-		AcceptedBy: generator.AcceptanceReasonColumnType,
-	}, nil
-}
-
-func New(size int8, opts ...Option) (model.Generator, error) {
-	genOpts, err := defaultOptions(size)
-	if err != nil {
-		return Generator{}, fmt.Errorf("%w: new", err)
-	}
-
-	for _, opt := range opts {
-		opt(&genOpts)
-	}
-
-	if err := genOpts.validate(); err != nil {
-		return Generator{}, fmt.Errorf("%w: new", err)
-	}
-
-	return genOpts, nil
 }

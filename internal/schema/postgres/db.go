@@ -85,9 +85,11 @@ func (c *connect) selectTableColumns(
 ) ([]model.Column, error) {
 	const query = `
 		SELECT 
-			column_name, is_nullable, udt_name
+			column_name, is_nullable, udt_name, typlen
 		FROM 
 			information_schema.columns
+		INNER JOIN pg_type
+			ON information_schema.columns.udt_name = pg_type.typname
 		WHERE
 			table_schema = $1 AND table_name = $2
 		ORDER BY
@@ -97,7 +99,8 @@ func (c *connect) selectTableColumns(
 	type Column struct {
 		ColumnName string `db:"column_name"`
 		IsNullable string `db:"is_nullable"`
-		UdtName    string `db:"udt_name"`
+		UdtName    string `db:"udt_name"` //nolint:tagliatelle // ok here
+		TypeLen    int    `db:"typlen"`   //nolint:tagliatelle // ok here
 	}
 
 	var columns []Column
@@ -110,6 +113,7 @@ func (c *connect) selectTableColumns(
 			Name:       model.Identifier(c.ColumnName),
 			IsNullable: c.IsNullable == "YES",
 			Type:       c.UdtName,
+			FixedSize:  c.TypeLen,
 		}
 	}), nil
 }

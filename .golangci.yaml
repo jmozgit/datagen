@@ -159,9 +159,11 @@ linters:
     rules:
       - linters:
           - cyclop
-          - paralleltest
           - wrapcheck
         path: (.+)_test\.go
+      - linters:
+          - paralleltest
+        path: tests/e2e/
     paths:
       - mocks
       - third_party$

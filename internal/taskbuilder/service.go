@@ -26,7 +26,7 @@ type schemaProvider interface {
 type generatorRegistry interface {
 	GetGenerator(
 		ctx context.Context,
-		userValues config.Generator,
+		userValues mo.Option[config.Generator],
 		optBaseType mo.Option[model.TargetType],
 	) (model.Generator, error)
 }

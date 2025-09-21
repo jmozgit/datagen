@@ -64,8 +64,8 @@ func Test_DbSaveNoErrors(t *testing.T) {
 			Table:  "test",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false},
-			{Name: "comment", Type: "text", IsNullable: false},
+			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: "comment", Type: "text", IsNullable: false, FixedSize: -2},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	})
@@ -112,7 +112,7 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 			Table:  "test_with_pk",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false},
+			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}, options.WithPKs([]string{"id"}))
@@ -151,7 +151,7 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 			Table:  "test_with_pk",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false},
+			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}, options.WithPKs([]string{"id"}))
@@ -193,7 +193,7 @@ func Test_ColumnConstraint(t *testing.T) {
 			Table:  "test_with_check",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer CHECK (id > 10)", IsNullable: false},
+			{Name: "id", Type: "integer CHECK (id > 10)", IsNullable: false, FixedSize: 4},
 		},
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	})

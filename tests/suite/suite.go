@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
@@ -130,6 +131,14 @@ func (b *BaseSuite) SaveConfig(opts ...ConfigOption) {
 
 	err = os.WriteFile(savedConfigPath, data, 0o644) //nolint:gosec,mnd // ok for tests
 	require.NoError(b.t, err)
+}
+
+func TestOnlyFor(t *testing.T, connType ...string) {
+	t.Helper()
+
+	if !slices.Contains(connType, curConnType(t)) {
+		t.Skipf("skip test for %s", connType)
+	}
 }
 
 func (b *BaseSuite) configFileName() string {

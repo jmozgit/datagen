@@ -15,7 +15,7 @@ import (
 
 type AcceptFn func(
 	ctx context.Context,
-	userValues config.Generator,
+	userValues mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (generator.AcceptanceDecision, error)
 
@@ -33,7 +33,7 @@ func New() *Registry {
 
 func (r *Registry) GetGenerator(
 	ctx context.Context,
-	userValues config.Generator,
+	userValues mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (model.Generator, error) {
 	for _, buildFn := range r.builders {

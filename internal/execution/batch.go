@@ -34,18 +34,18 @@ func NewBatchExecutor(saver Saver, cnt int) *BatchExecutor {
 	}
 }
 
-func shouldContinue(collected, task model.TaskProgress) bool {
-	return task.Bytes > collected.Bytes || task.Rows > collected.Rows
+func shouldContinue(collected, task model.TaskProgress, buffered uint64) bool {
+	return task.Rows > collected.Rows+buffered
 }
 
 func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {
-	for i := range task.Generators {
+	for i := range b.batch {
 		if len(b.batch[i]) == 0 {
 			b.batch[i] = make([]any, len(task.Generators))
 		}
 	}
 
-	for shouldContinue(b.collected, task.Limit) {
+	for shouldContinue(b.collected, task.Limit, 0) {
 		for i, gen := range task.Generators {
 			cell, err := gen.Gen(ctx)
 			if err != nil {
@@ -54,8 +54,8 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 			b.batch[b.batchID][i] = cell
 		}
 
-		if b.batchID+1 == len(b.batch) {
-			saved, err := b.saver.Save(ctx, task.Schema, b.batch)
+		if b.batchID+1 == len(b.batch) || !shouldContinue(b.collected, task.Limit, uint64(b.batchID)+1) {
+			saved, err := b.saver.Save(ctx, task.Schema, b.batch[:b.batchID+1])
 			if err != nil {
 				return fmt.Errorf("%w: execute", err)
 			}

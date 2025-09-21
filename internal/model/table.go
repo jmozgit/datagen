@@ -36,6 +36,7 @@ type Column struct {
 	Name       Identifier
 	IsNullable bool
 	Type       string
+	FixedSize  int
 }
 
 type UniqueConstraints []Identifier
