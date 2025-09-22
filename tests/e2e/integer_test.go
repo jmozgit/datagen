@@ -12,6 +12,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_MixedIntegersFormat(t *testing.T) {
+	suite.TestOnlyFor(t, "postgresql")
+
+	baseSuite := suite.NewBaseSuite(t)
+	table := model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "test_mixed_format",
+		},
+		Columns: []model.Column{
+			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+		},
+		UniqueConstraints: make([]model.UniqueConstraints, 0),
+	}
+	baseSuite.CreateTable(table, options.WithPreserve())
+
+	baseSuite.SaveConfig(
+		suite.WithBatchSize(3),
+		//nolint:exhaustruct // ok
+		suite.WithTableTarget(config.Table{
+			Schema:     string(table.Name.Schema),
+			Table:      string(table.Name.Table),
+			Generators: []config.Generator{},
+			LimitRows:  2,
+		}),
+	)
+
+	err := baseSuite.RunDatagen(t.Context())
+	require.NoError(t, err)
+
+	cnt := 0
+	baseSuite.OnEachRow(table, func(row []any) {
+		cnt++
+		require.Len(t, row, len(table.Columns))
+		for _, val := range row {
+			_ = toInteger(t, val)
+		}
+	})
+	require.Equal(t, 2, cnt)
+}
+
 func Test_PostgresqlAllIntegers(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
@@ -74,7 +116,7 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}
 
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(11),
 		//nolint:exhaustruct // ok
@@ -97,7 +139,7 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 		for i, val := range row {
 			v := toInteger(t, val)
 			if cnt != 0 {
-				require.Equal(t, curValues[cnt]+1, v)
+				require.Equal(t, curValues[i]+1, v)
 			}
 			curValues[i] = v
 		}

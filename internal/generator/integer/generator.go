@@ -101,7 +101,7 @@ func newGenerator(
 ) (model.Generator, error) {
 	genOpts, err := defaultOptions(size)
 	if err != nil {
-		return nil, fmt.Errorf("%w: new", err)
+		return nil, fmt.Errorf("%w: new generator", err)
 	}
 
 	for _, opt := range opts {
@@ -109,7 +109,7 @@ func newGenerator(
 	}
 
 	if err := genOpts.validate(); err != nil {
-		return nil, fmt.Errorf("%w: new", err)
+		return nil, fmt.Errorf("%w: new generator", err)
 	}
 
 	switch genOpts.format {
@@ -117,7 +117,7 @@ func newGenerator(
 		baseType, ok := optBaseType.Get()
 		if ok && baseType.IsSerial {
 			if baseType.SourceSpecifiedDefault != "" {
-				return newSourceSpecifiedGenerator(baseType.SourceSpecifiedDefault), nil
+				return nil, fmt.Errorf("%w: new generator", generator.ErrAlwaysUseSourceProviderDefault)
 			}
 
 			return newSerialGenerator(1), nil

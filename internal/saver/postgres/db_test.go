@@ -77,23 +77,26 @@ func Test_DbSaveNoErrors(t *testing.T) {
 
 	saved, err := setup.connect.Save(
 		t.Context(),
-		model.DatasetSchema{
-			ID: "public.test",
-			DataTypes: []model.TargetType{
-				//nolint:exhaustruct // ok for tests
-				{
-					SourceName: "id",
-					SourceType: "integer",
+		model.SaveBatch{
+			Schema: model.DatasetSchema{
+				ID: "public.test",
+				DataTypes: []model.TargetType{
+					//nolint:exhaustruct // ok for tests
+					{
+						SourceName: "id",
+						SourceType: "integer",
+					},
+					//nolint:exhaustruct // ok for tests
+					{
+						SourceName: "comment",
+						SourceType: "text",
+					},
 				},
-				//nolint:exhaustruct // ok for tests
-				{
-					SourceName: "comment",
-					SourceType: "text",
-				},
+				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
-			UniqueConstraints: make([]model.UniqueConstraints, 0),
+			ExcludeTargets: make(map[model.Identifier]struct{}),
+			Data:           data,
 		},
-		data,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -124,15 +127,18 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 
 	saved, err := setup.connect.Save(
 		t.Context(),
-		model.DatasetSchema{
-			ID: "public.test_with_pk",
-			DataTypes: []model.TargetType{
-				//nolint:exhaustruct // ok for tests
-				{SourceName: "id", SourceType: "integer"},
+		model.SaveBatch{
+			Schema: model.DatasetSchema{
+				ID: "public.test_with_pk",
+				DataTypes: []model.TargetType{
+					//nolint:exhaustruct // ok for tests
+					{SourceName: "id", SourceType: "integer"},
+				},
+				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
-			UniqueConstraints: make([]model.UniqueConstraints, 0),
+			Data:           data,
+			ExcludeTargets: make(map[model.Identifier]struct{}),
 		},
-		data,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -163,18 +169,21 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 
 	saved, err := setup.connect.Save(
 		t.Context(),
-		model.DatasetSchema{
-			ID: "public.test_with_pk",
-			DataTypes: []model.TargetType{
-				//nolint:exhaustruct // ok for tests
-				{
-					SourceName: "id",
-					SourceType: "integer",
+		model.SaveBatch{
+			Schema: model.DatasetSchema{
+				ID: "public.test_with_pk",
+				DataTypes: []model.TargetType{
+					//nolint:exhaustruct // ok for tests
+					{
+						SourceName: "id",
+						SourceType: "integer",
+					},
 				},
+				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
-			UniqueConstraints: make([]model.UniqueConstraints, 0),
+			ExcludeTargets: make(map[model.Identifier]struct{}),
+			Data:           data,
 		},
-		data,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -205,18 +214,21 @@ func Test_ColumnConstraint(t *testing.T) {
 
 	saved, err := setup.connect.Save(
 		t.Context(),
-		model.DatasetSchema{
-			ID: "public.test_with_check",
-			DataTypes: []model.TargetType{
-				//nolint:exhaustruct // it's okay here
-				{
-					SourceName: "id",
-					SourceType: "integer",
+		model.SaveBatch{
+			Schema: model.DatasetSchema{
+				ID: "public.test_with_check",
+				DataTypes: []model.TargetType{
+					//nolint:exhaustruct // it's okay here
+					{
+						SourceName: "id",
+						SourceType: "integer",
+					},
 				},
+				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
-			UniqueConstraints: make([]model.UniqueConstraints, 0),
+			ExcludeTargets: make(map[model.Identifier]struct{}),
+			Data:           data,
 		},
-		data,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -224,4 +236,40 @@ func Test_ColumnConstraint(t *testing.T) {
 		RowsSaved:           9,
 		BytesSaved:          0,
 	}, saved)
+}
+
+func Test_SaveAllDefaults(t *testing.T) {
+	t.Parallel()
+
+	setup := newSaveSetup(t, model.Table{
+		Name: model.TableName{
+			Schema: "public",
+			Table:  "test_all_defaults",
+		},
+		Columns: []model.Column{
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+		},
+		UniqueConstraints: make([]model.UniqueConstraints, 0),
+	})
+
+	_, err := setup.connect.SaveAllDefaultValues(t.Context(), model.DatasetSchema{
+		ID: "public.test_all_defaults",
+		DataTypes: []model.TargetType{
+			//nolint:exhaustruct // it's okay
+			{SourceName: "serial"},
+			//nolint:exhaustruct // it's okay
+			{SourceName: "smallserial"},
+			//nolint:exhaustruct // it's okay
+			{SourceName: "bigserial"},
+		},
+		UniqueConstraints: make([]model.UniqueConstraints, 0),
+	}, 100)
+	require.NoError(t, err)
+
+	cnt := 0
+	err = setup.testConn.Raw().QueryRow(t.Context(), "SELECT COUNT(*) FROM public.test_all_defaults").Scan(&cnt)
+	require.NoError(t, err)
+	require.Equal(t, 100, cnt)
 }

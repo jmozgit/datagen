@@ -27,13 +27,18 @@ func New(ctx context.Context, connStr string) (*DB, error) {
 	}, nil
 }
 
-func (d *DB) Save(ctx context.Context, schema model.DatasetSchema, data [][]any) (model.SaveReport, error) {
+func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport, error) {
+	schema := batch.Schema
+	data := batch.Data
+
 	name, err := model.TableNameFromIdentifier(schema.ID)
 	if err != nil {
 		return model.SaveReport{}, fmt.Errorf("%w: save", err)
 	}
-	columns := lo.Map(schema.DataTypes, func(taskeType model.TargetType, _ int) string {
-		return string(taskeType.SourceName)
+	columns := lo.FilterMap(schema.DataTypes, func(taskeType model.TargetType, _ int) (string, bool) {
+		_, exclude := batch.ExcludeTargets[taskeType.SourceName]
+
+		return string(taskeType.SourceName), !exclude
 	})
 
 	conn, err := d.pool.Acquire(ctx)
@@ -42,7 +47,9 @@ func (d *DB) Save(ctx context.Context, schema model.DatasetSchema, data [][]any)
 	}
 	defer conn.Release()
 
-	return save(ctx, conn, pgx.Identifier{string(name.Schema), string(name.Table)}, columns, data)
+	tableName := pgx.Identifier{string(name.Schema), string(name.Table)}
+
+	return save(ctx, conn, tableName, columns, data)
 }
 
 // do it once and more optimal.
@@ -137,4 +144,41 @@ func insert(
 	}
 
 	return collected, nil
+}
+
+func insertAllDefaultValuesQuery(
+	table pgx.Identifier, n int,
+) string {
+	query := `
+		INSERT INTO %s
+		SELECT FROM generate_series(1, %d)
+	`
+	tableName := table.Sanitize()
+
+	return fmt.Sprintf(query, tableName, n)
+}
+
+func (d *DB) SaveAllDefaultValues(
+	ctx context.Context,
+	schema model.DatasetSchema,
+	rows int,
+) (model.SaveReport, error) {
+	name, err := model.TableNameFromIdentifier(schema.ID)
+	if err != nil {
+		return model.SaveReport{}, fmt.Errorf("%w: save all default values", err)
+	}
+	tableName := pgx.Identifier{string(name.Schema), string(name.Table)}
+
+	query := insertAllDefaultValuesQuery(tableName, rows)
+
+	_, err = d.pool.Exec(ctx, query)
+	if err != nil {
+		return model.SaveReport{}, fmt.Errorf("%w: save all default values", err)
+	}
+
+	return model.SaveReport{
+		RowsSaved:           rows,
+		BytesSaved:          0,
+		ConstraintViolation: 0,
+	}, nil
 }

@@ -13,7 +13,14 @@ import (
 var ErrUnknownConnectionType = errors.New("unknown connection type")
 
 type Saver interface {
-	Save(ctx context.Context, schema model.DatasetSchema, data [][]any) (model.SaveReport, error)
+	Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport, error)
+
+	// It's here because I don't know how to cover this case better
+	SaveAllDefaultValues(
+		ctx context.Context,
+		schema model.DatasetSchema,
+		rows int,
+	) (model.SaveReport, error)
 }
 
 func GetSaver(ctx context.Context, cfg config.Config) (Saver, error) {
