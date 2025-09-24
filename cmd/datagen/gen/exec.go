@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/execution"
-	"github.com/viktorkomarov/datagen/internal/generator/registry"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 	"github.com/viktorkomarov/datagen/internal/taskbuilder"
 	"github.com/viktorkomarov/datagen/internal/workmanager"
@@ -15,8 +14,7 @@ import (
 func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	genRegistry := registry.New()
-	tasks, err := taskbuilder.Build(ctx, c.cfg, genRegistry)
+	tasks, err := taskbuilder.Build(ctx, c.cfg)
 	if err != nil {
 		return fmt.Errorf("%w: exec", err)
 	}

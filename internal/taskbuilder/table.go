@@ -15,7 +15,7 @@ import (
 func buildTableTask(
 	ctx context.Context,
 	registry generatorRegistry,
-	schemaProvider schemaProvider,
+	schemaProvider model.SchemaProvider,
 	target config.Target,
 ) (model.TaskGenerators, error) {
 	schemaAwareID, err := schemaProvider.TargetIdentifier(target)

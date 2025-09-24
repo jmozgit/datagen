@@ -5,30 +5,46 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
-	"github.com/viktorkomarov/datagen/internal/generator/integer"
+	"github.com/viktorkomarov/datagen/internal/generator/postgresql"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/closer"
 
 	"github.com/samber/mo"
 )
 
-type AcceptFn func(
-	ctx context.Context,
-	userValues mo.Option[config.Generator],
-	optBaseType mo.Option[model.TargetType],
-) (generator.AcceptanceDecision, error)
-
 type Registry struct {
-	builders []AcceptFn
+	providers []model.GeneratorProvider
 }
 
-func New() *Registry {
-	return &Registry{
-		builders: []AcceptFn{
-			integer.Accept,
-		},
+func PrepareRegistry(
+	ctx context.Context,
+	cfg *config.Config,
+	closerReg closer.CloserRegistry,
+) (*Registry, error) {
+	generators := defaultGeneratorProviders()
+
+	switch cfg.Connection.Type {
+	case config.PostgresqlConnection:
+		pool, err := pgxpool.New(ctx, cfg.Connection.ConnString())
+		if err != nil {
+			return nil, fmt.Errorf("%w: prepare registry", err)
+		}
+		closerReg.Add(closer.CloserFn(pool.Close))
+
+		pgSpecificGenerators, err := postgresql.DefaultProviderGenerators(pool)
+		if err != nil {
+			return nil, fmt.Errorf("%w: prepare registry", err)
+		}
+
+		generators = append(generators, pgSpecificGenerators...)
 	}
+
+	return &Registry{
+		providers: generators,
+	}, nil
 }
 
 func (r *Registry) GetGenerator(
@@ -36,8 +52,8 @@ func (r *Registry) GetGenerator(
 	userValues mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (model.Generator, error) {
-	for _, buildFn := range r.builders {
-		decision, err := buildFn(ctx, userValues, optBaseType)
+	for _, provider := range r.providers {
+		decision, err := provider.Accept(ctx, userValues, optBaseType)
 		if err == nil {
 			return decision.Generator, nil
 		}

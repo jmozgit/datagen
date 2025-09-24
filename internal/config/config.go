@@ -1,6 +1,10 @@
 package config
 
-import "github.com/alecthomas/units"
+import (
+	"fmt"
+
+	"github.com/alecthomas/units"
+)
 
 type ConnectionType string
 
@@ -18,6 +22,15 @@ type Config struct {
 type Connection struct {
 	Type       ConnectionType `yaml:"type"`
 	Postgresql *SQLConnection `yaml:"postgresql"`
+}
+
+func (c Connection) ConnString() string {
+	switch c.Type {
+	case PostgresqlConnection:
+		return c.Postgresql.ConnString("postgresql")
+	default:
+		panic(fmt.Sprintf("unknown connection type %s", c.Type))
+	}
 }
 
 type Target struct {

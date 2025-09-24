@@ -64,10 +64,9 @@ func Test_DbSaveNoErrors(t *testing.T) {
 			Table:  "test",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
-			{Name: "comment", Type: "text", IsNullable: false, FixedSize: -2, IsSerial: false, ColumnDefault: ""},
+			{Name: "id", Type: "integer", IsNullable: false},
+			{Name: "comment", Type: "text", IsNullable: false},
 		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	})
 
 	data := make([][]any, 23)
@@ -92,7 +91,6 @@ func Test_DbSaveNoErrors(t *testing.T) {
 						SourceType: "text",
 					},
 				},
-				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
 			ExcludeTargets: make(map[model.Identifier]struct{}),
 			Data:           data,
@@ -115,9 +113,8 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 			Table:  "test_with_pk",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "id", Type: "integer", IsNullable: false},
 		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}, options.WithPKs([]string{"id"}))
 
 	data := make([][]any, 0, 26)
@@ -134,7 +131,6 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 					//nolint:exhaustruct // ok for tests
 					{SourceName: "id", SourceType: "integer"},
 				},
-				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
 			Data:           data,
 			ExcludeTargets: make(map[model.Identifier]struct{}),
@@ -157,9 +153,8 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 			Table:  "test_with_pk",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "id", Type: "integer", IsNullable: false},
 		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	}, options.WithPKs([]string{"id"}))
 
 	data := make([][]any, 0, 26)
@@ -179,7 +174,6 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 						SourceType: "integer",
 					},
 				},
-				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
 			ExcludeTargets: make(map[model.Identifier]struct{}),
 			Data:           data,
@@ -202,9 +196,8 @@ func Test_ColumnConstraint(t *testing.T) {
 			Table:  "test_with_check",
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer CHECK (id > 10)", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
+			{Name: "id", Type: "integer CHECK (id > 10)", IsNullable: false},
 		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
 	})
 
 	data := make([][]any, 0, 20)
@@ -224,7 +217,6 @@ func Test_ColumnConstraint(t *testing.T) {
 						SourceType: "integer",
 					},
 				},
-				UniqueConstraints: make([]model.UniqueConstraints, 0),
 			},
 			ExcludeTargets: make(map[model.Identifier]struct{}),
 			Data:           data,
@@ -236,40 +228,4 @@ func Test_ColumnConstraint(t *testing.T) {
 		RowsSaved:           9,
 		BytesSaved:          0,
 	}, saved)
-}
-
-func Test_SaveAllDefaults(t *testing.T) {
-	t.Parallel()
-
-	setup := newSaveSetup(t, model.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_all_defaults",
-		},
-		Columns: []model.Column{
-			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
-			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
-			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
-		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
-	})
-
-	_, err := setup.connect.SaveAllDefaultValues(t.Context(), model.DatasetSchema{
-		ID: "public.test_all_defaults",
-		DataTypes: []model.TargetType{
-			//nolint:exhaustruct // it's okay
-			{SourceName: "serial"},
-			//nolint:exhaustruct // it's okay
-			{SourceName: "smallserial"},
-			//nolint:exhaustruct // it's okay
-			{SourceName: "bigserial"},
-		},
-		UniqueConstraints: make([]model.UniqueConstraints, 0),
-	}, 100)
-	require.NoError(t, err)
-
-	cnt := 0
-	err = setup.testConn.Raw().QueryRow(t.Context(), "SELECT COUNT(*) FROM public.test_all_defaults").Scan(&cnt)
-	require.NoError(t, err)
-	require.Equal(t, 100, cnt)
 }

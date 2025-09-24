@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/generator/registry"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema/postgres"
 
@@ -17,12 +18,6 @@ var (
 	ErrUnsupportedTargetType = errors.New("unsupported target type")
 )
 
-type schemaProvider interface {
-	TargetIdentifier(target config.Target) (model.Identifier, error)
-	GeneratorIdentifier(gen config.Generator) (model.Identifier, error)
-	DataSource(ctx context.Context, id model.Identifier) (model.DatasetSchema, error)
-}
-
 type generatorRegistry interface {
 	GetGenerator(
 		ctx context.Context,
@@ -31,7 +26,7 @@ type generatorRegistry interface {
 	) (model.Generator, error)
 }
 
-func makeSchemaProvider(cfg config.Config) (schemaProvider, error) {
+func makeSchemaProvider(cfg config.Config) (model.SchemaProvider, error) {
 	switch cfg.Connection.Type {
 	case config.PostgresqlConnection:
 		inspector, err := postgres.NewInspector(cfg.Connection.Postgresql)
@@ -45,10 +40,17 @@ func makeSchemaProvider(cfg config.Config) (schemaProvider, error) {
 	}
 }
 
-func Build(ctx context.Context, cfg config.Config, registry generatorRegistry) ([]model.TaskGenerators, error) {
+func Build(ctx context.Context, cfg config.Config) ([]model.TaskGenerators, error) {
 	schemaProvider, err := makeSchemaProvider(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%w: build tasks", err)
+	}
+
+	registry, err := registry.PrepareRegistry(ctx, registry.BuildArgs{
+		SchemaProvider: schemaProvider,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: build", err)
 	}
 
 	tasks := make([]model.TaskGenerators, 0, len(cfg.Targets))

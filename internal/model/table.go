@@ -33,19 +33,13 @@ func (t TableName) String() string {
 }
 
 type Column struct {
-	Name          Identifier
-	IsNullable    bool
-	Type          string
-	FixedSize     int
-	IsSerial      bool
-	ColumnDefault string
+	Name       Identifier
+	IsNullable bool
+	Type       string
+	FixedSize  int
 }
-
-type UniqueConstraints []Identifier
 
 type Table struct {
 	Name    TableName
 	Columns []Column
-	// delete it? We check it in savers anyway
-	UniqueConstraints []UniqueConstraints
 }

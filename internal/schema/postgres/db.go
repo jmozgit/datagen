@@ -2,10 +2,7 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"maps"
-	"slices"
 
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema"
@@ -44,15 +41,9 @@ func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table,
 		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
 	}
 
-	constraints, err := c.selectUniqueConstraints(ctx, conn, name)
-	if err != nil {
-		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
-	}
-
 	return model.Table{
-		Name:              name,
-		Columns:           columns,
-		UniqueConstraints: constraints,
+		Name:    name,
+		Columns: columns,
 	}, nil
 }
 
@@ -86,7 +77,7 @@ func (c *connect) selectTableColumns(
 ) ([]model.Column, error) {
 	const query = `
 		SELECT 
-			column_name, is_nullable, udt_name, typlen, column_default 
+			column_name, is_nullable, udt_name, typlen 
 		FROM 
 			information_schema.columns
 		INNER JOIN pg_type
@@ -98,11 +89,10 @@ func (c *connect) selectTableColumns(
 	`
 
 	type Column struct {
-		ColumnName    string         `db:"column_name"`
-		IsNullable    string         `db:"is_nullable"`
-		UdtName       string         `db:"udt_name"`
-		TypeLen       int            `db:"typlen"` //nolint:tagliatelle // ok here
-		ColumnDefault sql.NullString `db:"column_default"`
+		ColumnName string `db:"column_name"`
+		IsNullable string `db:"is_nullable"`
+		UdtName    string `db:"udt_name"`
+		TypeLen    int    `db:"typlen"` //nolint:tagliatelle // ok here
 	}
 
 	var columns []Column
@@ -112,63 +102,10 @@ func (c *connect) selectTableColumns(
 
 	return lo.Map(columns, func(c Column, _ int) model.Column {
 		return model.Column{
-			Name:          model.Identifier(c.ColumnName),
-			IsNullable:    c.IsNullable == "YES",
-			Type:          c.UdtName,
-			FixedSize:     c.TypeLen,
-			IsSerial:      isSerialInteger(c.ColumnDefault, c.UdtName),
-			ColumnDefault: c.ColumnDefault.String,
+			Name:       model.Identifier(c.ColumnName),
+			IsNullable: c.IsNullable == "YES",
+			Type:       c.UdtName,
+			FixedSize:  c.TypeLen,
 		}
-	}), nil
-}
-
-func (c *connect) selectUniqueConstraints(
-	ctx context.Context,
-	conn *pgx.Conn,
-	name model.TableName,
-) ([]model.UniqueConstraints, error) {
-	const query = `
-		SELECT
-    		i.relname AS index_name,
-    		a.attname AS column_name
-		FROM 
-			pg_class t
-		JOIN 
-			pg_index ix ON t.oid = ix.indrelid
-		JOIN 
-			pg_class i ON i.oid = ix.indexrelid
-		JOIN 
-			pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-		JOIN 
-			pg_namespace n ON n.oid = t.relnamespace
-		WHERE
-			n.nspname = $1
-			AND
-			t.relname = $2
-  			AND 
-			ix.indisunique = true
-		ORDER BY 
-			index_name, column_name
-	`
-	type Pair struct {
-		ColumnName string `db:"column_name"`
-		IndexName  string `db:"index_name"`
-	}
-
-	var cols []Pair
-	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema, name.Table); err != nil {
-		return nil, fmt.Errorf("%w: selectUniqueConstraints", err)
-	}
-
-	groups := slices.Collect(maps.Values(lo.GroupBy(cols, func(p Pair) string {
-		return p.IndexName
-	})))
-
-	return lo.Map(groups, func(group []Pair, _ int) model.UniqueConstraints {
-		columns := lo.Map(group, func(p Pair, _ int) model.Identifier {
-			return model.Identifier(p.ColumnName)
-		})
-
-		return model.UniqueConstraints(columns)
 	}), nil
 }

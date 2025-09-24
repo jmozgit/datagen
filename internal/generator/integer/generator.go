@@ -22,9 +22,8 @@ var (
 type Format string
 
 const (
-	FormatUnspecified Format = ""
-	FormatRandom      Format = "random"
-	FormatSerial      Format = "serial"
+	FormatRandom Format = "random"
+	FormatSerial Format = "serial"
 )
 
 type Option func(g *options)
@@ -54,19 +53,29 @@ type options struct {
 	max    int64
 }
 
-func Accept(
+type IntegerGeneratorProvider struct {
+	schema model.SchemaProvider
+}
+
+func New() IntegerGeneratorProvider {
+	return IntegerGeneratorProvider{}
+}
+
+func (i IntegerGeneratorProvider) Accept(
 	_ context.Context,
 	optUserSettings mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
-) (generator.AcceptanceDecision, error) {
+) (model.AcceptanceDecision, error) {
 	userSettings, userPresented := optUserSettings.Get()
 	if userPresented && userSettings.Type != config.GeneratorTypeInteger {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
 	}
+
 	baseType, baseTypePresented := optBaseType.Get()
 	if !userPresented && baseTypePresented && baseType.Type != model.Integer {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: accept", generator.ErrGeneratorDeclined)
 	}
+
 	size := int8(baseType.FixedSize)
 	if userPresented && userSettings.Integer.ByteSize != nil {
 		size = *userSettings.Integer.ByteSize
@@ -85,12 +94,12 @@ func Accept(
 
 	gen, err := newGenerator(size, optBaseType, opts...)
 	if err != nil {
-		return generator.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
 	}
 
-	return generator.AcceptanceDecision{
+	return model.AcceptanceDecision{
 		Generator:  gen,
-		AcceptedBy: generator.AcceptanceReasonColumnType,
+		AcceptedBy: model.AcceptanceReasonColumnType,
 	}, nil
 }
 
@@ -113,17 +122,6 @@ func newGenerator(
 	}
 
 	switch genOpts.format {
-	case FormatUnspecified:
-		baseType, ok := optBaseType.Get()
-		if ok && baseType.IsSerial {
-			if baseType.SourceSpecifiedDefault != "" {
-				return nil, fmt.Errorf("%w: new generator", generator.ErrAlwaysUseSourceProviderDefault)
-			}
-
-			return newSerialGenerator(1), nil
-		}
-
-		return newRandomGenerator(genOpts.min, genOpts.max), nil
 	case FormatRandom:
 		return newRandomGenerator(genOpts.min, genOpts.max), nil
 	case FormatSerial:
@@ -171,7 +169,7 @@ func defaultOptions(size int8) (options, error) {
 	}
 
 	return options{
-		format: FormatUnspecified,
+		format: FormatRandom,
 		size:   size,
 		min:    minV,
 		max:    maxV,

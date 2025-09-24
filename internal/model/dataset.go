@@ -1,15 +1,10 @@
 package model
 
-import (
-	"context"
-)
-
 type Identifier string
 
 type DatasetSchema struct {
-	ID                Identifier
-	DataTypes         []TargetType
-	UniqueConstraints []UniqueConstraints
+	ID        Identifier
+	DataTypes []TargetType
 }
 
 type TaskGenerators struct {
@@ -22,8 +17,4 @@ type SaveBatch struct {
 	Schema         DatasetSchema
 	ExcludeTargets map[Identifier]struct{}
 	Data           [][]any
-}
-
-type Generator interface {
-	Gen(ctx context.Context) (any, error)
 }

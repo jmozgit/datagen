@@ -1,18 +1,14 @@
 package postgres //nolint:testpackage // add to make progress
 
 import (
-	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
-	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 	"github.com/viktorkomarov/datagen/internal/schema"
 
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,56 +42,6 @@ func newPgInspectorTestSetup(
 	}
 }
 
-func (p *pgInspectorTestSetup) createUniqueConstraints(t *testing.T, table model.Table) {
-	t.Helper()
-
-	conn := p.testConn.Raw()
-
-	for i := range table.UniqueConstraints {
-		constraint := lo.Map(
-			table.UniqueConstraints[i],
-			func(m model.Identifier, _ int) string {
-				return string(m)
-			},
-		)
-
-		query := fmt.Sprintf(
-			"CREATE UNIQUE INDEX %s ON %s (%s)",
-			xrand.LowerCaseString(5),
-			table.Name.String(),
-			strings.Join(constraint, ","),
-		)
-
-		_, err := conn.Exec(t.Context(), query)
-		require.NoError(t, err)
-	}
-}
-
-func Test_PrimaryKeyMustBeSeen(t *testing.T) {
-	t.Parallel()
-
-	table := model.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_1",
-		},
-		Columns: []model.Column{
-			{Name: "bat", Type: "text", IsNullable: true, FixedSize: -1, IsSerial: false, ColumnDefault: ""},
-			{Name: "created_at", Type: "timestamptz", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "foo", Type: "int4", IsNullable: false, FixedSize: 4, IsSerial: false, ColumnDefault: ""},
-		},
-		UniqueConstraints: []model.UniqueConstraints{
-			{"foo"},
-		},
-	}
-
-	setup := newPgInspectorTestSetup(t, &table, options.WithPKs([]string{"foo"}))
-
-	actual, err := setup.connect.Table(t.Context(), table.Name)
-	require.NoError(t, err)
-	tableEqual(t, table, actual)
-}
-
 func Test_UnknownTable(t *testing.T) {
 	t.Parallel()
 
@@ -115,41 +61,10 @@ func Test_NoColumns(t *testing.T) {
 			Schema: "public",
 			Table:  "no_columns",
 		},
-		Columns:           []model.Column{},
-		UniqueConstraints: []model.UniqueConstraints{},
+		Columns: []model.Column{},
 	}
 
 	setup := newPgInspectorTestSetup(t, &table)
-	actual, err := setup.connect.Table(t.Context(), table.Name)
-	require.NoError(t, err)
-	tableEqual(t, table, actual)
-}
-
-func Test_OverlappingConstraints(t *testing.T) {
-	t.Parallel()
-
-	table := model.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "overlapping_constraints",
-		},
-		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col4", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-		},
-		UniqueConstraints: []model.UniqueConstraints{
-			{"col1", "col2"},
-			{"col2", "col3", "col4"},
-			{"col3"},
-			{"col1", "col2", "col3", "col4"},
-		},
-	}
-
-	setup := newPgInspectorTestSetup(t, &table)
-	setup.createUniqueConstraints(t, table)
-
 	actual, err := setup.connect.Table(t.Context(), table.Name)
 	require.NoError(t, err)
 	tableEqual(t, table, actual)
@@ -164,11 +79,10 @@ func Test_PartitionParentTable(t *testing.T) {
 			Table:  "parent",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col1", Type: "int8", IsNullable: false},
+			{Name: "col2", Type: "int8", IsNullable: true},
+			{Name: "col3", Type: "int8", IsNullable: true},
 		},
-		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
 	}
 
 	setup := newPgInspectorTestSetup(t,
@@ -190,11 +104,10 @@ func Test_PartitionChildTable(t *testing.T) {
 			Table:  "child",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8, IsSerial: false, ColumnDefault: ""},
+			{Name: "col1", Type: "int8", IsNullable: false},
+			{Name: "col2", Type: "int8", IsNullable: true},
+			{Name: "col3", Type: "int8", IsNullable: true},
 		},
-		UniqueConstraints: []model.UniqueConstraints{{"col1"}},
 	}
 
 	setup := newPgInspectorTestSetup(t,
@@ -216,5 +129,4 @@ func tableEqual(t *testing.T, expected, actual model.Table) {
 
 	require.Equal(t, expected.Name, actual.Name)
 	require.Equal(t, expected.Columns, actual.Columns)
-	require.ElementsMatch(t, expected.UniqueConstraints, actual.UniqueConstraints)
 }

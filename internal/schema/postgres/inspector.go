@@ -29,6 +29,7 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 //nolint:gochecknoglobals // more convenient that constants here
 var pgRegistryTypes = map[string]model.CommonType{
 	"int2": model.Integer, "int4": model.Integer, "int8": model.Integer,
+	"numeric": model.Float, "float4": model.Float, "float8": model.Float,
 }
 
 // it's incorrect, but ok for now.
@@ -59,19 +60,16 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 		}
 
 		dataTypes[i] = model.TargetType{
-			SourceName:             col.Name,
-			SourceType:             col.Type,
-			Type:                   tp,
-			IsNullable:             col.IsNullable,
-			FixedSize:              col.FixedSize,
-			IsSerial:               col.IsSerial,
-			SourceSpecifiedDefault: col.ColumnDefault,
+			SourceName: col.Name,
+			SourceType: col.Type,
+			Type:       tp,
+			IsNullable: col.IsNullable,
+			FixedSize:  col.FixedSize,
 		}
 	}
 
 	return model.DatasetSchema{
-		ID:                id,
-		DataTypes:         dataTypes,
-		UniqueConstraints: table.UniqueConstraints,
+		ID:        id,
+		DataTypes: dataTypes,
 	}, nil
 }

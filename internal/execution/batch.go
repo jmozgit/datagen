@@ -36,15 +36,6 @@ func shouldContinue(collected, task model.TaskProgress, buffered uint64) bool {
 }
 
 func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {
-	if len(task.ExcludeTargets) == len(task.Schema.DataTypes) {
-		_, err := b.saver.SaveAllDefaultValues(ctx, task.Schema, int(task.Limit.Rows))
-		if err != nil {
-			return fmt.Errorf("%w: execute", err)
-		}
-
-		return nil
-	}
-
 	for i := range b.batch {
 		if len(b.batch[i]) == 0 {
 			b.batch[i] = make([]any, len(task.Generators))
