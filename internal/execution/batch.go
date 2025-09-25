@@ -53,9 +53,8 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 
 		if b.batchID+1 == len(b.batch) || !shouldContinue(b.collected, task.Limit, uint64(b.batchID)+1) {
 			saved, err := b.saver.Save(ctx, model.SaveBatch{
-				Schema:         task.Schema,
-				Data:           b.batch[:b.batchID+1],
-				ExcludeTargets: task.ExcludeTargets,
+				Schema: task.Schema,
+				Data:   b.batch[:b.batchID+1],
 			})
 			if err != nil {
 				return fmt.Errorf("%w: execute", err)

@@ -15,7 +15,8 @@ type seqGenerator struct {
 // add prefetch.
 func (s *seqGenerator) Gen(ctx context.Context) (any, error) {
 	var next any
-	err := s.pool.QueryRow(ctx, fmt.Sprintf("select nextval(%s)", s.seqName)).Scan(&next)
+
+	err := s.pool.QueryRow(ctx, fmt.Sprintf("select nextval('%s')", s.seqName)).Scan(&next)
 	if err != nil {
 		return nil, fmt.Errorf("%w: serial gen", err)
 	}

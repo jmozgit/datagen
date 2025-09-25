@@ -39,7 +39,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		},
 		{
 			desc: "incorrect_border_for_int8_max",
-			size: 8,
+			size: 1,
 			options: []Option{
 				WithMaxValue(256),
 			},
@@ -50,7 +50,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		},
 		{
 			desc: "incorrect_border_for_int8_min",
-			size: 8,
+			size: 1,
 			options: []Option{
 				WithMinValue(math.MinInt8 - 1),
 			},
@@ -61,7 +61,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		},
 		{
 			desc: "correct_lower_border",
-			size: 16,
+			size: 2,
 			options: []Option{
 				WithMinValue(20),
 				WithMaxValue(math.MaxUint16 - 1),
@@ -73,7 +73,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		},
 		{
 			desc: "edge_case_uint",
-			size: 64,
+			size: 8,
 			options: []Option{
 				WithMinValue(0),
 				WithMaxValue(math.MaxInt64),
@@ -85,7 +85,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		},
 		{
 			desc: "edge_case_int",
-			size: 32,
+			size: 4,
 			options: []Option{
 				WithMinValue(math.MinInt32),
 				WithMaxValue(math.MaxInt32),

@@ -74,6 +74,7 @@ func (r *Registry) GetGenerator(
 
 	priority := []model.AcceptanceReason{
 		model.AcceptanceUserSettings,
+		model.AcceptanceReasonDriverAwareance,
 		model.AcceptanceReasonColumnType,
 		model.AcceptanceReasonDomain,
 		model.AcceptanceReasonColumnNameSuggestion,

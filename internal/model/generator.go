@@ -12,6 +12,7 @@ type AcceptanceReason int
 
 const (
 	AcceptanceReasonColumnType AcceptanceReason = iota + 1
+	AcceptanceReasonDriverAwareance
 	AcceptanceUserSettings
 	AcceptanceReasonDomain
 	AcceptanceReasonColumnNameSuggestion

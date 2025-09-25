@@ -9,8 +9,7 @@ type DatasetSchema struct {
 
 type TaskGenerators struct {
 	Task
-	ExcludeTargets map[Identifier]struct{}
-	Generators     []Generator
+	Generators []Generator
 }
 
 type SaveBatch struct {

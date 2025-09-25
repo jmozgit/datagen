@@ -2,11 +2,9 @@ package taskbuilder
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
 
 	"github.com/samber/mo"
@@ -38,7 +36,6 @@ func buildTableTask(
 		userSettingsByID[id] = settings
 	}
 
-	excludeTargets := make(map[model.Identifier]struct{})
 	gens := make([]model.Generator, 0, len(schema.DataTypes))
 	for _, targetType := range schema.DataTypes {
 		userSettings := mo.None[config.Generator]()
@@ -50,8 +47,6 @@ func buildTableTask(
 		switch {
 		case err == nil:
 			gens = append(gens, gen)
-		case errors.Is(err, generator.ErrAlwaysUseSourceProviderDefault):
-			excludeTargets[targetType.SourceName] = struct{}{}
 		default:
 			return model.TaskGenerators{}, fmt.Errorf("%w: build table task", err)
 		}
@@ -65,7 +60,6 @@ func buildTableTask(
 				Bytes: uint64(target.Table.LimitBytes),
 			},
 		},
-		ExcludeTargets: excludeTargets,
-		Generators:     gens,
+		Generators: gens,
 	}, nil
 }

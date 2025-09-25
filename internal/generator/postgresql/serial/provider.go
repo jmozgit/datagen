@@ -27,19 +27,21 @@ func (s *Provider) getSeqName(
 	dataset model.DatasetSchema,
 	baseType model.TargetType,
 ) (string, error) {
+	const fnName = "get seq name"
+
 	tableName, err := model.TableNameFromIdentifier(dataset.ID)
 	if err != nil {
-		return "", fmt.Errorf("%w: get seq name", err)
+		return "", fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	query := fmt.Sprintf("select pg_get_serial_sequence(%s, %s)", tableName.String(), string(baseType.SourceName))
+	query := fmt.Sprintf("select pg_get_serial_sequence('%s', '%s')", tableName.String(), string(baseType.SourceName))
 
 	var seqName sql.NullString
 	if err := s.pool.QueryRow(ctx, query).Scan(&seqName); err != nil {
-		return "", fmt.Errorf("%w: get seq name", err)
+		return "", fmt.Errorf("%w: %s", err, fnName)
 	}
 	if !seqName.Valid {
-		return "", fmt.Errorf("%w: get seq name", sql.ErrNoRows)
+		return "", fmt.Errorf("%w: %s", sql.ErrNoRows, fnName)
 	}
 
 	return seqName.String, nil
@@ -77,7 +79,7 @@ func (s *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonColumnType,
+		AcceptedBy: model.AcceptanceReasonDriverAwareance,
 		Generator:  &seqGenerator{seqName: seqName, pool: s.pool},
 	}, nil
 }
