@@ -14,14 +14,14 @@ func Test_FloatGeneratorFromType(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_float32",
 		},
-		Columns: []model.Column{
-			{Name: "real", Type: "real", IsNullable: false, FixedSize: 4},
-			{Name: "double", Type: "double precision", IsNullable: false, FixedSize: 8},
+		Columns: []suite.Column{
+			{Name: "real", Type: suite.TypeFloat4},
+			{Name: "double", Type: suite.TypeFloat8},
 		},
 	}
 	baseSuite.CreateTable(table, options.WithPreserve())

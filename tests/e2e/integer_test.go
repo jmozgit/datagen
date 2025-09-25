@@ -15,14 +15,14 @@ func Test_MixedIntegersFormat(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_mixed_format",
 		},
-		Columns: []model.Column{
-			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4},
-			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
+		Columns: []suite.Column{
+			{Name: "integer", Type: suite.UseRaw, RawType: "integer"},
+			{Name: "serial", Type: suite.UseRaw, RawType: "serial"},
 		},
 	}
 	baseSuite.CreateTable(table)

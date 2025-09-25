@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 
@@ -61,7 +60,7 @@ func WithBatchSize(batchSize int) ConfigOption {
 	}
 }
 
-func postgresqlConnectionOption(t *testing.T, conn connection) ConfigOption {
+func postgresqlConnectionOption(t *testing.T, conn tempConnAdapter) ConfigOption {
 	t.Helper()
 
 	return withConnection(config.Connection{
@@ -90,7 +89,7 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 
 		return &BaseSuite{
 			t:              t,
-			conn:           conn,
+			conn:           &TypeResolver{tempConnAdapter: conn, connType: "postgresql"},
 			connOption:     postgresqlConnectionOption(t, conn),
 			Config:         config.Config{}, //nolint:exhaustruct // ok
 			ConnectionType: connType,
@@ -104,12 +103,12 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 	}
 }
 
-func (b *BaseSuite) CreateTable(table model.Table, opts ...options.CreateTableOption) {
+func (b *BaseSuite) CreateTable(table Table, opts ...options.CreateTableOption) {
 	err := b.conn.CreateTable(b.t.Context(), table, opts...)
 	require.NoError(b.t, err)
 }
 
-func (b *BaseSuite) OnEachRow(table model.Table, fn func(row []any)) {
+func (b *BaseSuite) OnEachRow(table Table, fn func(row []any)) {
 	err := b.conn.OnEachRow(b.t.Context(), table, fn)
 	require.NoError(b.t, err)
 }

@@ -15,7 +15,10 @@ func newFloat32Gen() model.Generator {
 }
 
 func (f float32Gen) Gen(_ context.Context) (any, error) {
-	return rand.Float32(), nil
+	minF := float32(-1000000.0)
+	maxF := float32(1000000.0)
+
+	return minF + rand.Float32()*(maxF-minF), nil
 }
 
 func newFloat64Gen() model.Generator {
@@ -26,5 +29,5 @@ type float64Gen struct {
 }
 
 func (f float64Gen) Gen(_ context.Context) (any, error) {
-	return rand.Float64(), nil
+	return rand.NormFloat64(), nil
 }
