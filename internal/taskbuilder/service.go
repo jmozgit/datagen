@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator/registry"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema/postgres"
 
@@ -21,6 +20,7 @@ var (
 type generatorRegistry interface {
 	GetGenerator(
 		ctx context.Context,
+		datase model.DatasetSchema,
 		userValues mo.Option[config.Generator],
 		optBaseType mo.Option[model.TargetType],
 	) (model.Generator, error)
@@ -40,17 +40,10 @@ func makeSchemaProvider(cfg config.Config) (model.SchemaProvider, error) {
 	}
 }
 
-func Build(ctx context.Context, cfg config.Config) ([]model.TaskGenerators, error) {
+func Build(ctx context.Context, cfg config.Config, registry generatorRegistry) ([]model.TaskGenerators, error) {
 	schemaProvider, err := makeSchemaProvider(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%w: build tasks", err)
-	}
-
-	registry, err := registry.PrepareRegistry(ctx, registry.BuildArgs{
-		SchemaProvider: schemaProvider,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: build", err)
 	}
 
 	tasks := make([]model.TaskGenerators, 0, len(cfg.Targets))

@@ -3,3 +3,4 @@
 3. Proof and refactor postgresql saving
 4. Default values
 5. Get rid of exhaustruct linter for tests ?
+6. serial pg generator might prefetch values

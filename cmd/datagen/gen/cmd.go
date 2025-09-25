@@ -1,17 +1,20 @@
 package gen
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/pkg/closer"
 
 	"github.com/spf13/cobra"
 )
 
 type cmd struct {
-	flags flags
-	cfg   config.Config
+	flags          flags
+	cfg            config.Config
+	closerRegistry *closer.Registry
 }
 
 type flags struct {
@@ -32,10 +35,15 @@ func New() *cobra.Command {
 				return fmt.Errorf("%w: pre run", err)
 			}
 			cmd.cfg = cfg
+			cmd.closerRegistry = closer.NewRegistry()
 
 			return nil
 		},
 		RunE: cmd.exec,
+		PostRunE: func(_ *cobra.Command, _ []string) error {
+			// change context background
+			return cmd.closerRegistry.Close(context.Background())
+		},
 	}
 
 	parseFlags(c, &cmd.flags)

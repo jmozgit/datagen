@@ -4,9 +4,6 @@ import (
 	"math"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-
-	"github.com/samber/mo"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +14,6 @@ func Test_GeneratorValidation(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		size        int8
-		optBaseType mo.Option[model.TargetType]
 		options     []Option
 		assertErrFn func(t *testing.T, err error)
 	}{
@@ -27,17 +23,15 @@ func Test_GeneratorValidation(t *testing.T) {
 			options: []Option{
 				WithFormat(Format("145")),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.ErrorIs(t, err, ErrUnknownFormat)
 			},
 		},
 		{
-			desc:        "incorrect_size",
-			size:        5,
-			options:     []Option{},
-			optBaseType: mo.None[model.TargetType](),
+			desc:    "incorrect_size",
+			size:    5,
+			options: []Option{},
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.ErrorIs(t, err, ErrUnsupportedSize)
@@ -49,7 +43,6 @@ func Test_GeneratorValidation(t *testing.T) {
 			options: []Option{
 				WithMaxValue(256),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.ErrorIs(t, err, ErrIncorrectMinMaxValue)
@@ -61,7 +54,6 @@ func Test_GeneratorValidation(t *testing.T) {
 			options: []Option{
 				WithMinValue(math.MinInt8 - 1),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.ErrorIs(t, err, ErrIncorrectMinMaxValue)
@@ -74,7 +66,6 @@ func Test_GeneratorValidation(t *testing.T) {
 				WithMinValue(20),
 				WithMaxValue(math.MaxUint16 - 1),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -87,7 +78,6 @@ func Test_GeneratorValidation(t *testing.T) {
 				WithMinValue(0),
 				WithMaxValue(math.MaxInt64),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -100,7 +90,6 @@ func Test_GeneratorValidation(t *testing.T) {
 				WithMinValue(math.MinInt32),
 				WithMaxValue(math.MaxInt32),
 			},
-			optBaseType: mo.None[model.TargetType](),
 			assertErrFn: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -111,7 +100,7 @@ func Test_GeneratorValidation(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := newGenerator(tC.size, tC.optBaseType, tC.options...)
+			_, err := newGenerator(tC.size, tC.options...)
 			tC.assertErrFn(t, err)
 		})
 	}

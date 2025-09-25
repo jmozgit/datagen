@@ -46,7 +46,7 @@ func buildTableTask(
 			userSettings = mo.Some(set)
 		}
 
-		gen, err := registry.GetGenerator(ctx, userSettings, mo.Some(targetType))
+		gen, err := registry.GetGenerator(ctx, schema, userSettings, mo.Some(targetType))
 		switch {
 		case err == nil:
 			gens = append(gens, gen)

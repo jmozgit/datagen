@@ -53,16 +53,23 @@ type options struct {
 	max    int64
 }
 
-type IntegerGeneratorProvider struct {
-	schema model.SchemaProvider
+type Provider struct{}
+
+func NewProvider() Provider {
+	return Provider{}
 }
 
-func New() IntegerGeneratorProvider {
-	return IntegerGeneratorProvider{}
+func acceptanceReason(optUserSettings mo.Option[config.Generator]) model.AcceptanceReason {
+	if optUserSettings.IsPresent() {
+		return model.AcceptanceUserSettings
+	}
+
+	return model.AcceptanceReasonColumnType
 }
 
-func (i IntegerGeneratorProvider) Accept(
+func (i Provider) Accept(
 	_ context.Context,
+	_ model.DatasetSchema,
 	optUserSettings mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (model.AcceptanceDecision, error) {
@@ -92,20 +99,19 @@ func (i IntegerGeneratorProvider) Accept(
 		opts = append(opts, WithMinValue(*userSettings.Integer.MinValue))
 	}
 
-	gen, err := newGenerator(size, optBaseType, opts...)
+	gen, err := newGenerator(size, opts...)
 	if err != nil {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: accept", err)
 	}
 
 	return model.AcceptanceDecision{
 		Generator:  gen,
-		AcceptedBy: model.AcceptanceReasonColumnType,
+		AcceptedBy: acceptanceReason(optUserSettings),
 	}, nil
 }
 
 func newGenerator(
 	size int8,
-	optBaseType mo.Option[model.TargetType],
 	opts ...Option,
 ) (model.Generator, error) {
 	genOpts, err := defaultOptions(size)

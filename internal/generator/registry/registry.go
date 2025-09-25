@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/generator/postgresql"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/closer"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/samber/mo"
 )
 
@@ -21,8 +21,8 @@ type Registry struct {
 
 func PrepareRegistry(
 	ctx context.Context,
-	cfg *config.Config,
-	closerReg closer.CloserRegistry,
+	cfg config.Config,
+	closerReg *closer.Registry,
 ) (*Registry, error) {
 	generators := defaultGeneratorProviders()
 
@@ -32,7 +32,7 @@ func PrepareRegistry(
 		if err != nil {
 			return nil, fmt.Errorf("%w: prepare registry", err)
 		}
-		closerReg.Add(closer.CloserFn(pool.Close))
+		closerReg.Add(closer.Fn(pool.Close))
 
 		pgSpecificGenerators, err := postgresql.DefaultProviderGenerators(pool)
 		if err != nil {
@@ -40,6 +40,7 @@ func PrepareRegistry(
 		}
 
 		generators = append(generators, pgSpecificGenerators...)
+	default:
 	}
 
 	return &Registry{
@@ -49,21 +50,41 @@ func PrepareRegistry(
 
 func (r *Registry) GetGenerator(
 	ctx context.Context,
+	dataset model.DatasetSchema,
 	userValues mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (model.Generator, error) {
+	const fnName = "get generator"
+
+	matched := make(map[model.AcceptanceReason][]model.Generator)
 	for _, provider := range r.providers {
-		decision, err := provider.Accept(ctx, userValues, optBaseType)
+		decision, err := provider.Accept(ctx, dataset, userValues, optBaseType)
 		if err == nil {
-			return decision.Generator, nil
+			matched[decision.AcceptedBy] = append(matched[decision.AcceptedBy], decision.Generator)
+
+			continue
 		}
 
 		if errors.Is(err, generator.ErrGeneratorDeclined) {
 			continue
 		}
 
-		return nil, fmt.Errorf("%w: get generator", err)
+		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	return nil, fmt.Errorf("%w: gen generator", generator.ErrNoAvailableGenerators)
+	priority := []model.AcceptanceReason{
+		model.AcceptanceUserSettings,
+		model.AcceptanceReasonColumnType,
+		model.AcceptanceReasonDomain,
+		model.AcceptanceReasonColumnNameSuggestion,
+	}
+
+	for _, reason := range priority {
+		if gens, ok := matched[reason]; ok {
+			// what to do if len(gens) > 0 ?
+			return gens[0], nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: %s", generator.ErrNoAvailableGenerators, fnName)
 }

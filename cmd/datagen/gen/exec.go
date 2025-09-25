@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/execution"
+	"github.com/viktorkomarov/datagen/internal/generator/registry"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 	"github.com/viktorkomarov/datagen/internal/taskbuilder"
 	"github.com/viktorkomarov/datagen/internal/workmanager"
@@ -12,23 +13,30 @@ import (
 )
 
 func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
+	const fnName = "exec"
+
 	ctx := cmd.Context()
 
-	tasks, err := taskbuilder.Build(ctx, c.cfg)
+	reg, err := registry.PrepareRegistry(ctx, c.cfg, c.closerRegistry)
 	if err != nil {
-		return fmt.Errorf("%w: exec", err)
+		return fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	tasks, err := taskbuilder.Build(ctx, c.cfg, reg)
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	saver, err := factory.GetSaver(ctx, c.cfg)
 	if err != nil {
-		return fmt.Errorf("%w: exec", err)
+		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	batchExecutor := execution.NewBatchExecutor(saver, c.cfg.Options.BatchSize)
 
 	manager := workmanager.New(c.flags.workCnt, batchExecutor.Execute)
 	if err := manager.Execute(ctx, tasks); err != nil {
-		return fmt.Errorf("%w: exec", err)
+		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	return nil

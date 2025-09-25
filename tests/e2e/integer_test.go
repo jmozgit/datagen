@@ -22,8 +22,8 @@ func Test_MixedIntegersFormat(t *testing.T) {
 			Table:  "test_mixed_format",
 		},
 		Columns: []model.Column{
-			{Name: "integer", Type: "integer", IsNullable: false},
-			{Name: "serial", Type: "serial", IsNullable: false},
+			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
 		},
 	}
 	baseSuite.CreateTable(table, options.WithPreserve())
@@ -63,12 +63,12 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 			Table:  "test_all_integers",
 		},
 		Columns: []model.Column{
-			{Name: "smallint", Type: "smallint", IsNullable: false},
-			{Name: "integer", Type: "integer", IsNullable: false},
-			{Name: "bigint", Type: "bigint", IsNullable: false},
-			{Name: "int2", Type: "int2", IsNullable: false},
-			{Name: "int4", Type: "int4", IsNullable: false},
-			{Name: "int8", Type: "int8", IsNullable: false},
+			{Name: "smallint", Type: "smallint", IsNullable: false, FixedSize: 2},
+			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: "bigint", Type: "bigint", IsNullable: false, FixedSize: 8},
+			{Name: "int2", Type: "int2", IsNullable: false, FixedSize: 2},
+			{Name: "int4", Type: "int4", IsNullable: false, FixedSize: 4},
+			{Name: "int8", Type: "int8", IsNullable: false, FixedSize: 8},
 		},
 	}
 	baseSuite.CreateTable(table)
@@ -107,9 +107,9 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 			Table:  "test_default_serial",
 		},
 		Columns: []model.Column{
-			{Name: "smallserial", Type: "smallserial", IsNullable: false},
-			{Name: "serial", Type: "serial", IsNullable: false},
-			{Name: "bigserial", Type: "bigserial", IsNullable: false},
+			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
+			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8},
 		},
 	}
 
@@ -153,9 +153,9 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 			Table:  "test_serial",
 		},
 		Columns: []model.Column{
-			{Name: "smallserial", Type: "smallserial", IsNullable: false},
-			{Name: "serial", Type: "serial", IsNullable: false},
-			{Name: "bigserial", Type: "bigserial", IsNullable: false},
+			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2},
+			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
+			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8},
 		},
 	}
 	minValues := [3]int64{-10, 5, 0}
@@ -221,11 +221,7 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 			Table:  "test_integer_respect_constraints",
 		},
 		Columns: []model.Column{
-			{
-				Name:       "gen_col",
-				Type:       "integer",
-				IsNullable: false,
-			},
+			{Name: "gen_col", Type: "integer", IsNullable: false, FixedSize: 4},
 		},
 	}
 

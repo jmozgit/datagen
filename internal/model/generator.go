@@ -3,14 +3,16 @@ package model
 import (
 	"context"
 
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
+
+	"github.com/samber/mo"
 )
 
 type AcceptanceReason int
 
 const (
 	AcceptanceReasonColumnType AcceptanceReason = iota + 1
+	AcceptanceUserSettings
 	AcceptanceReasonDomain
 	AcceptanceReasonColumnNameSuggestion
 )
@@ -18,6 +20,7 @@ const (
 type GeneratorProvider interface {
 	Accept(
 		ctx context.Context,
+		dataset DatasetSchema,
 		userValues mo.Option[config.Generator],
 		optBaseType mo.Option[TargetType],
 	) (AcceptanceDecision, error)

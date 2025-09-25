@@ -1,10 +1,14 @@
 package postgresql
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/viktorkomarov/datagen/internal/generator/postgresql/serial"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func DefaultProviderGenerators(pool *pgxpool.Pool) ([]model.GeneratorProvider, error) {
-	return []model.GeneratorProvider{}, nil
+	return []model.GeneratorProvider{
+		serial.NewProvider(pool),
+	}, nil
 }

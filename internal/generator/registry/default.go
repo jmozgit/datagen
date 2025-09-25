@@ -7,6 +7,6 @@ import (
 
 func defaultGeneratorProviders() []model.GeneratorProvider {
 	return []model.GeneratorProvider{
-		integer.New(),
+		integer.NewProvider(),
 	}
 }

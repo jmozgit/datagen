@@ -79,9 +79,9 @@ func Test_PartitionParentTable(t *testing.T) {
 			Table:  "parent",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false},
-			{Name: "col2", Type: "int8", IsNullable: true},
-			{Name: "col3", Type: "int8", IsNullable: true},
+			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
+			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
 		},
 	}
 
@@ -104,9 +104,9 @@ func Test_PartitionChildTable(t *testing.T) {
 			Table:  "child",
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false},
-			{Name: "col2", Type: "int8", IsNullable: true},
-			{Name: "col3", Type: "int8", IsNullable: true},
+			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
+			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
 		},
 	}
 
