@@ -21,9 +21,7 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 		return nil, fmt.Errorf("%w: new inspector", err)
 	}
 
-	return &Inspector{
-		connect: newConnect(pgxConf),
-	}, nil
+	return &Inspector{connect: newConnect(pgxConf)}, nil
 }
 
 //nolint:gochecknoglobals // more convenient that constants here

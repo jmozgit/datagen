@@ -5,7 +5,6 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
 	"github.com/samber/lo"
@@ -26,7 +25,7 @@ func Test_MixedIntegersFormat(t *testing.T) {
 			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
 		},
 	}
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(3),

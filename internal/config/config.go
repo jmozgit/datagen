@@ -53,6 +53,7 @@ type Generator struct {
 	Column  string        `yaml:"column"`
 	Type    GeneratorType `yaml:"type"`
 	Integer *Integer      `yaml:"integer"`
+	Float   *Float        `yaml:"float"`
 }
 
 type Integer struct {
@@ -60,4 +61,8 @@ type Integer struct {
 	ByteSize *int8   `yaml:"byteSize"`
 	MinValue *int64  `yaml:"minValue"`
 	MaxValue *int64  `yaml:"maxValue"`
+}
+
+type Float struct {
+	ByteSize *int8 `yaml:"byteSize"`
 }
