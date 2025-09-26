@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/samber/mo"
 )
 
 var ErrInvalidByteSize = errors.New("invalid byte size")
@@ -47,13 +48,18 @@ func (p Provider) Accept(
 		reason = model.AcceptanceUserSettings
 	}
 
+	const (
+		float32Size = 4
+		float64Size = 8
+	)
+
 	switch fixedSize {
-	case 4:
+	case float32Size:
 		return model.AcceptanceDecision{
 			Generator:  newFloat32Gen(),
 			AcceptedBy: reason,
 		}, nil
-	case 8:
+	case float64Size:
 		return model.AcceptanceDecision{
 			Generator:  newFloat64Gen(),
 			AcceptedBy: reason,

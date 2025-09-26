@@ -2,12 +2,15 @@ package suite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 )
+
+var ErrUnknownTypeForDriver = errors.New("unknown err for driver")
 
 type connection interface {
 	SQLConnection() *config.SQLConnection
@@ -29,12 +32,15 @@ type TypeResolver struct {
 type Type string
 
 const (
-	TypeInt2   Type = "int2"
-	TypeInt4   Type = "int4"
-	TypeInt8   Type = "int8"
-	TypeFloat4 Type = "float4"
-	TypeFloat8 Type = "float8"
-	UseRaw     Type = "use_raw"
+	TypeUseRaw     Type = ""
+	TypeInt2       Type = "int2"
+	TypeInt4       Type = "int4"
+	TypeInt8       Type = "int8"
+	TypeSerialInt2 Type = "serial2"
+	TypeSerialInt4 Type = "serial4"
+	TypeSerialInt8 Type = "serial8"
+	TypeFloat4     Type = "float4"
+	TypeFloat8     Type = "float8"
 )
 
 type Column struct {
@@ -43,41 +49,85 @@ type Column struct {
 	RawType string
 }
 
+func NewColumnRawType(name, rawType string) Column {
+	return Column{
+		Name:    name,
+		RawType: rawType,
+		Type:    TypeUseRaw,
+	}
+}
+
+func NewColumn(name string, tp Type) Column {
+	return Column{
+		Name:    name,
+		RawType: "",
+		Type:    tp,
+	}
+}
+
 type Table struct {
 	Name    model.TableName
 	Columns []Column
 }
 
-func (c *TypeResolver) CreateTable(ctx context.Context, table Table, opts ...options.CreateTableOption) error {
-	columns := make([]model.Column, 0, len(table.Columns))
-	for _, col := range table.Columns {
+func (c *TypeResolver) mapColumns(columns []Column) ([]model.Column, error) {
+	mappeds := make([]model.Column, 0, len(columns))
+	for _, col := range columns {
+		//nolint:exhaustruct // it's okay for now
 		mapped := model.Column{
 			Name: model.Identifier(col.Name),
 		}
-		if col.Type == UseRaw {
+		if col.Type == TypeUseRaw {
 			mapped.Type = col.RawType
 		} else {
 			switch c.connType {
 			case "postgresql":
 				c, ok := pgMappgingType[col.Type]
 				if !ok {
-					return fmt.Errorf("unknown type %s for postgresql", col.Type)
+					return nil, fmt.Errorf("%w: %s", ErrUnknownTypeForDriver, col.Type)
 				}
 				mapped.Type = c
 			default:
-				return fmt.Errorf("unsupported mapping %s", c.connType)
+				return nil, fmt.Errorf("%w %s", ErrUnknownTypeForDriver, c.connType)
 			}
 		}
+
+		mappeds = append(mappeds, mapped)
 	}
 
-	return c.tempConnAdapter.CreateTable(ctx, model.Table{
+	return mappeds, nil
+}
+
+func (c *TypeResolver) CreateTable(ctx context.Context, table Table, opts ...options.CreateTableOption) error {
+	columns, err := c.mapColumns(table.Columns)
+	if err != nil {
+		return fmt.Errorf("%w: create table", err)
+	}
+
+	err = c.tempConnAdapter.CreateTable(ctx, model.Table{
 		Name:    table.Name,
 		Columns: columns,
 	}, opts...)
+	if err != nil {
+		return fmt.Errorf("%w: create table", err)
+	}
+
+	return nil
 }
 
-func (c *TypeResolver) OnEachRow(ctx context.Context, name Table, fn func(row []any)) error {
-	return c.tempConnAdapter.OnEachRow(ctx, model.Table{
-		Name: name.Name,
+func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row []any)) error {
+	columns, err := c.mapColumns(table.Columns)
+	if err != nil {
+		return fmt.Errorf("%w: on each row", err)
+	}
+
+	err = c.tempConnAdapter.OnEachRow(ctx, model.Table{
+		Name:    table.Name,
+		Columns: columns,
 	}, fn)
+	if err != nil {
+		return fmt.Errorf("%w: on each row", err)
+	}
+
+	return nil
 }

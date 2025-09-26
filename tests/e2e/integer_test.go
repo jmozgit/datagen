@@ -12,8 +12,6 @@ import (
 )
 
 func Test_MixedIntegersFormat(t *testing.T) {
-	suite.TestOnlyFor(t, "postgresql")
-
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
 		Name: model.TableName{
@@ -21,8 +19,8 @@ func Test_MixedIntegersFormat(t *testing.T) {
 			Table:  "test_mixed_format",
 		},
 		Columns: []suite.Column{
-			{Name: "integer", Type: suite.UseRaw, RawType: "integer"},
-			{Name: "serial", Type: suite.UseRaw, RawType: "serial"},
+			suite.NewColumn("integer", suite.TypeInt4),
+			suite.NewColumn("serial", suite.TypeSerialInt4),
 		},
 	}
 	baseSuite.CreateTable(table)
@@ -56,18 +54,18 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_all_integers",
 		},
-		Columns: []model.Column{
-			{Name: "smallint", Type: "smallint", IsNullable: false, FixedSize: 2},
-			{Name: "integer", Type: "integer", IsNullable: false, FixedSize: 4},
-			{Name: "bigint", Type: "bigint", IsNullable: false, FixedSize: 8},
-			{Name: "int2", Type: "int2", IsNullable: false, FixedSize: 2},
-			{Name: "int4", Type: "int4", IsNullable: false, FixedSize: 4},
-			{Name: "int8", Type: "int8", IsNullable: false, FixedSize: 8},
+		Columns: []suite.Column{
+			suite.NewColumnRawType("smallint", "smallint"),
+			suite.NewColumnRawType("integer", "integer"),
+			suite.NewColumnRawType("bigint", "bigint"),
+			suite.NewColumnRawType("int2", "int2"),
+			suite.NewColumnRawType("int4", "int4"),
+			suite.NewColumnRawType("int8", "int8"),
 		},
 	}
 	baseSuite.CreateTable(table)
@@ -100,15 +98,15 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_default_serial",
 		},
-		Columns: []model.Column{
-			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2},
-			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
-			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8},
+		Columns: []suite.Column{
+			suite.NewColumnRawType("smallserial", "smallserial"),
+			suite.NewColumnRawType("serial", "serial"),
+			suite.NewColumnRawType("bigserial", "bigserial"),
 		},
 	}
 
@@ -146,15 +144,15 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 
 func Test_SerialGeneratorFromConfig(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_serial",
 		},
-		Columns: []model.Column{
-			{Name: "smallserial", Type: "smallserial", IsNullable: false, FixedSize: 2},
-			{Name: "serial", Type: "serial", IsNullable: false, FixedSize: 4},
-			{Name: "bigserial", Type: "bigserial", IsNullable: false, FixedSize: 8},
+		Columns: []suite.Column{
+			suite.NewColumn("smallserial", suite.TypeSerialInt2),
+			suite.NewColumn("serial", suite.TypeSerialInt4),
+			suite.NewColumn("bigserial", suite.TypeSerialInt8),
 		},
 	}
 	minValues := [3]int64{-10, 5, 0}
@@ -214,13 +212,13 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 
-	table := model.Table{
+	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
 			Table:  "test_integer_respect_constraints",
 		},
-		Columns: []model.Column{
-			{Name: "gen_col", Type: "integer", IsNullable: false, FixedSize: 4},
+		Columns: []suite.Column{
+			suite.NewColumn("gen_col", suite.TypeInt4),
 		},
 	}
 
@@ -236,7 +234,7 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 			Generators: []config.Generator{
 				{
 					Type:   "integer",
-					Column: string(table.Columns[0].Name),
+					Column: table.Columns[0].Name,
 					Integer: &config.Integer{
 						Format:   lo.ToPtr("random"),
 						ByteSize: lo.ToPtr[int8](4),

@@ -13,7 +13,6 @@ type TaskGenerators struct {
 }
 
 type SaveBatch struct {
-	Schema         DatasetSchema
-	ExcludeTargets map[Identifier]struct{}
-	Data           [][]any
+	Schema DatasetSchema
+	Data   [][]any
 }

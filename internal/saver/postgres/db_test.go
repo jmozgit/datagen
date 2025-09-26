@@ -92,8 +92,7 @@ func Test_DbSaveNoErrors(t *testing.T) {
 					},
 				},
 			},
-			ExcludeTargets: make(map[model.Identifier]struct{}),
-			Data:           data,
+			Data: data,
 		},
 	)
 	require.NoError(t, err)
@@ -132,8 +131,7 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 					{SourceName: "id", SourceType: "integer"},
 				},
 			},
-			Data:           data,
-			ExcludeTargets: make(map[model.Identifier]struct{}),
+			Data: data,
 		},
 	)
 	require.NoError(t, err)
@@ -175,8 +173,7 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 					},
 				},
 			},
-			ExcludeTargets: make(map[model.Identifier]struct{}),
-			Data:           data,
+			Data: data,
 		},
 	)
 	require.NoError(t, err)
@@ -218,8 +215,7 @@ func Test_ColumnConstraint(t *testing.T) {
 					},
 				},
 			},
-			ExcludeTargets: make(map[model.Identifier]struct{}),
-			Data:           data,
+			Data: data,
 		},
 	)
 	require.NoError(t, err)

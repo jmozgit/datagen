@@ -44,12 +44,11 @@ func buildTableTask(
 		}
 
 		gen, err := registry.GetGenerator(ctx, schema, userSettings, mo.Some(targetType))
-		switch {
-		case err == nil:
-			gens = append(gens, gen)
-		default:
+		if err != nil {
 			return model.TaskGenerators{}, fmt.Errorf("%w: build table task", err)
 		}
+
+		gens = append(gens, gen)
 	}
 
 	return model.TaskGenerators{

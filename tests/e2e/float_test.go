@@ -1,39 +1,37 @@
-package e2e
+package e2e_test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_FloatGeneratorFromType(t *testing.T) {
-	suite.TestOnlyFor(t, "postgresql")
-
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
 		Name: model.TableName{
 			Schema: "public",
-			Table:  "test_float32",
+			Table:  "test_float",
 		},
 		Columns: []suite.Column{
-			{Name: "real", Type: suite.TypeFloat4},
-			{Name: "double", Type: suite.TypeFloat8},
+			suite.NewColumn("real", suite.TypeFloat4),
+			suite.NewColumn("double", suite.TypeFloat8),
 		},
 	}
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(17),
-		//nolint:exhaustruct // ok
 		suite.WithTableTarget(config.Table{
 			Schema:     string(table.Name.Schema),
 			Table:      string(table.Name.Table),
 			Generators: []config.Generator{},
 			LimitRows:  35,
+			LimitBytes: 0,
 		}),
 	)
 
@@ -52,6 +50,8 @@ func Test_FloatGeneratorFromType(t *testing.T) {
 }
 
 func toFloat(t *testing.T, val any) float64 {
+	t.Helper()
+
 	switch v := val.(type) {
 	case float32:
 		return float64(v)

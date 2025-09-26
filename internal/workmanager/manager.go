@@ -88,6 +88,8 @@ func (m *Manager) work(
 	tasks <-chan model.TaskGenerators,
 	errCh chan<- error,
 ) {
+	const fnName = "work"
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,7 +100,7 @@ func (m *Manager) work(
 			}
 
 			if err := m.job(ctx, task); err != nil {
-				errCh <- err
+				errCh <- fmt.Errorf("%w: %s", err, fnName)
 
 				return
 			}
@@ -110,6 +112,8 @@ func waitFinish(
 	wg *sync.WaitGroup,
 	errCh <-chan error,
 ) error {
+	const fnName = "wait finish"
+
 	finish := make(chan struct{})
 	go func() {
 		defer close(finish)
@@ -121,7 +125,11 @@ func waitFinish(
 	for {
 		select {
 		case <-finish:
-			return err
+			if err != nil {
+				return fmt.Errorf("%w: %s", err, fnName)
+			}
+
+			return nil
 		case wErr := <-errCh:
 			if err == nil {
 				err = wErr

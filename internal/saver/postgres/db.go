@@ -35,10 +35,8 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 	if err != nil {
 		return model.SaveReport{}, fmt.Errorf("%w: save", err)
 	}
-	columns := lo.FilterMap(schema.DataTypes, func(taskeType model.TargetType, _ int) (string, bool) {
-		_, exclude := batch.ExcludeTargets[taskeType.SourceName]
-
-		return string(taskeType.SourceName), !exclude
+	columns := lo.Map(schema.DataTypes, func(ct model.TargetType, _ int) string {
+		return string(ct.SourceName)
 	})
 
 	conn, err := d.pool.Acquire(ctx)
