@@ -97,7 +97,7 @@ func Test_PositiveScale(t *testing.T) {
 				require.NoError(t, err)
 
 				_, err = setup.testConn.Raw().Exec(t.Context(), "INSERT INTO test_numeric (gen_col, rev_gen_col) VALUES ($1, $2)", val1, val2)
-				require.NoErrorf(t, err, "case NUMERIC(%d, %d) or NUMERIC(%d,%d)", s, p, p, s)
+				require.NoErrorf(t, err, "case NUMERIC(%d, %d) %v or NUMERIC(%d,%d) %v", p, s, val1, s, p, val2)
 			}
 		}
 	}

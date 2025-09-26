@@ -44,7 +44,7 @@ func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
 			maxV := int(math.Pow10(p.template.precision))
 			sdigits := rand.IntN(maxV-minV) + minV
 			sdigits = randSign() * sdigits
-			freqPart := 1 + rand.IntN(p.template.scale)
+			freqPart := p.template.scale + rand.IntN(p.template.precision)
 
 			return decimal.New(int64(sdigits), -int32(freqPart)), nil
 		case diff < 0:
