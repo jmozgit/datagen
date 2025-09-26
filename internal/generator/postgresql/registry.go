@@ -1,6 +1,7 @@
 package postgresql
 
 import (
+	"github.com/viktorkomarov/datagen/internal/generator/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/generator/postgresql/serial"
 	"github.com/viktorkomarov/datagen/internal/model"
 
@@ -10,5 +11,6 @@ import (
 func DefaultProviderGenerators(pool *pgxpool.Pool) ([]model.GeneratorProvider, error) {
 	return []model.GeneratorProvider{
 		serial.NewProvider(pool),
+		numeric.NewProvider(pool),
 	}, nil
 }

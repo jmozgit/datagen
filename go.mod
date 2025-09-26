@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/samber/lo v1.51.0
 	github.com/samber/mo v1.15.0
+	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.9.0
 	go.yaml.in/yaml/v3 v3.0.3
