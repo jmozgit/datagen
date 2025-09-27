@@ -4,6 +4,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/generator/float"
 	"github.com/viktorkomarov/datagen/internal/generator/integer"
 	"github.com/viktorkomarov/datagen/internal/generator/timestamp"
+	"github.com/viktorkomarov/datagen/internal/generator/uuid"
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
@@ -12,5 +13,6 @@ func defaultGeneratorProviders() []model.GeneratorProvider {
 		integer.NewProvider(),
 		float.NewProvider(),
 		timestamp.NewProvider(),
+		uuid.NewProvider(),
 	}
 }

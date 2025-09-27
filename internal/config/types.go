@@ -6,4 +6,5 @@ const (
 	GeneratorTypeInteger   GeneratorType = "integer"
 	GeneratorTypeFloat     GeneratorType = "float"
 	GeneratorTypeTimestamp GeneratorType = "timestamp"
+	GeneratorTypeUUID      GeneratorType = "uuid"
 )

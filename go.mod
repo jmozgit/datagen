@@ -5,6 +5,7 @@ go 1.24.6
 require (
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
 	github.com/georgysavva/scany/v2 v2.1.4
+	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/samber/lo v1.51.0
 	github.com/samber/mo v1.15.0

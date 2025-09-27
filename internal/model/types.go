@@ -9,6 +9,7 @@ const (
 	Float
 	Text
 	Timestamp
+	UUID
 )
 
 type TargetType struct {

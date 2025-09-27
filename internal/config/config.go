@@ -56,6 +56,7 @@ type Generator struct {
 	Integer   *Integer      `yaml:"integer"`
 	Float     *Float        `yaml:"float"`
 	Timestamp *Timestamp    `yaml:"timestamp"`
+	UUID      *UUID         `yaml:"uuid"`
 }
 
 type Integer struct {
@@ -73,4 +74,8 @@ type Timestamp struct {
 	OnlyNow bool       `yaml:"onlyNow"`
 	From    *time.Time `yaml:"from"`
 	To      *time.Time `yaml:"to"`
+}
+
+type UUID struct {
+	Version *string `yaml:"version"`
 }
