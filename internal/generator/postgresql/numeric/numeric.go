@@ -17,7 +17,7 @@ func newPGNumericGenerator(tmplt numericTemplate) pgNumericGenerator {
 }
 
 func randSign() int {
-	if rand.Int()%2 == 0 {
+	if rand.Int()%2 == 0 { //nolint:gosec // ok
 		return 1
 	}
 
@@ -26,7 +26,7 @@ func randSign() int {
 
 func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
 	if p.template.precision == 0 {
-		return math.Float64frombits(rand.Uint64()), nil
+		return math.Float64frombits(rand.Uint64()), nil //nolint:gosec // ok
 	}
 
 	if p.template.scale > 0 {
@@ -35,22 +35,22 @@ func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
 		case diff == 0:
 			minV := int(math.Pow10(p.template.precision - 1))
 			maxV := int(math.Pow10(p.template.precision))
-			sdigits := rand.IntN(maxV-minV) + minV
+			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
 
 			return decimal.New(int64(sdigits), -int32(p.template.precision)), nil
 		case diff > 0:
 			minV := int(math.Pow10(p.template.precision - 1))
 			maxV := int(math.Pow10(p.template.precision))
-			sdigits := rand.IntN(maxV-minV) + minV
+			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
-			freqPart := p.template.scale + rand.IntN(p.template.precision)
+			freqPart := p.template.scale + rand.IntN(p.template.precision) //nolint:gosec // ok
 
 			return decimal.New(int64(sdigits), -int32(freqPart)), nil
 		case diff < 0:
 			minV := int(math.Pow10(p.template.precision - 1))
 			maxV := int(math.Pow10(p.template.precision))
-			sdigits := rand.IntN(maxV-minV) + minV
+			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
 
 			return decimal.New(int64(sdigits), -int32(p.template.scale)), nil
@@ -60,7 +60,7 @@ func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
 	absS := int(math.Abs(float64(p.template.scale)))
 	maxDigits := int(math.Pow10(p.template.precision))
 	step := int(math.Pow10(absS))
+	val := randSign() * rand.IntN(maxDigits) * step //nolint:gosec // ok
 
-	val := randSign() * rand.IntN(maxDigits) * step
 	return float64(val), nil
 }

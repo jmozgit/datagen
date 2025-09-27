@@ -13,6 +13,7 @@ import (
 var ErrUnknownTypeForDriver = errors.New("unknown err for driver")
 
 type connection interface {
+	ResolveTableName(name model.TableName) model.TableName
 	SQLConnection() *config.SQLConnection
 	CreateTable(ctx context.Context, table Table, opts ...options.CreateTableOption) error
 	OnEachRow(ctx context.Context, name Table, fn func(row []any)) error
@@ -29,6 +30,10 @@ type TypeResolver struct {
 	tempConnAdapter
 }
 
+const (
+	ScemaDefault string = "default"
+)
+
 type Type string
 
 const (
@@ -41,6 +46,7 @@ const (
 	TypeSerialInt8 Type = "serial8"
 	TypeFloat4     Type = "float4"
 	TypeFloat8     Type = "float8"
+	TypeTimestamp  Type = "timestamp"
 )
 
 type Column struct {
@@ -70,6 +76,22 @@ type Table struct {
 	Columns []Column
 }
 
+func (c *TypeResolver) ResolveTableName(name model.TableName) model.TableName {
+	if string(name.Schema) == ScemaDefault {
+		switch c.connType {
+		case postgresqlConnection:
+			return model.TableName{
+				Schema: model.Identifier("public"),
+				Table:  name.Table,
+			}
+		default:
+			return name
+		}
+	}
+
+	return name
+}
+
 func (c *TypeResolver) mapColumns(columns []Column) ([]model.Column, error) {
 	mappeds := make([]model.Column, 0, len(columns))
 	for _, col := range columns {
@@ -81,7 +103,7 @@ func (c *TypeResolver) mapColumns(columns []Column) ([]model.Column, error) {
 			mapped.Type = col.RawType
 		} else {
 			switch c.connType {
-			case "postgresql":
+			case postgresqlConnection:
 				c, ok := pgMappgingType[col.Type]
 				if !ok {
 					return nil, fmt.Errorf("%w: %s", ErrUnknownTypeForDriver, col.Type)
@@ -105,7 +127,7 @@ func (c *TypeResolver) CreateTable(ctx context.Context, table Table, opts ...opt
 	}
 
 	err = c.tempConnAdapter.CreateTable(ctx, model.Table{
-		Name:    table.Name,
+		Name:    c.ResolveTableName(table.Name),
 		Columns: columns,
 	}, opts...)
 	if err != nil {
@@ -122,7 +144,7 @@ func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row [
 	}
 
 	err = c.tempConnAdapter.OnEachRow(ctx, model.Table{
-		Name:    table.Name,
+		Name:    c.ResolveTableName(table.Name),
 		Columns: columns,
 	}, fn)
 	if err != nil {

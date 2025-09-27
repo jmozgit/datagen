@@ -28,6 +28,7 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 var pgRegistryTypes = map[string]model.CommonType{
 	"int2": model.Integer, "int4": model.Integer, "int8": model.Integer,
 	"numeric": model.Float, "float4": model.Float, "float8": model.Float,
+	"timestamp": model.Timestamp, "timestamptz": model.Timestamp,
 }
 
 // it's incorrect, but ok for now.

@@ -2,7 +2,6 @@ package float
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/config"
@@ -11,8 +10,6 @@ import (
 
 	"github.com/samber/mo"
 )
-
-var ErrInvalidByteSize = errors.New("invalid byte size")
 
 type Provider struct{}
 
@@ -65,6 +62,6 @@ func (p Provider) Accept(
 			AcceptedBy: reason,
 		}, nil
 	default:
-		return model.AcceptanceDecision{}, fmt.Errorf("%w: %d %s", ErrInvalidByteSize, fixedSize, fnName)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s unsupported byte size", generator.ErrGeneratorDeclined, fnName)
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
 	"github.com/samber/lo"
@@ -14,10 +13,7 @@ import (
 func Test_MixedIntegersFormat(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_mixed_format",
-		},
+		Name: baseSuite.TableName(suite.ScemaDefault, "test_mixed_integers"),
 		Columns: []suite.Column{
 			suite.NewColumn("integer", suite.TypeInt4),
 			suite.NewColumn("serial", suite.TypeSerialInt4),
@@ -55,10 +51,7 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_all_integers",
-		},
+		Name: baseSuite.TableName(suite.ScemaDefault, "test_all_integers"),
 		Columns: []suite.Column{
 			suite.NewColumnRawType("smallint", "smallint"),
 			suite.NewColumnRawType("integer", "integer"),
@@ -99,10 +92,7 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_default_serial",
-		},
+		Name: baseSuite.TableName(suite.ScemaDefault, "test_default_serial"),
 		Columns: []suite.Column{
 			suite.NewColumnRawType("smallserial", "smallserial"),
 			suite.NewColumnRawType("serial", "serial"),
@@ -145,10 +135,7 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 func Test_SerialGeneratorFromConfig(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_serial",
-		},
+		Name: baseSuite.TableName(suite.ScemaDefault, "test_serial"),
 		Columns: []suite.Column{
 			suite.NewColumn("smallserial", suite.TypeSerialInt2),
 			suite.NewColumn("serial", suite.TypeSerialInt4),
@@ -213,10 +200,7 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 
 	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_integer_respect_constraints",
-		},
+		Name: baseSuite.TableName(suite.ScemaDefault, "test_integer_respect_constraints"),
 		Columns: []suite.Column{
 			suite.NewColumn("gen_col", suite.TypeInt4),
 		},

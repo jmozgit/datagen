@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/alecthomas/units"
 )
@@ -50,10 +51,11 @@ type Table struct {
 }
 
 type Generator struct {
-	Column  string        `yaml:"column"`
-	Type    GeneratorType `yaml:"type"`
-	Integer *Integer      `yaml:"integer"`
-	Float   *Float        `yaml:"float"`
+	Column    string        `yaml:"column"`
+	Type      GeneratorType `yaml:"type"`
+	Integer   *Integer      `yaml:"integer"`
+	Float     *Float        `yaml:"float"`
+	Timestamp *Timestamp    `yaml:"timestamp"`
 }
 
 type Integer struct {
@@ -65,4 +67,10 @@ type Integer struct {
 
 type Float struct {
 	ByteSize *int8 `yaml:"byteSize"`
+}
+
+type Timestamp struct {
+	OnlyNow bool       `yaml:"onlyNow"`
+	From    *time.Time `yaml:"from"`
+	To      *time.Time `yaml:"to"`
 }

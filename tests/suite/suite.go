@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 
@@ -19,9 +20,10 @@ import (
 )
 
 const (
-	configFileName = "config.yaml"
-	datagenBin     = "datagen"
-	testLogsPath   = "../testlogs"
+	configFileName       = "config.yaml"
+	datagenBin           = "datagen"
+	testLogsPath         = "../testlogs"
+	postgresqlConnection = "postgresql"
 )
 
 type BaseSuite struct {
@@ -64,7 +66,7 @@ func postgresqlConnectionOption(t *testing.T, conn tempConnAdapter) ConfigOption
 	t.Helper()
 
 	return withConnection(config.Connection{
-		Type:       "postgresql",
+		Type:       postgresqlConnection,
 		Postgresql: conn.SQLConnection(),
 	})
 }
@@ -80,7 +82,7 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 
 	connType := curConnType(t)
 	switch connType {
-	case "postgresql":
+	case postgresqlConnection:
 		connStr, ok := os.LookupEnv("TEST_DATAGEN_PG_CONN")
 		require.True(t, ok)
 
@@ -89,7 +91,7 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 
 		return &BaseSuite{
 			t:              t,
-			conn:           &TypeResolver{tempConnAdapter: conn, connType: "postgresql"},
+			conn:           &TypeResolver{tempConnAdapter: conn, connType: postgresqlConnection},
 			connOption:     postgresqlConnectionOption(t, conn),
 			Config:         config.Config{}, //nolint:exhaustruct // ok
 			ConnectionType: connType,
@@ -101,6 +103,15 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 
 		return nil
 	}
+}
+
+func (b *BaseSuite) TableName(schema, name string) model.TableName {
+	return b.conn.ResolveTableName(
+		model.TableName{
+			Schema: model.Identifier(schema),
+			Table:  model.Identifier(name),
+		},
+	)
 }
 
 func (b *BaseSuite) CreateTable(table Table, opts ...options.CreateTableOption) {

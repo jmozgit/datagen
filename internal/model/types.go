@@ -8,9 +8,7 @@ const (
 	Integer CommonType = iota + 1
 	Float
 	Text
-	Time
-	Date
-	TimeDate
+	Timestamp
 )
 
 type TargetType struct {

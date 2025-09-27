@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/samber/mo"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/samber/lo"
+	"github.com/samber/mo"
 )
 
 type connect interface {
@@ -52,18 +54,25 @@ func (p *Provider) getNumericTemplate(
 
 	row := p.connect.QueryRow(ctx, query, tableName.Schema, tableName.Table, string(column.SourceName))
 
-	var numeric numericTemplate
-	if err := row.Scan(&numeric.precision, &numeric.scale); err != nil {
+	var (
+		prec  *int
+		scale *int
+	)
+
+	if err := row.Scan(&prec, &scale); err != nil {
 		return numericTemplate{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	return numeric, nil
+	return numericTemplate{
+		precision: lo.FromPtrOr(prec, 0),
+		scale:     lo.FromPtrOr(scale, 0),
+	}, nil
 }
 
 func (p *Provider) Accept(
 	ctx context.Context,
 	dataset model.DatasetSchema,
-	optUserSettings mo.Option[config.Generator],
+	_ mo.Option[config.Generator],
 	optBaseType mo.Option[model.TargetType],
 ) (model.AcceptanceDecision, error) {
 	const fnName = "numeric: accept"
