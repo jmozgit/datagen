@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 )
 
@@ -19,8 +18,6 @@ type pgNumericTestSetup struct {
 
 func newPgNumericTestSetup(
 	t *testing.T,
-	table *model.Table,
-	opts ...options.CreateTableOption,
 ) *pgNumericTestSetup {
 	t.Helper()
 
@@ -32,10 +29,6 @@ func newPgNumericTestSetup(
 	conn, err := testpg.New(t, connStr)
 	require.NoError(t, err)
 
-	if table != nil {
-		require.NoError(t, conn.CreateTable(t.Context(), *table, opts...))
-	}
-
 	return &pgNumericTestSetup{testConn: conn}
 }
 
@@ -45,9 +38,11 @@ func Test_PositiveScale(t *testing.T) {
 	scale := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	precision := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
+	conn := newPgNumericTestSetup(t)
+
 	for _, p := range precision {
 		for _, s := range scale {
-			setup := newPgNumericTestSetup(t, &model.Table{
+			err := conn.testConn.CreateTable(t.Context(), model.Table{
 				Name: model.TableName{
 					Schema: "public",
 					Table:  "test_numeric",
@@ -57,8 +52,10 @@ func Test_PositiveScale(t *testing.T) {
 					{Name: "rev_gen_col", Type: fmt.Sprintf("NUMERIC(%d, %d)", s, p)},
 				},
 			})
+			require.NoError(t, err)
 
-			provider := NewProvider(setup.testConn.Raw())
+			provider := NewProvider(conn.testConn.Raw())
+
 			gen1, err := provider.Accept(
 				t.Context(),
 				model.DatasetSchema{
@@ -96,7 +93,7 @@ func Test_PositiveScale(t *testing.T) {
 				val2, err := gen2.Generator.Gen(t.Context())
 				require.NoError(t, err)
 
-				_, err = setup.testConn.Raw().Exec(t.Context(), "INSERT INTO test_numeric (gen_col, rev_gen_col) VALUES ($1, $2)", val1, val2)
+				_, err = conn.testConn.Raw().Exec(t.Context(), "INSERT INTO test_numeric (gen_col, rev_gen_col) VALUES ($1, $2)", val1, val2)
 				require.NoErrorf(t, err, "case NUMERIC(%d, %d) %v or NUMERIC(%d,%d) %v", p, s, val1, s, p, val2)
 			}
 		}
