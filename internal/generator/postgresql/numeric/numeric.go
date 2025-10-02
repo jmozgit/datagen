@@ -9,11 +9,12 @@ import (
 )
 
 type pgNumericGenerator struct {
-	template numericTemplate
+	scale     int
+	precision int
 }
 
-func newPGNumericGenerator(tmplt numericTemplate) pgNumericGenerator {
-	return pgNumericGenerator{template: tmplt}
+func NewPostgresqlNumericGenerator(scale int, precision int) pgNumericGenerator {
+	return pgNumericGenerator{scale: scale, precision: precision}
 }
 
 func randSign() int {
@@ -25,40 +26,40 @@ func randSign() int {
 }
 
 func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
-	if p.template.precision == 0 {
+	if p.precision == 0 {
 		return math.Float64frombits(rand.Uint64()), nil //nolint:gosec // ok
 	}
 
-	if p.template.scale > 0 {
-		diff := p.template.precision - p.template.scale
+	if p.scale > 0 {
+		diff := p.precision - p.scale
 		switch {
 		case diff == 0:
-			minV := int(math.Pow10(p.template.precision - 1))
-			maxV := int(math.Pow10(p.template.precision))
+			minV := int(math.Pow10(p.precision - 1))
+			maxV := int(math.Pow10(p.precision))
 			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
 
-			return decimal.New(int64(sdigits), -int32(p.template.precision)), nil
+			return decimal.New(int64(sdigits), -int32(p.precision)), nil
 		case diff > 0:
-			minV := int(math.Pow10(p.template.precision - 1))
-			maxV := int(math.Pow10(p.template.precision))
+			minV := int(math.Pow10(p.precision - 1))
+			maxV := int(math.Pow10(p.precision))
 			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
-			freqPart := p.template.scale + rand.IntN(p.template.precision) //nolint:gosec // ok
+			freqPart := p.scale + rand.IntN(p.precision) //nolint:gosec // ok
 
 			return decimal.New(int64(sdigits), -int32(freqPart)), nil
 		case diff < 0:
-			minV := int(math.Pow10(p.template.precision - 1))
-			maxV := int(math.Pow10(p.template.precision))
+			minV := int(math.Pow10(p.precision - 1))
+			maxV := int(math.Pow10(p.precision))
 			sdigits := rand.IntN(maxV-minV) + minV //nolint:gosec // ok
 			sdigits = randSign() * sdigits
 
-			return decimal.New(int64(sdigits), -int32(p.template.scale)), nil
+			return decimal.New(int64(sdigits), -int32(p.scale)), nil
 		}
 	}
 
-	absS := int(math.Abs(float64(p.template.scale)))
-	maxDigits := int(math.Pow10(p.template.precision))
+	absS := int(math.Abs(float64(p.scale)))
+	maxDigits := int(math.Pow10(p.precision))
 	step := int(math.Pow10(absS))
 	val := randSign() * rand.IntN(maxDigits) * step //nolint:gosec // ok
 

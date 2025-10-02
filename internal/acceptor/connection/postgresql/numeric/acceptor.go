@@ -4,24 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator"
-	"github.com/viktorkomarov/datagen/internal/model"
-
-	"github.com/jackc/pgx/v5"
 	"github.com/samber/lo"
-	"github.com/samber/mo"
+	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
+	"github.com/viktorkomarov/datagen/internal/generator"
+	"github.com/viktorkomarov/datagen/internal/generator/postgresql/numeric"
+	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
 )
 
-type connect interface {
-	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-}
-
 type Provider struct {
-	connect connect
+	connect db.Connect
 }
 
-func NewProvider(connect connect) *Provider {
+func NewProvider(connect db.Connect) *Provider {
 	return &Provider{
 		connect: connect,
 	}
@@ -71,24 +66,22 @@ func (p *Provider) getNumericTemplate(
 
 func (p *Provider) Accept(
 	ctx context.Context,
-	dataset model.DatasetSchema,
-	_ mo.Option[config.Generator],
-	optBaseType mo.Option[model.TargetType],
+	req contract.AcceptRequest,
 ) (model.AcceptanceDecision, error) {
-	const fnName = "numeric: accept"
+	const fnName = "postgresql numeric: accept"
 
-	baseType, ok := optBaseType.Get()
+	baseType, ok := req.BaseType.Get()
 	if !ok || baseType.SourceType != "numeric" {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
 	}
 
-	template, err := p.getNumericTemplate(ctx, dataset, baseType)
+	template, err := p.getNumericTemplate(ctx, req.Dataset, baseType)
 	if err != nil {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareance,
-		Generator:  newPGNumericGenerator(template),
+		AcceptedBy: model.AcceptanceReasonDriverAwareness,
+		Generator:  numeric.NewPostgresqlNumericGenerator(template.scale, template.precision),
 	}, nil
 }

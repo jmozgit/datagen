@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/schema/postgres"
-
-	"github.com/samber/mo"
 )
 
 var (
@@ -20,9 +19,7 @@ var (
 type generatorRegistry interface {
 	GetGenerator(
 		ctx context.Context,
-		datase model.DatasetSchema,
-		userValues mo.Option[config.Generator],
-		optBaseType mo.Option[model.TargetType],
+		req contract.AcceptRequest,
 	) (model.Generator, error)
 }
 

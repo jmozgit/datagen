@@ -3,8 +3,8 @@ package gen
 import (
 	"fmt"
 
+	"github.com/viktorkomarov/datagen/internal/acceptor/registry"
 	"github.com/viktorkomarov/datagen/internal/execution"
-	"github.com/viktorkomarov/datagen/internal/generator/registry"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 	"github.com/viktorkomarov/datagen/internal/taskbuilder"
 	"github.com/viktorkomarov/datagen/internal/workmanager"

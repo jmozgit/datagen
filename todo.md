@@ -5,3 +5,4 @@
 5. Get rid of exhaustruct linter for tests ?
 6. serial pg generator might prefetch values
 7. change repository to interface
+8. add close to generators

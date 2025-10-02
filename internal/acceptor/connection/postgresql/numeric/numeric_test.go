@@ -5,9 +5,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
+	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
 	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 
 	"github.com/samber/mo"
@@ -58,37 +60,41 @@ func Test_PositiveScale(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			provider := numeric.NewProvider(conn.testConn.Raw())
+			provider := numeric.NewProvider(pgx.NewAdapterConn(conn.testConn.Raw()))
 
 			gen1, err := provider.Accept(
 				t.Context(),
-				model.DatasetSchema{
-					ID:        "public.test_numeric",
-					DataTypes: nil,
+				contract.AcceptRequest{
+					Dataset: model.DatasetSchema{
+						ID:        "public.test_numeric",
+						DataTypes: nil,
+					},
+					UserSettings: mo.None[config.Generator](),
+					//nolint:exhaustruct // ok
+					BaseType: mo.Some(model.TargetType{
+						SourceName: "gen_col",
+						Type:       model.Float,
+						SourceType: "numeric",
+					}),
 				},
-				mo.None[config.Generator](),
-				//nolint:exhaustruct // ok
-				mo.Some(model.TargetType{
-					SourceName: "gen_col",
-					Type:       model.Float,
-					SourceType: "numeric",
-				}),
 			)
 			require.NoError(t, err)
 
 			gen2, err := provider.Accept(
 				t.Context(),
-				model.DatasetSchema{
-					ID:        "public.test_numeric",
-					DataTypes: nil,
+				contract.AcceptRequest{
+					Dataset: model.DatasetSchema{
+						ID:        "public.test_numeric",
+						DataTypes: nil,
+					},
+					UserSettings: mo.None[config.Generator](),
+					//nolint:exhaustruct // ok
+					BaseType: mo.Some(model.TargetType{
+						SourceName: "rev_gen_col",
+						Type:       model.Float,
+						SourceType: "numeric",
+					}),
 				},
-				mo.None[config.Generator](),
-				//nolint:exhaustruct // ok
-				mo.Some(model.TargetType{
-					SourceName: "rev_gen_col",
-					Type:       model.Float,
-					SourceType: "numeric",
-				}),
 			)
 			require.NoError(t, err)
 
@@ -125,14 +131,16 @@ func Test_NegativeScale(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			provider := numeric.NewProvider(conn.testConn.Raw())
+			provider := numeric.NewProvider(pgx.NewAdapterConn(conn.testConn.Raw()))
 
 			gen1, err := provider.Accept(
 				t.Context(),
-				model.DatasetSchema{ID: "public.test_negative_scale", DataTypes: nil},
-				mo.None[config.Generator](),
-				//nolint:exhaustruct // ok
-				mo.Some(model.TargetType{SourceName: "col", Type: model.Float, SourceType: "numeric"}),
+				contract.AcceptRequest{
+					Dataset:      model.DatasetSchema{ID: "public.test_negative_scale", DataTypes: nil},
+					UserSettings: mo.None[config.Generator](),
+					//nolint:exhaustruct // ok
+					BaseType: mo.Some(model.TargetType{SourceName: "col", Type: model.Float, SourceType: "numeric"}),
+				},
 			)
 			require.NoError(t, err)
 

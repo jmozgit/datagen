@@ -10,7 +10,7 @@ import (
 
 type float32Gen struct{}
 
-func newFloat32Gen() model.Generator {
+func NewUnboundedFloat32Generator() model.Generator {
 	return float32Gen{}
 }
 
@@ -18,7 +18,7 @@ func (f float32Gen) Gen(_ context.Context) (any, error) {
 	return math.Float32frombits(rand.Uint32()), nil //nolint:gosec // ok for this purpose
 }
 
-func newFloat64Gen() model.Generator {
+func NewUnboundedFloat64Generator() model.Generator {
 	return float64Gen{}
 }
 

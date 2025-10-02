@@ -10,7 +10,7 @@ import (
 
 type alwaysNow struct{}
 
-func newAlwaysNow() model.Generator {
+func NewAlwaysNowGenerator() model.Generator {
 	return alwaysNow{}
 }
 
@@ -23,7 +23,7 @@ type inRange struct {
 	to   time.Time
 }
 
-func newInRange(from, to time.Time) inRange {
+func NewInRangeGenerator(from, to time.Time) inRange {
 	return inRange{from: from, to: to}
 }
 

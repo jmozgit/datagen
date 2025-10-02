@@ -7,4 +7,5 @@ const (
 	GeneratorTypeFloat     GeneratorType = "float"
 	GeneratorTypeTimestamp GeneratorType = "timestamp"
 	GeneratorTypeUUID      GeneratorType = "uuid"
+	GeneratorTypeLua       GeneratorType = "lua"
 )

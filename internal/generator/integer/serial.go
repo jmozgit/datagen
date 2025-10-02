@@ -1,12 +1,16 @@
 package integer
 
-import "context"
+import (
+	"context"
+
+	"github.com/viktorkomarov/datagen/internal/model"
+)
 
 type serialGenerator struct {
 	cur int64
 }
 
-func newSerialGenerator(cur int64) *serialGenerator {
+func NewSerialIntegerGenerator(cur int64) model.Generator {
 	return &serialGenerator{cur: cur}
 }
 

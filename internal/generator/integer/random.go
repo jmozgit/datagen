@@ -11,7 +11,7 @@ type randomGenerator struct {
 	max int64
 }
 
-func newRandomGenerator(
+func NewRandomInRangeGenerator(
 	minV int64, maxV int64,
 ) *randomGenerator {
 	return &randomGenerator{min: minV, max: maxV}

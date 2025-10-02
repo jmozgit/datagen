@@ -57,6 +57,7 @@ type Generator struct {
 	Float     *Float        `yaml:"float"`
 	Timestamp *Timestamp    `yaml:"timestamp"`
 	UUID      *UUID         `yaml:"uuid"`
+	Lua       *Lua          `yaml:"lua"`
 }
 
 type Integer struct {
@@ -78,4 +79,8 @@ type Timestamp struct {
 
 type UUID struct {
 	Version *string `yaml:"version"`
+}
+
+type Lua struct {
+	Path string `yaml:"path"`
 }

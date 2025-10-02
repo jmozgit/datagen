@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 
@@ -43,7 +44,13 @@ func buildTableTask(
 			userSettings = mo.Some(set)
 		}
 
-		gen, err := registry.GetGenerator(ctx, schema, userSettings, mo.Some(targetType))
+		req := contract.AcceptRequest{
+			Dataset:      schema,
+			UserSettings: userSettings,
+			BaseType:     mo.Some(targetType),
+		}
+
+		gen, err := registry.GetGenerator(ctx, req)
 		if err != nil {
 			return model.TaskGenerators{}, fmt.Errorf("%w: build table task", err)
 		}

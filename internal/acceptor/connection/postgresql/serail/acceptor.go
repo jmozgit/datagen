@@ -1,4 +1,4 @@
-package serial
+package serail
 
 import (
 	"context"
@@ -6,20 +6,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/generator"
+	"github.com/viktorkomarov/datagen/internal/generator/postgresql/serial"
 	"github.com/viktorkomarov/datagen/internal/model"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/samber/mo"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
 )
 
 type Provider struct {
-	pool *pgxpool.Pool
+	conn db.Connect
 }
 
-func NewProvider(pool *pgxpool.Pool) *Provider {
-	return &Provider{pool: pool}
+func NewProvider(conn db.Connect) *Provider {
+	return &Provider{conn: conn}
 }
 
 func (s *Provider) getSeqName(
@@ -37,7 +36,7 @@ func (s *Provider) getSeqName(
 	query := fmt.Sprintf("select pg_get_serial_sequence('%s', '%s')", tableName.String(), string(baseType.SourceName))
 
 	var seqName sql.NullString
-	if err := s.pool.QueryRow(ctx, query).Scan(&seqName); err != nil {
+	if err := s.conn.QueryRow(ctx, query).Scan(&seqName); err != nil {
 		return "", fmt.Errorf("%w: %s", err, fnName)
 	}
 	if !seqName.Valid {
@@ -49,27 +48,16 @@ func (s *Provider) getSeqName(
 
 func (s *Provider) Accept(
 	ctx context.Context,
-	dataset model.DatasetSchema,
-	optUserSettings mo.Option[config.Generator],
-	optBaseType mo.Option[model.TargetType],
+	req contract.AcceptRequest,
 ) (model.AcceptanceDecision, error) {
-	const fnName = "serial: accept"
+	const fnName = "postgresql serial: accept"
 
-	userSettings, ok := optUserSettings.Get()
-	if ok && userSettings.Type != config.GeneratorTypeInteger {
+	baseType, ok := req.BaseType.Get()
+	if !ok || baseType.Type != model.Integer {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
 	}
 
-	if ok && userSettings.Integer.Format != nil && *userSettings.Integer.Format != "serial" {
-		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
-	}
-
-	baseType, ok := optBaseType.Get()
-	if !ok {
-		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
-	}
-
-	seqName, err := s.getSeqName(ctx, dataset, baseType)
+	seqName, err := s.getSeqName(ctx, req.Dataset, baseType)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
@@ -79,7 +67,7 @@ func (s *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareance,
-		Generator:  &seqGenerator{seqName: seqName, pool: s.pool},
+		AcceptedBy: model.AcceptanceReasonDriverAwareness,
+		Generator:  serial.NewSeqBasedGenerator(s.conn, seqName),
 	}, nil
 }
