@@ -1,4 +1,4 @@
-package serail
+package serial
 
 import (
 	"context"
