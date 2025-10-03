@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/generator/postgresql/serial"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
@@ -54,13 +53,13 @@ func (s *Provider) Accept(
 
 	baseType, ok := req.BaseType.Get()
 	if !ok || baseType.Type != model.Integer {
-		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 
 	seqName, err := s.getSeqName(ctx, req.Dataset, baseType)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
+			return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 		}
 
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", err, fnName)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/schema"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -28,8 +27,9 @@ func NewInspector(conn *config.SQLConnection) (*Inspector, error) {
 var pgRegistryTypes = map[string]model.CommonType{
 	"int2": model.Integer, "int4": model.Integer, "int8": model.Integer,
 	"numeric": model.Float, "float4": model.Float, "float8": model.Float,
-	"timestamp": model.Timestamp, "timestamptz": model.Timestamp,
-	"text": model.Text, "uuid": model.UUID,
+	"timestamp": model.Timestamp, "timestamptz": model.Timestamp, "date": model.Date,
+	"text": model.Text,
+	"uuid": model.UUID,
 }
 
 // it's incorrect, but ok for now.
@@ -56,7 +56,7 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 	for i, col := range table.Columns {
 		tp, ok := pgRegistryTypes[col.Type]
 		if !ok {
-			return model.DatasetSchema{}, fmt.Errorf("%w: %s (%s) in %s", schema.ErrUnsupportedType, col.Name, col.Type, name)
+			tp = model.DriverSpecified
 		}
 
 		dataTypes[i] = model.TargetType{

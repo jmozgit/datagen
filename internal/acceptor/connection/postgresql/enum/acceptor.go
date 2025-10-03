@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/generator/oneof"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
@@ -32,7 +31,7 @@ func (p *Provider) EnumOID(ctx context.Context, rawType string) (int64, error) {
 	err := p.connect.QueryRow(ctx, query, rawType).Scan(&oid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
+			return 0, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 		}
 
 		return 0, fmt.Errorf("%w: %s", err, fnName)

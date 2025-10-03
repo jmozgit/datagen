@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/enum"
+	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/interval"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/serial"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
@@ -13,5 +14,6 @@ func DefaultProviderGenerators(conn db.Connect) []contract.GeneratorProvider {
 		numeric.NewProvider(conn),
 		serial.NewProvider(conn),
 		enum.NewProvider(conn),
+		interval.NewProvider(),
 	}
 }

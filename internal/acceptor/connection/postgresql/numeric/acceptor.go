@@ -6,7 +6,6 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/generator/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
@@ -72,7 +71,7 @@ func (p *Provider) Accept(
 
 	baseType, ok := req.BaseType.Get()
 	if !ok || baseType.SourceType != "numeric" {
-		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", generator.ErrGeneratorDeclined, fnName)
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 
 	template, err := p.getNumericTemplate(ctx, req.Dataset, baseType)

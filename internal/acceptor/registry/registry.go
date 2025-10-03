@@ -11,7 +11,6 @@ import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/acceptor/user"
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/closer"
 	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
@@ -63,7 +62,7 @@ func (r *Registry) GetGenerator(
 			continue
 		}
 
-		if errors.Is(err, generator.ErrGeneratorDeclined) {
+		if errors.Is(err, contract.ErrGeneratorDeclined) {
 			continue
 		}
 
@@ -85,5 +84,5 @@ func (r *Registry) GetGenerator(
 		}
 	}
 
-	return nil, fmt.Errorf("%w: %s", generator.ErrNoAvailableGenerators, fnName)
+	return nil, fmt.Errorf("%w: %s", contract.ErrNoAvailableGenerators, fnName)
 }

@@ -1,6 +1,7 @@
 package commontype
 
 import (
+	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/date"
 	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/float"
 	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/integer"
 	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/time"
@@ -14,5 +15,6 @@ func DefaultProviderGenerators() []contract.GeneratorProvider {
 		integer.NewProvider(),
 		time.NewProvider(),
 		uuid.NewProvider(),
+		date.NewProvider(),
 	}
 }

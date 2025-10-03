@@ -5,10 +5,12 @@ import "fmt"
 type CommonType int
 
 const (
-	Integer CommonType = iota + 1
+	DriverSpecified CommonType = iota
+	Integer
 	Float
 	Text
 	Timestamp
+	Date
 	UUID
 )
 
