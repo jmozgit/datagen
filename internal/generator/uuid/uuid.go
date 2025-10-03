@@ -27,6 +27,8 @@ func (u uuidV1Generator) Gen(_ context.Context) (any, error) {
 	return val, nil
 }
 
+func (u uuidV1Generator) Close() {}
+
 func NewUUIDV3Generator() model.Generator {
 	return uuidV3Generator{}
 }
@@ -41,6 +43,8 @@ func (u uuidV3Generator) Gen(_ context.Context) (any, error) {
 
 	return gouuid.NewV3(v4, xrand.LowerCaseString(systemNameLen)), nil
 }
+
+func (u uuidV3Generator) Close() {}
 
 func NewUUIDV4Generator() model.Generator {
 	return uuidV4Generator{}
@@ -57,6 +61,8 @@ func (u uuidV4Generator) Gen(_ context.Context) (any, error) {
 	return val, nil
 }
 
+func (u uuidV4Generator) Close() {}
+
 func NewUUIDV5Generator() model.Generator {
 	return uuidV5Generator{}
 }
@@ -71,6 +77,8 @@ func (u uuidV5Generator) Gen(_ context.Context) (any, error) {
 
 	return gouuid.NewV5(v4, xrand.LowerCaseString(systemNameLen)), nil
 }
+
+func (u uuidV5Generator) Close() {}
 
 func NewUUIDV6Generator() model.Generator {
 	return uuidV6Generator{}
@@ -87,6 +95,8 @@ func (u uuidV6Generator) Gen(_ context.Context) (any, error) {
 	return val, nil
 }
 
+func (u uuidV6Generator) Close() {}
+
 func NewUUIDV7Generator() model.Generator {
 	return uuidV7Generator{}
 }
@@ -101,3 +111,5 @@ func (u uuidV7Generator) Gen(_ context.Context) (any, error) {
 
 	return val, nil
 }
+
+func (u uuidV7Generator) Close() {}

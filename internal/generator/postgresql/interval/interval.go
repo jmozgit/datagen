@@ -23,3 +23,5 @@ func (g generator) Gen(_ context.Context) (any, error) {
 		Valid:        true,
 	}, nil
 }
+
+func (g generator) Close() {}

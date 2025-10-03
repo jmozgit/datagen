@@ -27,3 +27,5 @@ func (a fixedSizeGenerator) Gen(_ context.Context) (any, error) {
 
 	return string(buf), nil
 }
+
+func (a fixedSizeGenerator) Close() {}

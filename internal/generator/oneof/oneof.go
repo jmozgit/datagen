@@ -16,3 +16,5 @@ func NewGenerator[T any](values []T) Generator[T] {
 func (g Generator[T]) Gen(_ context.Context) (any, error) {
 	return g.values[rand.IntN(len(g.values))], nil
 }
+
+func (g Generator[T]) Close() {}

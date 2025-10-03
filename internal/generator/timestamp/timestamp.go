@@ -18,6 +18,8 @@ func (a alwaysNow) Gen(_ context.Context) (any, error) {
 	return time.Now(), nil
 }
 
+func (a alwaysNow) Close() {}
+
 type inRange struct {
 	from time.Time
 	to   time.Time
@@ -35,3 +37,5 @@ func (i inRange) Gen(_ context.Context) (any, error) {
 
 	return time.Unix(sec, 0), nil
 }
+
+func (i inRange) Close() {}

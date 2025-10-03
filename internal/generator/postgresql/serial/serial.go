@@ -31,3 +31,5 @@ func (s *seqGenerator) Gen(ctx context.Context) (any, error) {
 
 	return next, nil
 }
+
+func (s *seqGenerator) Close() {}

@@ -16,6 +16,7 @@ const (
 
 type Generator interface {
 	Gen(ctx context.Context) (any, error)
+	Close()
 }
 
 type AcceptanceDecision struct {

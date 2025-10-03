@@ -43,3 +43,7 @@ func (s *scriptExecutor) Gen(_ context.Context) (any, error) {
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedLuaReturnedValue, fnName)
 	}
 }
+
+func (s scriptExecutor) Close() {
+	s.state.Close()
+}

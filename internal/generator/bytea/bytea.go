@@ -30,3 +30,5 @@ func (a aroundByteaGenerator) Gen(_ context.Context) (any, error) {
 
 	return buff, nil
 }
+
+func (a aroundByteaGenerator) Close() {}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+
+	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 type randomGenerator struct {
@@ -13,7 +15,7 @@ type randomGenerator struct {
 
 func NewRandomInRangeGenerator(
 	minV int64, maxV int64,
-) *randomGenerator {
+) model.Generator {
 	return &randomGenerator{min: minV, max: maxV}
 }
 
@@ -36,3 +38,5 @@ func (r *randomGenerator) Gen(_ context.Context) (any, error) {
 
 	return r.min + fromMin + fromMax, nil
 }
+
+func (r *randomGenerator) Close() {}

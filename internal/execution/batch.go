@@ -36,6 +36,12 @@ func shouldContinue(collected, task model.TaskProgress, buffered uint64) bool {
 }
 
 func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) error {
+	defer func() {
+		for i := range task.Generators {
+			task.Generators[i].Close()
+		}
+	}()
+
 	for i := range b.batch {
 		if len(b.batch[i]) == 0 {
 			b.batch[i] = make([]any, len(task.Generators))

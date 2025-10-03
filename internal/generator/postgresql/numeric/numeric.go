@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/shopspring/decimal"
+	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 type pgNumericGenerator struct {
@@ -13,7 +14,7 @@ type pgNumericGenerator struct {
 	precision int
 }
 
-func NewPostgresqlNumericGenerator(scale int, precision int) pgNumericGenerator {
+func NewPostgresqlNumericGenerator(scale int, precision int) model.Generator {
 	return pgNumericGenerator{scale: scale, precision: precision}
 }
 
@@ -65,3 +66,5 @@ func (p pgNumericGenerator) Gen(_ context.Context) (any, error) {
 
 	return float64(val), nil
 }
+
+func (p pgNumericGenerator) Close() {}

@@ -12,14 +12,16 @@ const (
 	Timestamp
 	Date
 	UUID
+	Reference
 )
 
 type TargetType struct {
-	SourceName Identifier
-	Type       CommonType
-	SourceType string
-	IsNullable bool
-	FixedSize  int
+	SourceName    Identifier
+	Type          CommonType
+	SourceType    string
+	IsNullable    bool
+	FixedSize     int
+	ReferenceInfo ReferenceInfo
 }
 
 func (b TargetType) String() string {
@@ -27,4 +29,9 @@ func (b TargetType) String() string {
 		"TargetType[Type %d, SourceType %s]",
 		b.Type, b.SourceType,
 	)
+}
+
+type ReferenceInfo struct {
+	RefDataschema Identifier
+	RefTargetType Identifier
 }

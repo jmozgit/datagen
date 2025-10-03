@@ -26,3 +26,5 @@ func (g generator) Gen(_ context.Context) (any, error) {
 
 	return g.internet.IPv6(reflect.Value{})
 }
+
+func (g generator) Close() {}

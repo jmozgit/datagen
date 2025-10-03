@@ -43,19 +43,33 @@ func Build(ctx context.Context, cfg config.Config, registry generatorRegistry) (
 		return nil, fmt.Errorf("%w: build tasks", err)
 	}
 
-	tasks := make([]model.TaskGenerators, 0, len(cfg.Targets))
-	for _, task := range cfg.Targets {
+	refRequests := make([]referenceRequest, 0)
+	tasks := make([]model.TaskGenerators, len(cfg.Targets))
+	for idx, task := range cfg.Targets {
 		table := task.Table
 		if table == nil {
 			return nil, fmt.Errorf("%w: build tasks", ErrUnsupportedTargetType)
 		}
 
-		tableTask, err := buildTableTask(ctx, registry, schemaProvider, task)
+		tableTask, references, err := buildTableTask(ctx, registry, schemaProvider, task)
 		if err != nil {
 			return nil, fmt.Errorf("%w: build tasks", err)
 		}
 
-		tasks = append(tasks, tableTask)
+		tasks[idx] = tableTask
+
+		for i := range references {
+			references[i].taskIdx = idx
+		}
+
+		refRequests = append(refRequests, refRequests...)
+	}
+
+	if len(refRequests) > 0 {
+		tasks, err = resolveReference(ctx, tasks, refRequests)
+		if err != nil {
+			return nil, fmt.Errorf("%w: build tasks", err)
+		}
 	}
 
 	return tasks, nil

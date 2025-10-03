@@ -20,3 +20,5 @@ func (s *serialGenerator) Gen(_ context.Context) (any, error) {
 
 	return cur, nil
 }
+
+func (s serialGenerator) Close() {}

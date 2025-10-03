@@ -20,6 +20,8 @@ func (w waitCtxGenerator) Gen(ctx context.Context) (any, error) {
 	return nil, ctx.Err()
 }
 
+func (w waitCtxGenerator) Close() {}
+
 type notifyWhenStart struct {
 	closeCh chan struct{}
 }
@@ -30,6 +32,8 @@ func (w notifyWhenStart) Gen(ctx context.Context) (any, error) {
 	return nil, ctx.Err()
 }
 
+func (w notifyWhenStart) Close() {}
+
 type returnErr struct {
 	err error
 }
@@ -38,11 +42,15 @@ func (w returnErr) Gen(_ context.Context) (any, error) {
 	return nil, w.err
 }
 
+func (w returnErr) Close() {}
+
 type noError struct{}
 
 func (w noError) Gen(_ context.Context) (any, error) {
 	return nil, nil //nolint:nilnil // it's ok
 }
+
+func (w noError) Close() {}
 
 func Test_ManagerExecuteStopByCtx(t *testing.T) {
 	t.Parallel()
