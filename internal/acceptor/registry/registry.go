@@ -14,15 +14,18 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/closer"
 	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
+	"github.com/viktorkomarov/datagen/internal/refresolver"
 )
 
 type Registry struct {
-	providers []contract.GeneratorProvider
+	refRegistry *refresolver.Service
+	providers   []contract.GeneratorProvider
 }
 
 func PrepareRegistry(
 	ctx context.Context,
 	cfg config.Config,
+	refRegistry *refresolver.Service,
 	closerReg *closer.Registry,
 ) (*Registry, error) {
 	generators := append(
@@ -38,12 +41,18 @@ func PrepareRegistry(
 		}
 		closerReg.Add(closer.Fn(pool.Close))
 
-		generators = append(generators, postgresql.DefaultProviderGenerators(pgx.NewAdapterPool(pool))...)
+		generators = append(
+			generators,
+			postgresql.DefaultProviderGenerators(
+				pgx.NewAdapterPool(pool),
+				refRegistry,
+			)...)
 	default:
 	}
 
 	return &Registry{
-		providers: generators,
+		refRegistry: refRegistry,
+		providers:   generators,
 	}, nil
 }
 

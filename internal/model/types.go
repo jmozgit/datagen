@@ -1,6 +1,8 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type CommonType int
 
@@ -16,12 +18,11 @@ const (
 )
 
 type TargetType struct {
-	SourceName    Identifier
-	Type          CommonType
-	SourceType    string
-	IsNullable    bool
-	FixedSize     int
-	ReferenceInfo ReferenceInfo
+	SourceName Identifier
+	Type       CommonType
+	SourceType string
+	IsNullable bool
+	FixedSize  int
 }
 
 func (b TargetType) String() string {
@@ -31,7 +32,4 @@ func (b TargetType) String() string {
 	)
 }
 
-type ReferenceInfo struct {
-	RefDataschema Identifier
-	RefTargetType Identifier
-}
+type Subscription func(batch SaveBatch)

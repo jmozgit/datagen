@@ -8,21 +8,27 @@ import (
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 )
 
-type Saver interface {
-	factory.Saver
+type refNotifier interface {
+	OnSaved(batch model.SaveBatch)
 }
 
 type BatchExecutor struct {
-	saver     Saver
-	collected model.TaskProgress
-	batchID   int
-	batch     [][]any
+	saver       factory.Saver
+	refNotifier refNotifier
+	collected   model.TaskProgress
+	batchID     int
+	batch       [][]any
 }
 
-func NewBatchExecutor(saver Saver, cnt int) *BatchExecutor {
+func NewBatchExecutor(
+	saver factory.Saver,
+	refNotifier refNotifier,
+	cnt int,
+) *BatchExecutor {
 	return &BatchExecutor{
-		saver:   saver,
-		batchID: 0,
+		saver:       saver,
+		refNotifier: refNotifier,
+		batchID:     0,
 		collected: model.TaskProgress{
 			Bytes: 0,
 			Rows:  0,
@@ -58,13 +64,17 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 		}
 
 		if b.batchID+1 == len(b.batch) || !shouldContinue(b.collected, task.Limit, uint64(b.batchID)+1) {
-			saved, err := b.saver.Save(ctx, model.SaveBatch{
+			batch := model.SaveBatch{
 				Schema: task.Schema,
 				Data:   b.batch[:b.batchID+1],
-			})
+			}
+
+			saved, err := b.saver.Save(ctx, batch)
 			if err != nil {
 				return fmt.Errorf("%w: execute", err)
 			}
+
+			b.refNotifier.OnSaved(batch)
 
 			b.collected = model.TaskProgress{
 				Bytes: b.collected.Bytes + uint64(saved.BytesSaved),

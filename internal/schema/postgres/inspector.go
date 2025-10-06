@@ -69,7 +69,8 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 	}
 
 	return model.DatasetSchema{
-		ID:        id,
-		DataTypes: dataTypes,
+		ID:                id,
+		DataTypes:         dataTypes,
+		UniqueConstraints: table.UniqueIndexes,
 	}, nil
 }

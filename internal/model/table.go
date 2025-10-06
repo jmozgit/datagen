@@ -19,7 +19,7 @@ func TableNameFromIdentifier(id Identifier) (TableName, error) {
 
 	split := strings.Split(string(id), ".")
 	if len(split) != sep {
-		return TableName{}, fmt.Errorf("%w, invalid table name identifier: %s", ErrIncorrectTableName, id)
+		return TableName{}, fmt.Errorf("%w, got %s", ErrIncorrectTableName, id)
 	}
 
 	return TableName{
@@ -40,6 +40,7 @@ type Column struct {
 }
 
 type Table struct {
-	Name    TableName
-	Columns []Column
+	Name          TableName
+	Columns       []Column
+	UniqueIndexes [][]Identifier
 }

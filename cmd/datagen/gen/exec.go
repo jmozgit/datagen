@@ -5,6 +5,7 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/acceptor/registry"
 	"github.com/viktorkomarov/datagen/internal/execution"
+	"github.com/viktorkomarov/datagen/internal/refresolver"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
 	"github.com/viktorkomarov/datagen/internal/taskbuilder"
 	"github.com/viktorkomarov/datagen/internal/workmanager"
@@ -17,7 +18,8 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 
 	ctx := cmd.Context()
 
-	reg, err := registry.PrepareRegistry(ctx, c.cfg, c.closerRegistry)
+	refSvc := refresolver.NewService()
+	reg, err := registry.PrepareRegistry(ctx, c.cfg, refSvc, c.closerRegistry)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
@@ -32,7 +34,7 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	batchExecutor := execution.NewBatchExecutor(saver, c.cfg.Options.BatchSize)
+	batchExecutor := execution.NewBatchExecutor(saver, refSvc, c.cfg.Options.BatchSize)
 
 	manager := workmanager.New(c.flags.workCnt, batchExecutor.Execute)
 	if err := manager.Execute(ctx, tasks); err != nil {

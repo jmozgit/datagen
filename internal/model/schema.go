@@ -11,3 +11,7 @@ type SchemaProvider interface {
 	GeneratorIdentifier(gen config.Generator) (Identifier, error)
 	DataSource(ctx context.Context, id Identifier) (DatasetSchema, error)
 }
+
+type ValuesReader interface {
+	ReadValues(ctx context.Context) ([]any, error)
+}

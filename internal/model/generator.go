@@ -19,6 +19,10 @@ type Generator interface {
 	Close()
 }
 
+type GeneratorDeps interface {
+	DependsOn() []Identifier
+}
+
 type AcceptanceDecision struct {
 	Generator  Generator
 	AcceptedBy AcceptanceReason

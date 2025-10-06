@@ -7,83 +7,48 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/generator/reference"
 	"github.com/viktorkomarov/datagen/internal/model"
 
+	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
-var ErrUnresolvedReference = errors.New("reference is unresolved")
+var ErrCycledRefences = errors.New("cycled refernces are not allowed")
 
-type referenceRequest struct {
-	info           model.ReferenceInfo
-	taskIdx        int
-	generatorIndex int
+type tableTaskBuilder struct {
+	targets []config.Table
+	tasks   []model.TaskGenerators
+	depsOn  map[model.Identifier][]model.Identifier
+
+	schemaProvider model.SchemaProvider
 }
 
-func buildTableTask(
-	ctx context.Context,
-	registry generatorRegistry,
+func newTableTaskBuilder(
 	schemaProvider model.SchemaProvider,
-	target config.Target,
-) (
-	model.TaskGenerators,
-	[]referenceRequest,
-	error,
-) {
-	schemaAwareID, err := schemaProvider.TargetIdentifier(target)
+) tableTaskBuilder {
+	return tableTaskBuilder{
+		targets: make([]config.Table, 0),
+		tasks:   make([]model.TaskGenerators, 0),
+		depsOn:  make(map[model.Identifier][]model.Identifier),
+
+		schemaProvider: schemaProvider,
+	}
+}
+
+func (t *tableTaskBuilder) addTask(ctx context.Context, target config.Target) error {
+	const fnName = "add task"
+
+	schemaAwareID, err := t.schemaProvider.TargetIdentifier(target)
 	if err != nil {
-		return model.TaskGenerators{}, nil, fmt.Errorf("%w: build table task", err)
+		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	schema, err := schemaProvider.DataSource(ctx, schemaAwareID)
+	schema, err := t.schemaProvider.DataSource(ctx, schemaAwareID)
 	if err != nil {
-		return model.TaskGenerators{}, nil, fmt.Errorf("%w: build table task", err)
+		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	userSettingsByID := make(map[model.Identifier]config.Generator)
-	for _, settings := range target.Table.Generators {
-		id, err := schemaProvider.GeneratorIdentifier(settings)
-		if err != nil {
-			return model.TaskGenerators{}, nil, fmt.Errorf("%w: build table task", err)
-		}
-
-		userSettingsByID[id] = settings
-	}
-
-	refRequests := make([]referenceRequest, 0)
-	gens := make([]model.Generator, 0, len(schema.DataTypes))
-	for idx, targetType := range schema.DataTypes {
-		userSettings := mo.None[config.Generator]()
-		if set, ok := userSettingsByID[targetType.SourceName]; ok {
-			userSettings = mo.Some(set)
-		}
-
-		if targetType.Type == model.Reference {
-			refRequests = append(refRequests, referenceRequest{
-				info:           targetType.ReferenceInfo,
-				taskIdx:        -1,
-				generatorIndex: idx,
-			})
-
-			continue
-		}
-
-		req := contract.AcceptRequest{
-			Dataset:      schema,
-			UserSettings: userSettings,
-			BaseType:     mo.Some(targetType),
-		}
-
-		gen, err := registry.GetGenerator(ctx, req)
-		if err != nil {
-			return model.TaskGenerators{}, nil, fmt.Errorf("%w: build table task", err)
-		}
-
-		gens = append(gens, gen)
-	}
-
-	return model.TaskGenerators{
+	task := model.TaskGenerators{
 		Task: model.Task{
 			Schema: schema,
 			Limit: model.TaskProgress{
@@ -91,50 +56,116 @@ func buildTableTask(
 				Bytes: uint64(target.Table.LimitBytes),
 			},
 		},
-		Generators: gens,
-	}, refRequests, nil
+		Generators: make([]model.Generator, len(schema.DataTypes)),
+	}
+	t.targets = append(t.targets, *target.Table)
+	t.tasks = append(t.tasks, task)
+
+	return nil
 }
 
-func tryTroResolve(
-	ctx context.Context,
-	req referenceRequest,
-	generators []model.TaskGenerators,
-) ([]model.TaskGenerators, error) {
-	for _, gen := range generators {
-		if gen.Schema.ID != req.info.RefDataschema {
-			continue
-		}
+func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generatorRegistry) error {
+	const fnName = "set generators"
 
-		for i, col := range gen.Schema.DataTypes {
-			if col.SourceName != req.info.RefTargetType {
-				continue
+	for idx, target := range t.targets {
+		userSettingsByID := make(map[model.Identifier]config.Generator)
+		for _, settings := range target.Generators {
+			id, err := t.schemaProvider.GeneratorIdentifier(settings)
+			if err != nil {
+				return fmt.Errorf("%w: %s", err, fnName)
 			}
 
-			// it might be recursive ?
-			pipe := reference.BuildPipe(gen.Generators[i], 100)
-			gen.Generators[i] = pipe.Pub
-			generators[req.taskIdx].Generators[req.generatorIndex] = pipe.Sub
+			userSettingsByID[id] = settings
+		}
 
-			return generators, nil
+		for genIdx, targetType := range t.tasks[idx].Schema.DataTypes {
+			userSettings := mo.None[config.Generator]()
+			if set, ok := userSettingsByID[targetType.SourceName]; ok {
+				userSettings = mo.Some(set)
+			}
+
+			req := contract.AcceptRequest{
+				Dataset:      t.tasks[idx].Schema,
+				UserSettings: userSettings,
+				BaseType:     mo.Some(targetType),
+			}
+
+			gen, err := registry.GetGenerator(ctx, req)
+			if err != nil {
+				return fmt.Errorf("%w: %s", err, fnName)
+			}
+
+			if genDeps, ok := gen.(model.GeneratorDeps); ok {
+				from := t.tasks[idx].Schema.ID
+				t.depsOn[from] = append(t.depsOn[from], genDeps.DependsOn()...)
+			}
+
+			t.tasks[idx].Generators[genIdx] = gen
 		}
 	}
 
-	return nil, fmt.Errorf("%w: try to resolve", ErrUnresolvedReference)
+	return nil
 }
 
-func resolveReference(
-	ctx context.Context,
-	generators []model.TaskGenerators,
-	requests []referenceRequest,
-) ([]model.TaskGenerators, error) {
-	for _, req := range requests {
-		var err error
+func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
+	byID := lo.SliceToMap(t.tasks, func(t model.TaskGenerators) (model.Identifier, model.TaskGenerators) {
+		return t.Schema.ID, t
+	})
 
-		generators, err = tryTroResolve(ctx, req, generators)
-		if err != nil {
-			return nil, fmt.Errorf("%w: resolve reference %s.%s", err, req.info.RefDataschema, req.info.RefTargetType)
+	ids := lo.Map(t.tasks, func(t model.TaskGenerators, _ int) model.Identifier {
+		return t.Schema.ID
+	})
+
+	sortedIDs, err := topSort(ids, t.depsOn)
+	if err != nil {
+		return nil, fmt.Errorf("%w: sort tasks", err)
+	}
+
+	return lo.Map(sortedIDs, func(t model.Identifier, _ int) model.TaskGenerators {
+		return byID[t]
+	}), nil
+}
+
+func topSort(
+	ids []model.Identifier,
+	deps map[model.Identifier][]model.Identifier,
+) ([]model.Identifier, error) {
+	const fnName = "top sort"
+
+	out := make([]model.Identifier, 0, len(ids))
+	visited := make(map[model.Identifier]bool)
+	inProgress := make(map[model.Identifier]bool)
+	var visit func(model.Identifier) error
+
+	visit = func(id model.Identifier) error {
+		const fnName = "inner visit"
+
+		if visited[id] {
+			return nil
+		}
+
+		if inProgress[id] {
+			return fmt.Errorf("%w: %s %s", ErrCycledRefences, id, fnName)
+		}
+
+		inProgress[id] = true
+		for _, d := range deps[id] {
+			if err := visit(d); err != nil {
+				return fmt.Errorf("%w: %s", err, fnName)
+			}
+		}
+
+		visited[id] = true
+		out = append(out, id)
+
+		return nil
+	}
+
+	for _, id := range ids {
+		if err := visit(id); err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
 	}
 
-	return generators, nil
+	return out, nil
 }

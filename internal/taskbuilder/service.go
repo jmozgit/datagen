@@ -37,40 +37,33 @@ func makeSchemaProvider(cfg config.Config) (model.SchemaProvider, error) {
 	}
 }
 
-func Build(ctx context.Context, cfg config.Config, registry generatorRegistry) ([]model.TaskGenerators, error) {
+func Build(
+	ctx context.Context,
+	cfg config.Config,
+	registry generatorRegistry,
+) ([]model.TaskGenerators, error) {
+	const fnName = "taskbuilder: build"
+
 	schemaProvider, err := makeSchemaProvider(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("%w: build tasks", err)
+		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	refRequests := make([]referenceRequest, 0)
-	tasks := make([]model.TaskGenerators, len(cfg.Targets))
-	for idx, task := range cfg.Targets {
+	ttb := newTableTaskBuilder(schemaProvider)
+	for _, task := range cfg.Targets {
 		table := task.Table
 		if table == nil {
-			return nil, fmt.Errorf("%w: build tasks", ErrUnsupportedTargetType)
+			return nil, fmt.Errorf("%w: %s", ErrUnsupportedTargetType, fnName)
 		}
 
-		tableTask, references, err := buildTableTask(ctx, registry, schemaProvider, task)
-		if err != nil {
-			return nil, fmt.Errorf("%w: build tasks", err)
-		}
-
-		tasks[idx] = tableTask
-
-		for i := range references {
-			references[i].taskIdx = idx
-		}
-
-		refRequests = append(refRequests, refRequests...)
-	}
-
-	if len(refRequests) > 0 {
-		tasks, err = resolveReference(ctx, tasks, refRequests)
-		if err != nil {
-			return nil, fmt.Errorf("%w: build tasks", err)
+		if err := ttb.addTask(ctx, task); err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
 	}
 
-	return tasks, nil
+	if err := ttb.setGenerators(ctx, registry); err != nil {
+		return nil, fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	return ttb.sortTasks()
 }
