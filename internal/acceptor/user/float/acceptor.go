@@ -53,13 +53,15 @@ func (p Provider) Accept(
 	switch byteSize {
 	case floatDefault, float64Size:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceUserSettings,
-			Generator:  float.NewUnboundedFloat64Generator(),
+			AcceptedBy:     model.AcceptanceUserSettings,
+			Generator:      float.NewUnboundedFloat64Generator(),
+			ChooseCallback: nil,
 		}, nil
 	case float32Size:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceUserSettings,
-			Generator:  float.NewUnboundedFloat32Generator(),
+			AcceptedBy:     model.AcceptanceUserSettings,
+			Generator:      float.NewUnboundedFloat32Generator(),
+			ChooseCallback: nil,
 		}, nil
 	default:
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %d %s", ErrUnsupportedByteSize, byteSize, fnName)

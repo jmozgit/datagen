@@ -10,6 +10,7 @@ type CreateTableOptions struct {
 	PKs        []string
 	PartPolicy PartPolicy
 	Preserve   bool
+	FGs        string
 }
 
 type CreateTableOption func(c *CreateTableOptions)
@@ -33,5 +34,11 @@ func WithHashPartitions(parts int, field string) CreateTableOption {
 func WithPreserve() CreateTableOption {
 	return func(c *CreateTableOptions) {
 		c.Preserve = true
+	}
+}
+
+func WithForeignKey(fg string) CreateTableOption {
+	return func(c *CreateTableOptions) {
+		c.FGs = fg
 	}
 }

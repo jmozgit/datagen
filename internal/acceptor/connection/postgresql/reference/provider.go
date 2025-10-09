@@ -11,17 +11,16 @@ import (
 	"github.com/viktorkomarov/datagen/internal/generator/reference"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
 )
 
 type Provider struct {
 	connect db.Connect
-	refsvc  *refresolver.Service
+	refsvc  model.ReferenceResolver
 }
 
 func NewProvider(
 	connect db.Connect,
-	refsvc *refresolver.Service,
+	refsvc model.ReferenceResolver,
 ) *Provider {
 	return &Provider{
 		connect: connect,
@@ -30,8 +29,8 @@ func NewProvider(
 }
 
 type referenceInfo struct {
-	targetID model.Identifier
-	cellID   model.Identifier
+	table  model.Identifier
+	column model.Identifier
 }
 
 func (p *Provider) resolveReference(
@@ -43,33 +42,43 @@ func (p *Provider) resolveReference(
 
 	const query = `
 	SELECT
+    	nsp.nspname AS references_schema,
     	confrelid::regclass AS references_table,
-    	af.attname AS references_column,
-    FROM pg_constraint AS c
-	JOIN 
-		pg_attribute 
-	AS a ON a.attnum = ANY(c.conkey) AND a.attrelid = c.conrelid
-	JOIN
-		pg_attribute
-	AS af ON af.attnum = ANY(c.confkey) AND af.attrelid = c.confrelid
+    	af.attname AS references_column
+	FROM pg_constraint AS c
+	JOIN pg_attribute AS a 
+    	ON a.attnum = ANY(c.conkey) AND a.attrelid = c.conrelid
+	JOIN pg_attribute AS af 
+		ON af.attnum = ANY(c.confkey) AND af.attrelid = c.confrelid
+	JOIN pg_class AS cl 
+		ON cl.oid = c.confrelid
+	JOIN pg_namespace AS nsp 
+		ON nsp.oid = cl.relnamespace
 	WHERE 
-		c.contype = 'f' AND c.conrelid = $1::regclass AND a.attname = $2
+    	c.contype = 'f' AND c.conrelid = $1::regclass AND a.attname = $2;
 	`
 
 	// scan identifier must be smarter
-	var refInfo referenceInfo
+	var (
+		tableName  model.TableName
+		columnName model.Identifier
+	)
+
 	err := p.connect.
 		QueryRow(ctx, query, schema.ID, baseType.SourceName).
-		Scan(&refInfo.targetID, &refInfo.cellID)
+		Scan(&tableName.Schema, &tableName.Table, &columnName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return referenceInfo{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 		}
 
-		return referenceInfo{}, nil
+		return referenceInfo{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	return refInfo, nil
+	return referenceInfo{
+		table:  model.Identifier(tableName.String()),
+		column: columnName,
+	}, nil
 }
 
 func (p *Provider) Accept(
@@ -79,7 +88,7 @@ func (p *Provider) Accept(
 	const fnName = "postgresql reference: accept"
 
 	baseType, ok := req.BaseType.Get()
-	if !ok || baseType.Type != model.Reference {
+	if !ok {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 
@@ -88,16 +97,20 @@ func (p *Provider) Accept(
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	reader, err := reader.NewConnection(req.Dataset, refInfo.cellID, 150, p.connect)
+	reader, err := reader.NewConnection(refInfo.table, refInfo.column, 150, p.connect)
 	if err != nil {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
+	generator, chooseCallback := reference.NewBufferedValuesGenerator(
+		req.Dataset,
+		refInfo.table, refInfo.column,
+		reader, p.refsvc, 100,
+	)
+
 	return model.AcceptanceDecision{
-		Generator: reference.NewBufferedValuesGenerator(
-			refInfo.targetID, refInfo.cellID,
-			reader, 100,
-		),
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
+		Generator:      generator,
+		ChooseCallback: chooseCallback,
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
 	}, nil
 }

@@ -17,8 +17,9 @@ type GeneratorProvider interface {
 }
 
 var (
-	ErrGeneratorDeclined     = errors.New("generator is declined")
-	ErrNoAvailableGenerators = errors.New("no available generators")
+	ErrGeneratorDeclined          = errors.New("generator is declined")
+	ErrNoAvailableGenerators      = errors.New("no available generators")
+	ErrTooManyGeneratorsAvailable = errors.New("too many generator available")
 )
 
 type AcceptRequest struct {

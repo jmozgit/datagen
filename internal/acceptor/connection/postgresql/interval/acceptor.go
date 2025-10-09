@@ -27,7 +27,8 @@ func (p *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
-		Generator:  interval.NewPostgresql(),
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
+		Generator:      interval.NewPostgresql(),
+		ChooseCallback: nil,
 	}, nil
 }

@@ -34,5 +34,6 @@ func (p Provider) Accept(
 			time.Date(nowY-2, time.January, 1, 0, 0, 0, 0, time.UTC),
 			time.Date(nowY+2, time.January, 1, 0, 0, 0, 0, time.UTC),
 		),
+		ChooseCallback: nil,
 	}, nil
 }

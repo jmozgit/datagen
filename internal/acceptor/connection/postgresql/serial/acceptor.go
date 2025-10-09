@@ -66,7 +66,8 @@ func (s *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
-		Generator:  serial.NewSeqBasedGenerator(s.conn, seqName),
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
+		Generator:      serial.NewSeqBasedGenerator(s.conn, seqName),
+		ChooseCallback: nil,
 	}, nil
 }

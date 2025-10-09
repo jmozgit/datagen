@@ -23,7 +23,7 @@ func (p Provider) Accept(
 	_ context.Context,
 	req contract.AcceptRequest,
 ) (model.AcceptanceDecision, error) {
-	const fnName = "commont type integer: accept"
+	const fnName = "common type integer: accept"
 
 	baseType, ok := req.BaseType.Get()
 	if !ok || baseType.Type != model.Integer {
@@ -31,26 +31,29 @@ func (p Provider) Accept(
 	}
 
 	const (
-		int8Gen  = 8
-		int32Gen = 32
-		int64Gen = 64
+		int8Gen  = 1
+		int32Gen = 4
+		int64Gen = 8
 	)
 
 	switch baseType.FixedSize {
 	case 0, int32Gen:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceReasonColumnType,
-			Generator:  integer.NewRandomInRangeGenerator(math.MinInt32, math.MaxInt32),
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      integer.NewRandomInRangeGenerator(math.MinInt32, math.MaxInt32),
+			ChooseCallback: nil,
 		}, nil
 	case int8Gen:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceReasonColumnType,
-			Generator:  integer.NewRandomInRangeGenerator(math.MinInt8, math.MaxInt8),
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      integer.NewRandomInRangeGenerator(math.MinInt8, math.MaxInt8),
+			ChooseCallback: nil,
 		}, nil
 	case int64Gen:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceReasonColumnType,
-			Generator:  integer.NewRandomInRangeGenerator(math.MinInt64, math.MaxInt64),
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      integer.NewRandomInRangeGenerator(math.MinInt64, math.MaxInt64),
+			ChooseCallback: nil,
 		}, nil
 	default:
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", ErrUnknownByteSize, fnName)

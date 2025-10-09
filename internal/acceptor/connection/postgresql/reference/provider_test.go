@@ -44,7 +44,7 @@ func (r *refSuite) insertIntoBaseTable(t *testing.T) []int64 {
 	err := pgxscan.Select(
 		t.Context(), r.pgConn.Raw(),
 		&values,
-		"INSERT INTO public.base SELECT * FROM generate_series(1, 100)",
+		"INSERT INTO public.base SELECT * FROM generate_series(1, 100) RETURNING id",
 	)
 	require.NoError(t, err)
 
@@ -110,10 +110,10 @@ func Test_HeapTable(t *testing.T) {
 	for i := 0; i < len(values)*3; i++ {
 		val, err := gen.Generator.Gen(t.Context())
 		require.NoError(t, err)
-		valInt, ok := val.(int64)
+		valInt, ok := val.(int32)
 		require.True(t, ok)
 
-		require.Contains(t, values, valInt)
+		require.Contains(t, values, int64(valInt))
 	}
 }
 
@@ -145,9 +145,9 @@ func Test_TableWithPK(t *testing.T) {
 	for i := 0; i < len(values)*3; i++ {
 		val, err := gen.Generator.Gen(t.Context())
 		require.NoError(t, err)
-		valInt, ok := val.(int64)
+		valInt, ok := val.(int32)
 		require.True(t, ok)
 
-		require.Contains(t, values, valInt)
+		require.Contains(t, values, int64(valInt))
 	}
 }

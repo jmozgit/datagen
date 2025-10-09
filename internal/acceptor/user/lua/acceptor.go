@@ -39,7 +39,8 @@ func (p Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		Generator:  lua.NewScriptExecutor(path),
-		AcceptedBy: model.AcceptanceUserSettings,
+		Generator:      lua.NewScriptExecutor(path),
+		AcceptedBy:     model.AcceptanceUserSettings,
+		ChooseCallback: nil,
 	}, nil
 }

@@ -20,7 +20,7 @@ func (p Provider) Accept(
 	_ context.Context,
 	req contract.AcceptRequest,
 ) (model.AcceptanceDecision, error) {
-	const fnName = "commont type time: accept"
+	const fnName = "common type time: accept"
 
 	baseType, ok := req.BaseType.Get()
 	if !ok || baseType.Type != model.Timestamp {
@@ -33,5 +33,6 @@ func (p Provider) Accept(
 			time.Now().Add(-time.Hour*24*60),
 			time.Now().Add(time.Hour*24*60),
 		),
+		ChooseCallback: nil,
 	}, nil
 }

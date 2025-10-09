@@ -52,8 +52,9 @@ func (p Provider) Accept(
 	case FormatRandom:
 		if options.byteSize == nil {
 			return model.AcceptanceDecision{
-				AcceptedBy: model.AcceptanceUserSettings,
-				Generator:  integer.NewRandomInRangeGenerator(math.MinInt32, math.MaxInt32),
+				AcceptedBy:     model.AcceptanceUserSettings,
+				Generator:      integer.NewRandomInRangeGenerator(math.MinInt32, math.MaxInt32),
+				ChooseCallback: nil,
 			}, nil
 		}
 		key := fmt.Sprint(*options.byteSize)
@@ -68,6 +69,7 @@ func (p Provider) Accept(
 				Generator: integer.NewRandomInRangeGenerator(
 					*options.minValue, *options.maxValue,
 				),
+				ChooseCallback: nil,
 			}, nil
 		}
 
@@ -79,14 +81,16 @@ func (p Provider) Accept(
 	case FormatSerial:
 		if options.minValue == nil {
 			return model.AcceptanceDecision{
-				AcceptedBy: model.AcceptanceUserSettings,
-				Generator:  integer.NewSerialIntegerGenerator(0),
+				AcceptedBy:     model.AcceptanceUserSettings,
+				Generator:      integer.NewSerialIntegerGenerator(0),
+				ChooseCallback: nil,
 			}, nil
 		}
 
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceUserSettings,
-			Generator:  integer.NewSerialIntegerGenerator(*options.minValue),
+			AcceptedBy:     model.AcceptanceUserSettings,
+			Generator:      integer.NewSerialIntegerGenerator(*options.minValue),
+			ChooseCallback: nil,
 		}, nil
 	default:
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s %s", ErrUnknownFormat, options.format, fnName)

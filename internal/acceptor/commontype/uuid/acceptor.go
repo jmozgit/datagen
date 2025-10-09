@@ -19,7 +19,7 @@ func (p Provider) Accept(
 	_ context.Context,
 	req contract.AcceptRequest,
 ) (model.AcceptanceDecision, error) {
-	const fnName = "commont type uuid: accept"
+	const fnName = "common type uuid: accept"
 	baseType, ok := req.BaseType.Get()
 
 	if !ok || baseType.Type != model.UUID {
@@ -27,7 +27,8 @@ func (p Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonColumnType,
-		Generator:  uuid.NewUUIDV4Generator(),
+		AcceptedBy:     model.AcceptanceReasonColumnType,
+		Generator:      uuid.NewUUIDV4Generator(),
+		ChooseCallback: nil,
 	}, nil
 }

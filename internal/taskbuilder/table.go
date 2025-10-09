@@ -8,6 +8,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/refresolver"
 
 	"github.com/samber/lo"
 	"github.com/samber/mo"
@@ -16,21 +17,20 @@ import (
 var ErrCycledRefences = errors.New("cycled refernces are not allowed")
 
 type tableTaskBuilder struct {
-	targets []config.Table
-	tasks   []model.TaskGenerators
-	depsOn  map[model.Identifier][]model.Identifier
-
+	targets        []config.Table
+	tasks          []model.TaskGenerators
+	refresolver    *refresolver.Service
 	schemaProvider model.SchemaProvider
 }
 
 func newTableTaskBuilder(
 	schemaProvider model.SchemaProvider,
+	refresolver *refresolver.Service,
 ) tableTaskBuilder {
 	return tableTaskBuilder{
-		targets: make([]config.Table, 0),
-		tasks:   make([]model.TaskGenerators, 0),
-		depsOn:  make(map[model.Identifier][]model.Identifier),
-
+		targets:        make([]config.Table, 0),
+		tasks:          make([]model.TaskGenerators, 0),
+		refresolver:    refresolver,
 		schemaProvider: schemaProvider,
 	}
 }
@@ -95,11 +95,6 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 				return fmt.Errorf("%w: %s", err, fnName)
 			}
 
-			if genDeps, ok := gen.(model.GeneratorDeps); ok {
-				from := t.tasks[idx].Schema.ID
-				t.depsOn[from] = append(t.depsOn[from], genDeps.DependsOn()...)
-			}
-
 			t.tasks[idx].Generators[genIdx] = gen
 		}
 	}
@@ -116,13 +111,15 @@ func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
 		return t.Schema.ID
 	})
 
-	sortedIDs, err := topSort(ids, t.depsOn)
+	sortedIDs, err := topSort(ids, t.refresolver.DepsOn())
 	if err != nil {
 		return nil, fmt.Errorf("%w: sort tasks", err)
 	}
 
-	return lo.Map(sortedIDs, func(t model.Identifier, _ int) model.TaskGenerators {
-		return byID[t]
+	return lo.FilterMap(sortedIDs, func(t model.Identifier, _ int) (model.TaskGenerators, bool) {
+		gen, ok := byID[t]
+
+		return gen, ok
 	}), nil
 }
 

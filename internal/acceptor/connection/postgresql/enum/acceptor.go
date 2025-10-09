@@ -94,7 +94,8 @@ func (p *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		Generator:  oneof.NewGenerator(enums),
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
+		Generator:      oneof.NewGenerator(enums),
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
+		ChooseCallback: nil,
 	}, nil
 }

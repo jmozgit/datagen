@@ -40,7 +40,8 @@ func (p Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
-		Generator:  gen,
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
+		Generator:      gen,
+		ChooseCallback: nil,
 	}, nil
 }

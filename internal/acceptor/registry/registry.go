@@ -62,11 +62,11 @@ func (r *Registry) GetGenerator(
 ) (model.Generator, error) {
 	const fnName = "get generator"
 
-	matched := make(map[model.AcceptanceReason][]model.Generator)
+	matched := make(map[model.AcceptanceReason][]model.AcceptanceDecision)
 	for _, provider := range r.providers {
 		decision, err := provider.Accept(ctx, req)
 		if err == nil {
-			matched[decision.AcceptedBy] = append(matched[decision.AcceptedBy], decision.Generator)
+			matched[decision.AcceptedBy] = append(matched[decision.AcceptedBy], decision)
 
 			continue
 		}
@@ -80,6 +80,7 @@ func (r *Registry) GetGenerator(
 
 	priority := []model.AcceptanceReason{
 		model.AcceptanceUserSettings,
+		model.AcceptanceReasonReference,
 		model.AcceptanceReasonDriverAwareness,
 		model.AcceptanceReasonColumnType,
 		model.AcceptanceReasonDomain,
@@ -87,9 +88,17 @@ func (r *Registry) GetGenerator(
 	}
 
 	for _, reason := range priority {
-		if gens, ok := matched[reason]; ok {
-			// what to do if len(gens) > 0 ?
-			return gens[0], nil
+		if decisions, ok := matched[reason]; ok {
+			if len(decisions) > 1 {
+				return nil, fmt.Errorf("%w: %s", contract.ErrTooManyGeneratorsAvailable, fnName)
+			}
+
+			d := decisions[0]
+			if d.ChooseCallback != nil {
+				d.ChooseCallback()
+			}
+
+			return d.Generator, nil
 		}
 	}
 

@@ -1,8 +1,6 @@
 package model
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type CommonType int
 
@@ -33,3 +31,7 @@ func (b TargetType) String() string {
 }
 
 type Subscription func(batch SaveBatch)
+
+type ReferenceResolver interface {
+	Register(Identifier, Identifier, Subscription)
+}

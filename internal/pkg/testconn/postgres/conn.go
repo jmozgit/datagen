@@ -118,6 +118,10 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...optio
 		query += fmt.Sprintf(",primary key (%s)", strings.Join(params.PKs, ","))
 	}
 
+	if len(params.FGs) != 0 {
+		query += fmt.Sprintf(", %s", params.FGs)
+	}
+
 	query += ")"
 
 	if params.PartPolicy.Method != "" {

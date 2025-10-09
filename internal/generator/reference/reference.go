@@ -17,17 +17,23 @@ type BufferedValues struct {
 }
 
 func NewBufferedValuesGenerator(
+	schema model.DatasetSchema,
 	refTargetID model.Identifier,
 	refCellID model.Identifier,
 	reader model.ValuesReader,
+	refresolver model.ReferenceResolver,
 	bufferedSize int,
-) *BufferedValues {
-	return &BufferedValues{
+) (model.Generator, model.ChooseCallback) {
+	buf := &BufferedValues{
 		targetID:  refTargetID,
 		genID:     refCellID,
 		reader:    reader,
 		batchSize: bufferedSize,
 		next:      make(chan any, bufferedSize),
+	}
+
+	return buf, func() {
+		refresolver.Register(schema.ID, refTargetID, buf.onTargetSavedValues)
 	}
 }
 
@@ -52,7 +58,7 @@ func (b *BufferedValues) waitNextValue(ctx context.Context) (any, error) {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("%w: wait next value", ctx.Err())
 		default:
-			go b.fallbackRead(ctx)
+			b.fallbackRead(ctx)
 		}
 	}
 }
@@ -64,19 +70,20 @@ func (b *BufferedValues) fallbackRead(ctx context.Context) {
 		return
 	}
 
-	for _, val := range values {
-		select {
-		case b.next <- val:
-		default:
-			continue
+	go func() {
+		for _, val := range values {
+			select {
+			case b.next <- val:
+			default:
+				continue
+			}
 		}
-	}
+	}()
 }
 
-func (b *BufferedValues) OnTargetSavedValues(
+func (b *BufferedValues) onTargetSavedValues(
 	batch model.SaveBatch,
 ) {
-
 	idx := 0
 	for i := 1; i < len(batch.Schema.DataTypes); i++ {
 		if batch.Schema.DataTypes[i].SourceName == b.genID {
@@ -92,8 +99,4 @@ func (b *BufferedValues) OnTargetSavedValues(
 			continue
 		}
 	}
-}
-
-func (b *BufferedValues) DependsOn() []model.Identifier {
-	return []model.Identifier{b.targetID}
 }

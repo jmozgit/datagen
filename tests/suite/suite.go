@@ -159,8 +159,33 @@ func (b *BaseSuite) datagenBin() string {
 	return path.Join(b.binPath, datagenBin)
 }
 
-func (b *BaseSuite) RunDatagen(ctx context.Context) error {
+type flagsValues struct {
+	filePath string
+	worker   int
+}
+
+type FlagOption func(f *flagsValues)
+
+func WithWorkers(w uint) FlagOption {
+	return func(f *flagsValues) {
+		f.worker = int(w)
+	}
+}
+
+func (b *BaseSuite) RunDatagen(ctx context.Context, opts ...FlagOption) error {
+	flags := flagsValues{
+		filePath: b.configFileName(),
+		worker:   -1,
+	}
+
+	for _, opt := range opts {
+		opt(&flags)
+	}
+
 	args := []string{"gen", "-f", b.configFileName()}
+	if flags.worker != -1 {
+		args = append(args, "-w", fmt.Sprint(flags.worker))
+	}
 
 	cmd := exec.CommandContext(ctx, b.datagenBin(), args...) //nolint:gosec // ok for tests
 

@@ -33,15 +33,17 @@ func (p Provider) Accept(
 	if timestampSetting == nil {
 		from, to := time.Now().AddDate(0, -1, 0), time.Now().AddDate(0, 1, 0)
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceUserSettings,
-			Generator:  timestamp.NewInRangeGenerator(from, to),
+			AcceptedBy:     model.AcceptanceUserSettings,
+			Generator:      timestamp.NewInRangeGenerator(from, to),
+			ChooseCallback: nil,
 		}, nil
 	}
 
 	if timestampSetting.OnlyNow {
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceUserSettings,
-			Generator:  timestamp.NewAlwaysNowGenerator(),
+			AcceptedBy:     model.AcceptanceUserSettings,
+			Generator:      timestamp.NewAlwaysNowGenerator(),
+			ChooseCallback: nil,
 		}, nil
 	}
 
@@ -55,7 +57,8 @@ func (p Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceUserSettings,
-		Generator:  timestamp.NewInRangeGenerator(from, to),
+		AcceptedBy:     model.AcceptanceUserSettings,
+		Generator:      timestamp.NewInRangeGenerator(from, to),
+		ChooseCallback: nil,
 	}, nil
 }

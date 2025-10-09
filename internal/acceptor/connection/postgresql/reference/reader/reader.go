@@ -14,12 +14,12 @@ type Connection struct {
 }
 
 func NewConnection(
-	schema model.DatasetSchema,
+	tableNameID model.Identifier,
 	columnID model.Identifier,
 	batchSize int,
 	db db.Connect,
 ) (*Connection, error) {
-	tableName, err := model.TableNameFromIdentifier(schema.ID)
+	tableName, err := model.TableNameFromIdentifier(tableNameID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: new connection", err)
 	}

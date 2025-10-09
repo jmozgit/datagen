@@ -51,7 +51,8 @@ func (p Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceUserSettings,
-		Generator:  gen,
+		AcceptedBy:     model.AcceptanceUserSettings,
+		Generator:      gen,
+		ChooseCallback: nil,
 	}, nil
 }

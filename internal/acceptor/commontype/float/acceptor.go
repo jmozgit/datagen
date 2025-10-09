@@ -25,7 +25,7 @@ func (p Provider) Accept(
 	const fnName = "common type float: accept"
 
 	baseType, ok := req.BaseType.Get()
-	if !ok && baseType.Type != model.Float {
+	if !ok || baseType.Type != model.Float {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 
@@ -37,13 +37,15 @@ func (p Provider) Accept(
 	switch baseType.FixedSize {
 	case 0, float32Gen:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceReasonColumnType,
-			Generator:  float.NewUnboundedFloat32Generator(),
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      float.NewUnboundedFloat32Generator(),
+			ChooseCallback: nil,
 		}, nil
 	case float64Gen:
 		return model.AcceptanceDecision{
-			AcceptedBy: model.AcceptanceReasonColumnType,
-			Generator:  float.NewUnboundedFloat64Generator(),
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      float.NewUnboundedFloat64Generator(),
+			ChooseCallback: nil,
 		}, nil
 	default:
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", ErrFloatSizeUnspecified, fnName)

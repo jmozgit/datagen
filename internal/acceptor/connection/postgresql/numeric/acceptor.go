@@ -80,7 +80,8 @@ func (p *Provider) Accept(
 	}
 
 	return model.AcceptanceDecision{
-		AcceptedBy: model.AcceptanceReasonDriverAwareness,
-		Generator:  numeric.NewPostgresqlNumericGenerator(template.scale, template.precision),
+		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
+		Generator:      numeric.NewPostgresqlNumericGenerator(template.scale, template.precision),
+		ChooseCallback: nil,
 	}, nil
 }

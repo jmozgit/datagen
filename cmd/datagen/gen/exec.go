@@ -24,7 +24,7 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	tasks, err := taskbuilder.Build(ctx, c.cfg, reg)
+	tasks, err := taskbuilder.Build(ctx, c.cfg, reg, refSvc)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
