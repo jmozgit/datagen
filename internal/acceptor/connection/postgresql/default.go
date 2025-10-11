@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/enum"
+	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/geometry"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/interval"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
@@ -21,5 +22,6 @@ func DefaultProviderGenerators(
 		enum.NewProvider(conn),
 		interval.NewProvider(),
 		reference.NewProvider(conn, refResolver),
+		geometry.NewProvider(),
 	}
 }

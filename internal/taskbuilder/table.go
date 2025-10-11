@@ -92,7 +92,7 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 
 			gen, err := registry.GetGenerator(ctx, req)
 			if err != nil {
-				return fmt.Errorf("%w: %s", err, fnName)
+				return fmt.Errorf("%w: %s.%s %s", err, t.tasks[idx].Schema.ID, targetType.SourceName, fnName)
 			}
 
 			t.tasks[idx].Generators[genIdx] = gen
