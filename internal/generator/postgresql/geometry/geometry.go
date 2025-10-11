@@ -128,12 +128,7 @@ type Generator struct {
 type generator func() any
 
 func (g generator) Gen(_ context.Context) (any, error) {
-
-	val := g()
-
-	fmt.Printf("\n %+v \n", val)
-
-	return val, nil
+	return g(), nil
 }
 
 func (g generator) Close() {}
