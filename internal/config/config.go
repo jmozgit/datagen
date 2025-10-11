@@ -51,13 +51,14 @@ type Table struct {
 }
 
 type Generator struct {
-	Column    string        `yaml:"column"`
-	Type      GeneratorType `yaml:"type"`
-	Integer   *Integer      `yaml:"integer"`
-	Float     *Float        `yaml:"float"`
-	Timestamp *Timestamp    `yaml:"timestamp"`
-	UUID      *UUID         `yaml:"uuid"`
-	Lua       *Lua          `yaml:"lua"`
+	Column          string           `yaml:"column"`
+	Type            GeneratorType    `yaml:"type"`
+	Integer         *Integer         `yaml:"integer"`
+	Float           *Float           `yaml:"float"`
+	Timestamp       *Timestamp       `yaml:"timestamp"`
+	UUID            *UUID            `yaml:"uuid"`
+	Lua             *Lua             `yaml:"lua"`
+	ListProbability *ListProbability `yaml:"list_probability"`
 }
 
 type Integer struct {
@@ -83,4 +84,9 @@ type UUID struct {
 
 type Lua struct {
 	Path string `yaml:"path"`
+}
+
+type ListProbability struct {
+	Values       []any `yaml:"values"`
+	Distribution []int `yaml:"distribution"`
 }

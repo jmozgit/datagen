@@ -7,6 +7,7 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 )
 
@@ -16,13 +17,15 @@ type connection interface {
 	ResolveTableName(name model.TableName) model.TableName
 	SQLConnection() *config.SQLConnection
 	CreateTable(ctx context.Context, table Table, opts ...options.CreateTableOption) error
-	OnEachRow(ctx context.Context, name Table, fn func(row []any)) error
+	OnEachRow(ctx context.Context, name Table, fn func(row []any), opts ...options.OnEachRowOption) error
+	ExecuteInFunc(ctx context.Context, fn func(ctx context.Context, c db.Connect) error) error
 }
 
 type tempConnAdapter interface {
 	SQLConnection() *config.SQLConnection
 	CreateTable(ctx context.Context, table model.Table, opts ...options.CreateTableOption) error
-	OnEachRow(ctx context.Context, name model.Table, fn func(row []any)) error
+	OnEachRow(ctx context.Context, name model.Table, fn func(row []any), opts ...options.OnEachRowOption) error
+	ExecuteInFunc(ctx context.Context, fn func(ctx context.Context, c db.Connect) error) error
 }
 
 type TypeResolver struct {
@@ -137,7 +140,7 @@ func (c *TypeResolver) CreateTable(ctx context.Context, table Table, opts ...opt
 	return nil
 }
 
-func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row []any)) error {
+func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row []any), opts ...options.OnEachRowOption) error {
 	columns, err := c.mapColumns(table.Columns)
 	if err != nil {
 		return fmt.Errorf("%w: on each row", err)
@@ -146,9 +149,17 @@ func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row [
 	err = c.tempConnAdapter.OnEachRow(ctx, model.Table{
 		Name:    c.ResolveTableName(table.Name),
 		Columns: columns,
-	}, fn)
+	}, fn, opts...)
 	if err != nil {
 		return fmt.Errorf("%w: on each row", err)
+	}
+
+	return nil
+}
+
+func (c *TypeResolver) ExecuteInFunc(ctx context.Context, fn func(ctx context.Context, c db.Connect) error) error {
+	if err := c.tempConnAdapter.ExecuteInFunc(ctx, fn); err != nil {
+		return fmt.Errorf("%w: execute in func", err)
 	}
 
 	return nil

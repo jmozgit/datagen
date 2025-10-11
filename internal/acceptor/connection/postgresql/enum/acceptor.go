@@ -22,12 +22,12 @@ func NewProvider(connect db.Connect) *Provider {
 	}
 }
 
-func (p *Provider) EnumOID(ctx context.Context, rawType string) (int64, error) {
+func (p *Provider) enumOID(ctx context.Context, rawType string) (uint32, error) {
 	const fnName = "enum oid"
 
 	const query = "SELECT oid FROM pg_type WHERE typname = $1 AND typtype = 'e'"
 
-	var oid int64
+	var oid uint32
 	err := p.connect.QueryRow(ctx, query, rawType).Scan(&oid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -40,10 +40,10 @@ func (p *Provider) EnumOID(ctx context.Context, rawType string) (int64, error) {
 	return oid, nil
 }
 
-func (p *Provider) GetEnums(ctx context.Context, baseType model.TargetType) ([]string, error) {
+func (p *Provider) getEnums(ctx context.Context, baseType model.TargetType) ([]string, error) {
 	const fnName = "get enums"
 
-	enumOID, err := p.EnumOID(ctx, baseType.SourceType)
+	enumOID, err := p.enumOID(ctx, baseType.SourceType)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
@@ -84,7 +84,7 @@ func (p *Provider) Accept(
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 
-	enums, err := p.GetEnums(ctx, baseType)
+	enums, err := p.getEnums(ctx, baseType)
 	if err != nil {
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", err, fnName)
 	}

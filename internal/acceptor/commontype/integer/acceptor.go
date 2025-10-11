@@ -32,6 +32,7 @@ func (p Provider) Accept(
 
 	const (
 		int8Gen  = 1
+		int16Gen = 2
 		int32Gen = 4
 		int64Gen = 8
 	)
@@ -47,6 +48,12 @@ func (p Provider) Accept(
 		return model.AcceptanceDecision{
 			AcceptedBy:     model.AcceptanceReasonColumnType,
 			Generator:      integer.NewRandomInRangeGenerator(math.MinInt8, math.MaxInt8),
+			ChooseCallback: nil,
+		}, nil
+	case int16Gen:
+		return model.AcceptanceDecision{
+			AcceptedBy:     model.AcceptanceReasonColumnType,
+			Generator:      integer.NewRandomInRangeGenerator(math.MinInt16, math.MaxInt16),
 			ChooseCallback: nil,
 		}, nil
 	case int64Gen:

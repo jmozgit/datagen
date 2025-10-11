@@ -1,5 +1,7 @@
 package options
 
+import "github.com/viktorkomarov/datagen/internal/pkg/db"
+
 type PartPolicy struct {
 	Method string
 	Cnt    int
@@ -40,5 +42,17 @@ func WithPreserve() CreateTableOption {
 func WithForeignKey(fg string) CreateTableOption {
 	return func(c *CreateTableOptions) {
 		c.FGs = fg
+	}
+}
+
+type OnEachRow struct {
+	ScanFn func(row db.Row) ([]any, error)
+}
+
+type OnEachRowOption func(o *OnEachRow)
+
+func WithScanFn(scanFn func(row db.Row) ([]any, error)) OnEachRowOption {
+	return func(o *OnEachRow) {
+		o.ScanFn = scanFn
 	}
 }

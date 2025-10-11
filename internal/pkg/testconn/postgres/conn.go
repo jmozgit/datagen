@@ -8,6 +8,8 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
+	pgxadapter "github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
 
@@ -151,7 +153,19 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...optio
 	return nil
 }
 
-func (c *Conn) OnEachRow(ctx context.Context, table model.Table, fn func(row []any)) error {
+func (c *Conn) OnEachRow(
+	ctx context.Context,
+	table model.Table,
+	fn func(row []any),
+	opts ...options.OnEachRowOption,
+) error {
+	optsRow := options.OnEachRow{
+		ScanFn: nil,
+	}
+	for _, opt := range opts {
+		opt(&optsRow)
+	}
+
 	columns := lo.Map(table.Columns, func(c model.Column, _ int) string {
 		return string(c.Name)
 	})
@@ -170,15 +184,35 @@ func (c *Conn) OnEachRow(ctx context.Context, table model.Table, fn func(row []a
 	}
 
 	for rows.Next() {
-		if err := rows.Scan(ptrBuf...); err != nil {
-			return fmt.Errorf("%w: on each row", err)
-		}
+		if optsRow.ScanFn != nil {
+			buf, err := optsRow.ScanFn(rows)
+			if err != nil {
+				return fmt.Errorf("%w: on each row", err)
+			}
 
-		fn(buf)
+			fn(buf)
+		} else {
+			if err := rows.Scan(ptrBuf...); err != nil {
+				return fmt.Errorf("%w: on each row", err)
+			}
+
+			fn(buf)
+		}
 	}
 
 	if err = rows.Err(); err != nil {
 		return fmt.Errorf("%w: on each row", err)
+	}
+
+	return nil
+}
+
+func (c *Conn) ExecuteInFunc(ctx context.Context, fn func(ctx context.Context, conn db.Connect) error) error {
+	adapter := pgxadapter.NewAdapterConn(c.conn)
+
+	err := fn(ctx, adapter)
+	if err != nil {
+		return fmt.Errorf("%w: execute in func", err)
 	}
 
 	return nil

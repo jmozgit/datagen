@@ -12,6 +12,7 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
 
@@ -119,8 +120,13 @@ func (b *BaseSuite) CreateTable(table Table, opts ...options.CreateTableOption) 
 	require.NoError(b.t, err)
 }
 
-func (b *BaseSuite) OnEachRow(table Table, fn func(row []any)) {
-	err := b.conn.OnEachRow(b.t.Context(), table, fn)
+func (b *BaseSuite) OnEachRow(table Table, fn func(row []any), opts ...options.OnEachRowOption) {
+	err := b.conn.OnEachRow(b.t.Context(), table, fn, opts...)
+	require.NoError(b.t, err)
+}
+
+func (b *BaseSuite) ExecuteInFunc(fn func(ctx context.Context, c db.Connect) error) {
+	err := b.conn.ExecuteInFunc(b.t.Context(), fn)
 	require.NoError(b.t, err)
 }
 
