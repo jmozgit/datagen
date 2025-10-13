@@ -31,12 +31,8 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 	schema := batch.Schema
 	data := batch.Data
 
-	name, err := model.TableNameFromIdentifier(schema.ID)
-	if err != nil {
-		return model.SaveReport{}, fmt.Errorf("%w: save", err)
-	}
-	columns := lo.Map(schema.DataTypes, func(ct model.TargetType, _ int) string {
-		return string(ct.SourceName)
+	columns := lo.Map(schema.Columns, func(ct model.TargetType, _ int) string {
+		return ct.SourceName.Unquoted()
 	})
 
 	conn, err := d.pool.Acquire(ctx)
@@ -45,7 +41,7 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 	}
 	defer conn.Release()
 
-	tableName := pgx.Identifier{string(name.Schema), string(name.Table)}
+	tableName := pgx.Identifier{schema.TableName.Schema.Unquoted(), schema.TableName.Table.Unquoted()}
 
 	return save(ctx, conn, tableName, columns, data)
 }

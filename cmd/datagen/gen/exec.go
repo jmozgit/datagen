@@ -19,7 +19,7 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
 	refSvc := refresolver.NewService()
-	reg, err := registry.PrepareRegistry(ctx, c.cfg, refSvc, c.closerRegistry)
+	reg, err := registry.PrepareAcceptors(ctx, c.cfg, refSvc, c.closerRegistry)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}

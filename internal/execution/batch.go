@@ -56,7 +56,7 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 		for i, gen := range task.Generators {
 			cell, err := gen.Gen(ctx)
 			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.Schema.DataTypes[i])
+				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.Columns[i].SourceName)
 			}
 
 			batch[batchID][i] = cell
@@ -64,13 +64,13 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 
 		if batchID+1 == len(batch) || !shouldContinue(collected, task.Limit, uint64(batchID)+1) {
 			batch := model.SaveBatch{
-				Schema: task.Schema,
+				Schema: task.DatasetSchema,
 				Data:   batch[:batchID+1],
 			}
 
 			saved, err := b.saver.Save(ctx, batch)
 			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.Schema.ID)
+				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName)
 			}
 
 			b.refNotifier.OnSaved(batch)

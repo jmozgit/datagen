@@ -30,11 +30,13 @@ func (p Provider) Accept(
 	}
 
 	const (
-		float32Gen = 32
-		float64Gen = 64
+		float32Gen = 4
+		float64Gen = 8
 	)
 
 	switch baseType.FixedSize {
+	case -1:
+		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	case 0, float32Gen:
 		return model.AcceptanceDecision{
 			AcceptedBy:     model.AcceptanceReasonColumnType,

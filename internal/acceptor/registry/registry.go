@@ -22,7 +22,7 @@ type Registry struct {
 	providers   []contract.GeneratorProvider
 }
 
-func PrepareRegistry(
+func PrepareAcceptors(
 	ctx context.Context,
 	cfg config.Config,
 	refRegistry *refresolver.Service,

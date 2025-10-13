@@ -6,6 +6,7 @@ import (
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/schema"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -32,24 +33,63 @@ var pgRegistryTypes = map[string]model.CommonType{
 	"uuid": model.UUID,
 }
 
-// it's incorrect, but ok for now.
-func (i *Inspector) TargetIdentifier(target config.Target) (model.Identifier, error) {
-	return model.Identifier(fmt.Sprintf("%s.%s", target.Table.Schema, target.Table.Table)), nil
-}
+func (i *Inspector) TableIdentifier(ctx context.Context, table *config.Table) (model.TableName, error) {
+	const fnName = "table identifier"
 
-func (i *Inspector) GeneratorIdentifier(gen config.Generator) (model.Identifier, error) {
-	return model.Identifier(gen.Column), nil
-}
-
-func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.DatasetSchema, error) {
-	name, err := model.TableNameFromIdentifier(id)
+	matchedTables, err := i.connect.ResolveTableNames(ctx, table.Table, table.Schema)
 	if err != nil {
-		return model.DatasetSchema{}, fmt.Errorf("%w: data source", err)
+		return model.TableName{}, fmt.Errorf("%w: %s", err, fnName)
 	}
+
+	switch {
+	case len(matchedTables) == 0:
+		return model.TableName{}, fmt.Errorf(
+			"%w: %s schema: %s table: %s",
+			schema.ErrEntityNotFound, fnName,
+			table.Schema, table.Table,
+		)
+	case len(matchedTables) > 1:
+		return model.TableName{}, fmt.Errorf(
+			"%w: %s try to specify schema for %s",
+			schema.ErrTooManyTablesMatched, fnName, table.Table,
+		)
+	default:
+		return matchedTables[0], nil
+	}
+}
+
+func (i *Inspector) ColumnIdentifier(ctx context.Context, tableName model.TableName, column string) (model.Identifier, error) {
+	const fnName = "column identifier"
+
+	columns, err := i.connect.ResolveColumnNames(ctx, tableName, column)
+	if err != nil {
+		return model.Identifier(""), fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	switch {
+	case len(columns) == 0:
+		return model.Identifier(""), fmt.Errorf(
+			"%w: %s schema: %s table: %s column: %s",
+			schema.ErrEntityNotFound, fnName,
+			tableName.Schema, tableName.Table, column,
+		)
+	case len(columns) > 1:
+		return model.Identifier(""), fmt.Errorf(
+			"%w: %s schema: %s table: %s column: %s",
+			schema.ErrTooManyColumnsMatched, fnName,
+			tableName.Schema, tableName.Table, column,
+		)
+	default:
+		return columns[0], nil
+	}
+}
+
+func (i *Inspector) Table(ctx context.Context, name model.TableName) (model.DatasetSchema, error) {
+	const fnName = "table"
 
 	table, err := i.connect.Table(ctx, name)
 	if err != nil {
-		return model.DatasetSchema{}, fmt.Errorf("%w: data source", err)
+		return model.DatasetSchema{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	dataTypes := make([]model.TargetType, len(table.Columns))
@@ -69,8 +109,8 @@ func (i *Inspector) DataSource(ctx context.Context, id model.Identifier) (model.
 	}
 
 	return model.DatasetSchema{
-		ID:                id,
-		DataTypes:         dataTypes,
+		TableName:         name,
+		Columns:           dataTypes,
 		UniqueConstraints: table.UniqueIndexes,
 	}, nil
 }

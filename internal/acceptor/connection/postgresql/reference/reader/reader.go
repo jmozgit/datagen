@@ -14,20 +14,15 @@ type Connection struct {
 }
 
 func NewConnection(
-	tableNameID model.Identifier,
-	columnID model.Identifier,
-	batchSize int,
+	tableName model.TableName,
+	column model.Identifier,
+	limit int,
 	db db.Connect,
-) (*Connection, error) {
-	tableName, err := model.TableNameFromIdentifier(tableNameID)
-	if err != nil {
-		return nil, fmt.Errorf("%w: new connection", err)
-	}
-
+) *Connection {
 	return &Connection{
-		query: baseQuery(tableName, columnID, batchSize),
+		query: baseQuery(tableName, column, limit),
 		db:    db,
-	}, nil
+	}
 }
 
 func (c *Connection) ReadValues(ctx context.Context) ([]any, error) {
@@ -58,13 +53,13 @@ func (c *Connection) ReadValues(ctx context.Context) ([]any, error) {
 
 func baseQuery(
 	table model.TableName,
-	colID model.Identifier,
+	col model.Identifier,
 	batchSize int,
 ) string {
 	// better aproach: see statitistic, if row number is not large, then use ORDER BY RANDOM()
 	// use index scan where it's possible
 	return fmt.Sprintf(
 		`SELECT %s FROM %s TABLESAMPLE BERNOULLI (33) LIMIT %d`,
-		colID, table.String(), batchSize,
+		col, table.String(), batchSize,
 	)
 }

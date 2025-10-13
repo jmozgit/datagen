@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
@@ -35,30 +37,30 @@ func newTableTaskBuilder(
 	}
 }
 
-func (t *tableTaskBuilder) addTask(ctx context.Context, target config.Target) error {
-	const fnName = "add task"
+func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Table) error {
+	const fnName = "add table task"
 
-	schemaAwareID, err := t.schemaProvider.TargetIdentifier(target)
+	schemaAwareID, err := t.schemaProvider.TableIdentifier(ctx, target)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	schema, err := t.schemaProvider.DataSource(ctx, schemaAwareID)
+	schema, err := t.schemaProvider.Table(ctx, schemaAwareID)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	task := model.TaskGenerators{
 		Task: model.Task{
-			Schema: schema,
+			DatasetSchema: schema,
 			Limit: model.TaskProgress{
-				Rows:  target.Table.LimitRows,
-				Bytes: uint64(target.Table.LimitBytes),
+				Rows:  target.LimitRows,
+				Bytes: uint64(target.LimitBytes),
 			},
 		},
-		Generators: make([]model.Generator, len(schema.DataTypes)),
+		Generators: make([]model.Generator, len(schema.Columns)),
 	}
-	t.targets = append(t.targets, *target.Table)
+	t.targets = append(t.targets, *target)
 	t.tasks = append(t.tasks, task)
 
 	return nil
@@ -68,9 +70,10 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 	const fnName = "set generators"
 
 	for idx, target := range t.targets {
+		task := t.tasks[idx]
 		userSettingsByID := make(map[model.Identifier]config.Generator)
 		for _, settings := range target.Generators {
-			id, err := t.schemaProvider.GeneratorIdentifier(settings)
+			id, err := t.schemaProvider.ColumnIdentifier(ctx, task.DatasetSchema.TableName, settings.Column)
 			if err != nil {
 				return fmt.Errorf("%w: %s", err, fnName)
 			}
@@ -78,24 +81,29 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 			userSettingsByID[id] = settings
 		}
 
-		for genIdx, targetType := range t.tasks[idx].Schema.DataTypes {
+		for genIdx, targetType := range task.DatasetSchema.Columns {
 			userSettings := mo.None[config.Generator]()
 			if set, ok := userSettingsByID[targetType.SourceName]; ok {
+				delete(userSettingsByID, targetType.SourceName)
 				userSettings = mo.Some(set)
 			}
 
 			req := contract.AcceptRequest{
-				Dataset:      t.tasks[idx].Schema,
+				Dataset:      task.DatasetSchema,
 				UserSettings: userSettings,
 				BaseType:     mo.Some(targetType),
 			}
 
 			gen, err := registry.GetGenerator(ctx, req)
 			if err != nil {
-				return fmt.Errorf("%w: %s.%s %s", err, t.tasks[idx].Schema.ID, targetType.SourceName, fnName)
+				return fmt.Errorf("%w: %s.%s %s", err, task.DatasetSchema.TableName, targetType.SourceName, fnName)
 			}
 
 			t.tasks[idx].Generators[genIdx] = gen
+		}
+
+		if len(userSettingsByID) > 0 {
+			return fmt.Errorf("unknown user config %s", fnName)
 		}
 	}
 
@@ -103,20 +111,18 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 }
 
 func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
-	byID := lo.SliceToMap(t.tasks, func(t model.TaskGenerators) (model.Identifier, model.TaskGenerators) {
-		return t.Schema.ID, t
+	byID := lo.SliceToMap(t.tasks, func(t model.TaskGenerators) (model.TableName, model.TaskGenerators) {
+		return t.DatasetSchema.TableName, t
 	})
 
-	ids := lo.Map(t.tasks, func(t model.TaskGenerators, _ int) model.Identifier {
-		return t.Schema.ID
-	})
+	ids := slices.Collect(maps.Keys(byID))
 
 	sortedIDs, err := topSort(ids, t.refresolver.DepsOn())
 	if err != nil {
 		return nil, fmt.Errorf("%w: sort tasks", err)
 	}
 
-	return lo.FilterMap(sortedIDs, func(t model.Identifier, _ int) (model.TaskGenerators, bool) {
+	return lo.FilterMap(sortedIDs, func(t model.TableName, _ int) (model.TaskGenerators, bool) {
 		gen, ok := byID[t]
 
 		return gen, ok
@@ -124,17 +130,17 @@ func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
 }
 
 func topSort(
-	ids []model.Identifier,
-	deps map[model.Identifier][]model.Identifier,
-) ([]model.Identifier, error) {
+	ids []model.TableName,
+	deps map[model.TableName][]model.TableName,
+) ([]model.TableName, error) {
 	const fnName = "top sort"
 
-	out := make([]model.Identifier, 0, len(ids))
-	visited := make(map[model.Identifier]bool)
-	inProgress := make(map[model.Identifier]bool)
-	var visit func(model.Identifier) error
+	out := make([]model.TableName, 0, len(ids))
+	visited := make(map[model.TableName]bool)
+	inProgress := make(map[model.TableName]bool)
+	var visit func(model.TableName) error
 
-	visit = func(id model.Identifier) error {
+	visit = func(id model.TableName) error {
 		const fnName = "inner visit"
 
 		if visited[id] {

@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 var ErrIncorrectTableName = errors.New("table name format schema.table")
@@ -11,21 +10,6 @@ var ErrIncorrectTableName = errors.New("table name format schema.table")
 type TableName struct {
 	Schema Identifier
 	Table  Identifier
-}
-
-// it's incorrect, `.` might be in schema/table name.
-func TableNameFromIdentifier(id Identifier) (TableName, error) {
-	const sep = 2
-
-	split := strings.Split(string(id), ".")
-	if len(split) != sep {
-		return TableName{}, fmt.Errorf("%w, got %s", ErrIncorrectTableName, id)
-	}
-
-	return TableName{
-		Schema: Identifier(split[0]),
-		Table:  Identifier(split[1]),
-	}, nil
 }
 
 func (t TableName) String() string {

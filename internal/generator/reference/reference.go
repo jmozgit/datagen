@@ -9,31 +9,31 @@ import (
 )
 
 type BufferedValues struct {
-	reader    model.ValuesReader
-	targetID  model.Identifier
-	genID     model.Identifier
-	batchSize int
-	next      chan any
+	columnReader model.ColumnValueReader
+	refTable     model.TableName
+	refCol       model.Identifier
+	batchSize    int
+	next         chan any
 }
 
 func NewBufferedValuesGenerator(
 	schema model.DatasetSchema,
-	refTargetID model.Identifier,
-	refCellID model.Identifier,
-	reader model.ValuesReader,
+	columnReader model.ColumnValueReader,
+	refTable model.TableName,
+	refCol model.Identifier,
 	refresolver model.ReferenceResolver,
 	bufferedSize int,
 ) (model.Generator, model.ChooseCallback) {
 	buf := &BufferedValues{
-		targetID:  refTargetID,
-		genID:     refCellID,
-		reader:    reader,
-		batchSize: bufferedSize,
-		next:      make(chan any, bufferedSize),
+		columnReader: columnReader,
+		refTable:     refTable,
+		refCol:       refCol,
+		batchSize:    bufferedSize,
+		next:         make(chan any, bufferedSize),
 	}
 
 	return buf, func() {
-		refresolver.Register(schema.ID, refTargetID, buf.onTargetSavedValues)
+		refresolver.Register(schema.TableName, refTable, buf.onTargetSavedValues)
 	}
 }
 
@@ -64,7 +64,7 @@ func (b *BufferedValues) waitNextValue(ctx context.Context) (any, error) {
 }
 
 func (b *BufferedValues) fallbackRead(ctx context.Context) {
-	values, err := b.reader.ReadValues(ctx)
+	values, err := b.columnReader.ReadValues(ctx)
 	if err != nil {
 		slog.Error("failed to read values", slog.Any("error", err))
 		return
@@ -85,8 +85,8 @@ func (b *BufferedValues) onTargetSavedValues(
 	batch model.SaveBatch,
 ) {
 	idx := 0
-	for i := 1; i < len(batch.Schema.DataTypes); i++ {
-		if batch.Schema.DataTypes[i].SourceName == b.genID {
+	for i := 1; i < len(batch.Schema.Columns); i++ {
+		if batch.Schema.Columns[i].SourceName == b.refCol {
 			idx = i
 			break
 		}

@@ -27,15 +27,28 @@ func (s *Provider) getSeqName(
 ) (string, error) {
 	const fnName = "get seq name"
 
-	tableName, err := model.TableNameFromIdentifier(dataset.ID)
-	if err != nil {
-		return "", fmt.Errorf("%w: %s", err, fnName)
-	}
+	tableName := dataset.TableName
 
-	query := fmt.Sprintf("select pg_get_serial_sequence('%s', '%s')", tableName.String(), string(baseType.SourceName))
+	const query = `
+	SELECT
+    	s.relname AS sequence_name
+	FROM pg_class s
+	JOIN pg_namespace n ON n.oid = s.relnamespace
+	JOIN pg_depend d ON d.objid = s.oid
+	JOIN pg_class t ON d.refobjid = t.oid
+	JOIN pg_attribute a ON a.attnum = d.refobjsubid AND a.attrelid = t.oid
+	WHERE s.relkind = 'S'
+  		AND n.nspname = $1
+  		AND t.relname = $2
+  		AND a.attname = $3
+	`
 
 	var seqName sql.NullString
-	if err := s.conn.QueryRow(ctx, query).Scan(&seqName); err != nil {
+	if err := s.conn.QueryRow(
+		ctx, query,
+		tableName.Schema.Unquoted(), tableName.Table.Unquoted(),
+		baseType.SourceName.Unquoted(),
+	).Scan(&seqName); err != nil {
 		return "", fmt.Errorf("%w: %s", err, fnName)
 	}
 	if !seqName.Valid {

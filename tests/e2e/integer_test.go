@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
 	"github.com/samber/lo"
@@ -144,7 +145,7 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 	}
 	minValues := [3]int64{-10, 5, 0}
 
-	baseSuite.CreateTable(table)
+	baseSuite.CreateTable(table, options.WithPreserve())
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(13),
 		//nolint:exhaustruct // ok

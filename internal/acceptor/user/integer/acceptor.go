@@ -58,7 +58,7 @@ func (p Provider) Accept(
 			}, nil
 		}
 		key := fmt.Sprint(*options.byteSize)
-		if *options.byteSize >= 0 {
+		if *options.minValue >= 0 {
 			key += "u"
 		}
 

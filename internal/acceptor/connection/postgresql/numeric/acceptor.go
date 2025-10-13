@@ -41,18 +41,14 @@ func (p *Provider) getNumericTemplate(
 		WHERE
 			table_schema = $1 AND table_name = $2 AND column_name = $3
 		`
-	tableName, err := model.TableNameFromIdentifier(dataset.ID)
-	if err != nil {
-		return numericTemplate{}, fmt.Errorf("%w: %s", err, fnName)
-	}
-
-	row := p.connect.QueryRow(ctx, query, tableName.Schema, tableName.Table, string(column.SourceName))
+	tableName := dataset.TableName
 
 	var (
 		prec  *int
 		scale *int
 	)
 
+	row := p.connect.QueryRow(ctx, query, tableName.Schema.Unquoted(), tableName.Table.Unquoted(), column.SourceName.Unquoted())
 	if err := row.Scan(&prec, &scale); err != nil {
 		return numericTemplate{}, fmt.Errorf("%w: %s", err, fnName)
 	}

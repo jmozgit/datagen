@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
@@ -19,6 +20,13 @@ import (
 
 type refSuite struct {
 	pgConn *postgres.Conn
+}
+
+func newTableName(schema, table string) model.TableName {
+	return model.TableName{
+		Schema: model.Identifier(pgx.Identifier([]string{schema}).Sanitize()),
+		Table:  model.Identifier(pgx.Identifier([]string{table}).Sanitize()),
+	}
 }
 
 func (r *refSuite) createBaseTable(t *testing.T) {
@@ -54,11 +62,11 @@ func (r *refSuite) insertIntoBaseTable(t *testing.T) []int64 {
 func (r *refSuite) getAcceptRequest() contract.AcceptRequest {
 	return contract.AcceptRequest{
 		Dataset: model.DatasetSchema{
-			ID: "public.child",
+			TableName: newTableName("public", "child"),
 		},
 		UserSettings: mo.None[config.Generator](),
 		BaseType: mo.Some(model.TargetType{
-			SourceName: "base_id",
+			SourceName: model.Identifier(pgx.Identifier([]string{"base_id"}).Sanitize()),
 			Type:       model.Reference,
 			SourceType: "int",
 			IsNullable: false,
@@ -93,11 +101,15 @@ func Test_HeapTable(t *testing.T) {
 	err := testConn.pgConn.CreateTable(
 		t.Context(),
 		model.Table{
-			Name: model.TableName{Schema: "public", Table: "child"},
+			Name: newTableName("public", "child"),
 			Columns: []model.Column{
-				{Name: "base_id", Type: "int references base(id)"},
+				{
+					Name: model.Identifier(pgx.Identifier([]string{"base_id"}).Sanitize()),
+					Type: "int references base(id)",
+				},
 			},
 		},
+		options.WithPreserve(),
 	)
 	require.NoError(t, err)
 
@@ -127,7 +139,7 @@ func Test_TableWithPK(t *testing.T) {
 	err := testConn.pgConn.CreateTable(
 		t.Context(),
 		model.Table{
-			Name: model.TableName{Schema: "public", Table: "child"},
+			Name: newTableName("public", "child"),
 			Columns: []model.Column{
 				{Name: "id", Type: "int"},
 				{Name: "base_id", Type: "int references base(id)"},

@@ -12,47 +12,68 @@ func Test_topSort(t *testing.T) {
 
 	testCases := []struct {
 		desc string
-		ids  []model.Identifier
-		deps map[model.Identifier][]model.Identifier
+		ids  []model.TableName
+		deps map[model.TableName][]model.TableName
 
-		expected    []model.Identifier
+		expected    []model.TableName
 		expectedErr bool
 	}{
 		{
 			desc: "top_sort_no_deps",
-			ids: []model.Identifier{
-				"id", "id1", "id2", "id3",
+			ids: []model.TableName{
+				{Schema: "public", Table: "id"},
+				{Schema: "public", Table: "id1"},
+				{Schema: "public", Table: "id2"},
+				{Schema: "public", Table: "id3"},
 			},
-			deps: make(map[model.Identifier][]model.Identifier),
-			expected: []model.Identifier{
-				"id", "id1", "id2", "id3",
+			deps: make(map[model.TableName][]model.TableName),
+			expected: []model.TableName{
+				{Schema: "public", Table: "id"},
+				{Schema: "public", Table: "id1"},
+				{Schema: "public", Table: "id2"},
+				{Schema: "public", Table: "id3"},
 			},
 			expectedErr: false,
 		},
 		{
 			desc: "top_sort_cycled_ref",
-			ids: []model.Identifier{
-				"id", "id1", "id2", "id3",
+			ids: []model.TableName{
+				{Schema: "public", Table: "id"},
+				{Schema: "public", Table: "id1"},
+				{Schema: "public", Table: "id2"},
+				{Schema: "public", Table: "id3"},
 			},
-			deps: map[model.Identifier][]model.Identifier{
-				"id":  {"id1"},
-				"id1": {"id"},
+			deps: map[model.TableName][]model.TableName{
+				{Schema: "public", Table: "id"}:  {{Schema: "public", Table: "id1"}},
+				{Schema: "public", Table: "id1"}: {{Schema: "public", Table: "id"}},
 			},
 			expected:    nil,
 			expectedErr: true,
 		},
 		{
 			desc: "top_sort_with_dep",
-			ids: []model.Identifier{
-				"id", "id1", "id2", "id3", "id4", "id5",
+			ids: []model.TableName{
+				{Schema: "public", Table: "id"},
+				{Schema: "public", Table: "id1"},
+				{Schema: "public", Table: "id2"},
+				{Schema: "public", Table: "id3"},
+				{Schema: "public", Table: "id4"},
+				{Schema: "public", Table: "id5"},
 			},
-			deps: map[model.Identifier][]model.Identifier{
-				"id":  {"id2", "id3"},
-				"id2": {"id3"},
-				"id4": {"id5"},
-				"id5": {"id3"},
+			deps: map[model.TableName][]model.TableName{
+				{Schema: "public", Table: "id"}:  {{Schema: "public", Table: "id2"}, {Schema: "public", Table: "id3"}},
+				{Schema: "public", Table: "id2"}: {{Schema: "public", Table: "id3"}},
+				{Schema: "public", Table: "id4"}: {{Schema: "public", Table: "id5"}},
+				{Schema: "public", Table: "id5"}: {{Schema: "public", Table: "id3"}},
 			},
-			expected:    []model.Identifier{"id3", "id2", "id", "id1", "id5", "id4"},
+			expected: []model.TableName{
+				{Schema: "public", Table: "id3"},
+				{Schema: "public", Table: "id2"},
+				{Schema: "public", Table: "id"},
+				{Schema: "public", Table: "id1"},
+				{Schema: "public", Table: "id5"},
+				{Schema: "public", Table: "id4"},
+			},
 			expectedErr: false,
 		},
 	}

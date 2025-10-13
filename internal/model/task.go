@@ -6,6 +6,6 @@ type TaskProgress struct {
 }
 
 type Task struct {
-	Limit  TaskProgress
-	Schema DatasetSchema
+	Limit         TaskProgress
+	DatasetSchema DatasetSchema
 }

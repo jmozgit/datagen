@@ -78,8 +78,8 @@ func Test_DbSaveNoErrors(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				ID: "public.test",
-				DataTypes: []model.TargetType{
+				TableName: model.TableName{Schema: "public", Table: "test"},
+				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
 					{
 						SourceName: "id",
@@ -125,8 +125,8 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				ID: "public.test_with_pk",
-				DataTypes: []model.TargetType{
+				TableName: model.TableName{Schema: "public", Table: "test_with_pk"},
+				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
 					{SourceName: "id", SourceType: "integer"},
 				},
@@ -164,8 +164,8 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				ID: "public.test_with_pk",
-				DataTypes: []model.TargetType{
+				TableName: model.TableName{Schema: "public", Table: "test_with_pk"},
+				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
 					{
 						SourceName: "id",
@@ -206,8 +206,8 @@ func Test_ColumnConstraint(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				ID: "public.test_with_check",
-				DataTypes: []model.TargetType{
+				TableName: model.TableName{Schema: "public", Table: "test_with_check"},
+				Columns: []model.TargetType{
 					//nolint:exhaustruct // it's okay here
 					{
 						SourceName: "id",

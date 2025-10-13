@@ -58,7 +58,7 @@ func Build(
 			return nil, fmt.Errorf("%w: %s", ErrUnsupportedTargetType, fnName)
 		}
 
-		if err := ttb.addTask(ctx, task); err != nil {
+		if err := ttb.addTableTask(ctx, table); err != nil {
 			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
 	}

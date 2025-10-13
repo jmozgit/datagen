@@ -71,7 +71,7 @@ func (c *connect) doesTableExist(
 	`
 
 	var exists bool
-	if err := conn.QueryRow(ctx, query, name.Schema, name.Table).Scan(&exists); err != nil {
+	if err := conn.QueryRow(ctx, query, name.Schema.Unquoted(), name.Table.Unquoted()).Scan(&exists); err != nil {
 		return false, fmt.Errorf("%w: does table exist", err)
 	}
 
@@ -104,13 +104,13 @@ func (c *connect) selectTableColumns(
 	}
 
 	var columns []Column
-	if err := pgxscan.Select(ctx, conn, &columns, query, name.Schema, name.Table); err != nil {
+	if err := pgxscan.Select(ctx, conn, &columns, query, name.Schema.Unquoted(), name.Table.Unquoted()); err != nil {
 		return nil, fmt.Errorf("%w: selectTableColumns", err)
 	}
 
 	return lo.Map(columns, func(c Column, _ int) model.Column {
 		return model.Column{
-			Name:       model.Identifier(c.ColumnName),
+			Name:       model.Identifier(pgx.Identifier([]string{c.ColumnName}).Sanitize()),
 			IsNullable: c.IsNullable == "YES",
 			Type:       c.UdtName,
 			FixedSize:  c.TypeLen,
@@ -152,7 +152,7 @@ func (c *connect) selectUniqueConstraints(
 	}
 
 	var cols []Pair
-	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema, name.Table); err != nil {
+	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema.Unquoted(), name.Table.Unquoted()); err != nil {
 		return nil, fmt.Errorf("%w: selectUniqueConstraints", err)
 	}
 
@@ -162,8 +162,67 @@ func (c *connect) selectUniqueConstraints(
 
 	return lo.Map(groups, func(group []Pair, _ int) []model.Identifier {
 		return lo.Map(group, func(p Pair, _ int) model.Identifier {
-			// read id from db
-			return model.Identifier(p.ColumnName)
+			return model.Identifier(pgx.Identifier([]string{p.ColumnName}).Sanitize())
 		})
+	}), nil
+}
+
+func (c *connect) ResolveTableNames(ctx context.Context, name, schema string) ([]model.TableName, error) {
+	const fnName = "resolve table names"
+	const queryWithoutSchema = "SELECT schemaname, tablename FROM pg_catalog.pg_tables WHERE tablename = $1"
+	const queryWithSchema = "SELECT schemaname, tablename FROM pg_catalog.pg_tables WHERE tablename = $1 AND schemaname = $2"
+
+	type Row struct {
+		SchemaName string `db:"schemaname"`
+		TableName  string `db:"tablename"`
+	}
+
+	conn, err := pgx.ConnectConfig(ctx, c.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%w: table", err)
+	}
+	defer conn.Close(ctx)
+
+	var rows []Row
+
+	if schema == "" {
+		err = pgxscan.Select(ctx, conn, &rows, queryWithoutSchema, name)
+	} else {
+		err = pgxscan.Select(ctx, conn, &rows, queryWithSchema, name, schema)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	return lo.Map(rows, func(row Row, _ int) model.TableName {
+		return model.TableName{
+			Schema: model.Identifier(pgx.Identifier([]string{row.SchemaName}).Sanitize()),
+			Table:  model.Identifier(pgx.Identifier([]string{row.TableName}).Sanitize()),
+		}
+	}), nil
+}
+
+func (c *connect) ResolveColumnNames(ctx context.Context, name model.TableName, column string) ([]model.Identifier, error) {
+	const fnName = "resolve column names"
+	const query = "SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND table_schema = $2 AND column_name = $3"
+
+	conn, err := pgx.ConnectConfig(ctx, c.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%w: table", err)
+	}
+	defer conn.Close(ctx)
+
+	var rawColumns []string
+	err = pgxscan.Select(
+		ctx, conn, &rawColumns,
+		query,
+		name.Table.Unquoted(), name.Schema.Unquoted(), column,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	return lo.Map(rawColumns, func(row string, _ int) model.Identifier {
+		return model.Identifier(pgx.Identifier([]string{row}).Sanitize())
 	}), nil
 }

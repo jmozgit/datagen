@@ -66,8 +66,9 @@ func Test_PositiveScale(t *testing.T) {
 				t.Context(),
 				contract.AcceptRequest{
 					Dataset: model.DatasetSchema{
-						ID:        "public.test_numeric",
-						DataTypes: nil,
+						TableName:         model.TableName{Schema: "public", Table: "test_numeric"},
+						Columns:           nil,
+						UniqueConstraints: nil,
 					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
@@ -84,8 +85,9 @@ func Test_PositiveScale(t *testing.T) {
 				t.Context(),
 				contract.AcceptRequest{
 					Dataset: model.DatasetSchema{
-						ID:        "public.test_numeric",
-						DataTypes: nil,
+						TableName:         model.TableName{Schema: "public", Table: "test_numeric"},
+						Columns:           nil,
+						UniqueConstraints: nil,
 					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
@@ -136,7 +138,11 @@ func Test_NegativeScale(t *testing.T) {
 			gen1, err := provider.Accept(
 				t.Context(),
 				contract.AcceptRequest{
-					Dataset:      model.DatasetSchema{ID: "public.test_negative_scale", DataTypes: nil},
+					Dataset: model.DatasetSchema{
+						TableName:         model.TableName{Schema: "public", Table: "test_negative_scale"},
+						Columns:           nil,
+						UniqueConstraints: nil,
+					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
 					BaseType: mo.Some(model.TargetType{SourceName: "col", Type: model.Float, SourceType: "numeric"}),

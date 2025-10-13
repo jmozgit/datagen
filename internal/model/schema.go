@@ -7,11 +7,11 @@ import (
 )
 
 type SchemaProvider interface {
-	TargetIdentifier(target config.Target) (Identifier, error)
-	GeneratorIdentifier(gen config.Generator) (Identifier, error)
-	DataSource(ctx context.Context, id Identifier) (DatasetSchema, error)
+	TableIdentifier(ctx context.Context, table *config.Table) (TableName, error)
+	ColumnIdentifier(ctx context.Context, tableName TableName, column string) (Identifier, error)
+	Table(ctx context.Context, table TableName) (DatasetSchema, error)
 }
 
-type ValuesReader interface {
+type ColumnValueReader interface {
 	ReadValues(ctx context.Context) ([]any, error)
 }

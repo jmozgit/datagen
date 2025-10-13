@@ -1,7 +1,5 @@
 package model
 
-import "fmt"
-
 type CommonType int
 
 const (
@@ -23,15 +21,8 @@ type TargetType struct {
 	FixedSize  int
 }
 
-func (b TargetType) String() string {
-	return fmt.Sprintf(
-		"TargetType[Type %d, SourceType %s]",
-		b.Type, b.SourceType,
-	)
-}
-
 type Subscription func(batch SaveBatch)
 
 type ReferenceResolver interface {
-	Register(Identifier, Identifier, Subscription)
+	Register(TableName, TableName, Subscription)
 }
