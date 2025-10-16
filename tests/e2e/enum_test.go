@@ -16,7 +16,6 @@ import (
 type pgEnumSuite struct {
 	bs         *suite.BaseSuite
 	enumValues []string
-	table      suite.Table
 }
 
 func newPGEnumSuite(t *testing.T) pgEnumSuite {
@@ -54,13 +53,10 @@ func (p pgEnumSuite) scanFn(row db.Row) ([]any, error) {
 }
 
 func (p pgEnumSuite) createTable() suite.Table {
-	table := suite.Table{
-		Name: p.bs.TableName(suite.ScemaDefault, "enum_table"),
-		Columns: []suite.Column{
-			suite.NewColumn("id", suite.TypeInt2),
-			suite.NewColumnRawType("value", "test_enum_type"),
-		},
-	}
+	table := p.bs.NewTable("enum_table", []suite.Column{
+		suite.NewColumn("id", suite.TypeInt2),
+		suite.NewColumnRawType("value", "test_enum_type"),
+	})
 	p.bs.CreateTable(table, options.WithPKs([]string{"id"}))
 
 	return table
@@ -73,8 +69,8 @@ func Test_PostgresqlEnumValues(t *testing.T) {
 	enumSuite.bs.SaveConfig(
 		suite.WithBatchSize(39),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			LimitRows:  73,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),
@@ -109,8 +105,8 @@ func Test_EnumUserSettings(t *testing.T) {
 	enumSuite.bs.SaveConfig(
 		suite.WithBatchSize(7),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			LimitRows:  19,
 			LimitBytes: 0,
 			Generators: []config.Generator{

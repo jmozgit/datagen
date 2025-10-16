@@ -48,14 +48,14 @@ func Test_PositiveScale(t *testing.T) {
 		for _, s := range scale {
 			err := conn.testConn.CreateTable(t.Context(), model.Table{
 				Name: model.TableName{
-					Schema: "public",
-					Table:  "test_numeric",
+					Schema: model.PGIdentifier("public"),
+					Table:  model.PGIdentifier("test_numeric"),
 				},
 				Columns: []model.Column{
 					//nolint:exhaustruct // ok
-					{Name: "gen_col", Type: fmt.Sprintf("NUMERIC(%d, %d)", p, s)},
+					{Name: model.PGIdentifier("gen_col"), Type: fmt.Sprintf("NUMERIC(%d, %d)", p, s)},
 					//nolint:exhaustruct // ok
-					{Name: "rev_gen_col", Type: fmt.Sprintf("NUMERIC(%d, %d)", s, p)},
+					{Name: model.PGIdentifier("rev_gen_col"), Type: fmt.Sprintf("NUMERIC(%d, %d)", s, p)},
 				},
 			})
 			require.NoError(t, err)
@@ -66,14 +66,14 @@ func Test_PositiveScale(t *testing.T) {
 				t.Context(),
 				contract.AcceptRequest{
 					Dataset: model.DatasetSchema{
-						TableName:         model.TableName{Schema: "public", Table: "test_numeric"},
+						TableName:         model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_numeric")},
 						Columns:           nil,
 						UniqueConstraints: nil,
 					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
 					BaseType: mo.Some(model.TargetType{
-						SourceName: "gen_col",
+						SourceName: model.PGIdentifier("gen_col"),
 						Type:       model.Float,
 						SourceType: "numeric",
 					}),
@@ -85,14 +85,14 @@ func Test_PositiveScale(t *testing.T) {
 				t.Context(),
 				contract.AcceptRequest{
 					Dataset: model.DatasetSchema{
-						TableName:         model.TableName{Schema: "public", Table: "test_numeric"},
+						TableName:         model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_numeric")},
 						Columns:           nil,
 						UniqueConstraints: nil,
 					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
 					BaseType: mo.Some(model.TargetType{
-						SourceName: "rev_gen_col",
+						SourceName: model.PGIdentifier("rev_gen_col"),
 						Type:       model.Float,
 						SourceType: "numeric",
 					}),
@@ -127,9 +127,9 @@ func Test_NegativeScale(t *testing.T) {
 	for _, p := range precision {
 		for _, s := range scale {
 			err := conn.testConn.CreateTable(t.Context(), model.Table{
-				Name: model.TableName{Schema: "public", Table: "test_negative_scale"},
+				Name: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_negative_scale")},
 				//nolint:exhaustruct // ok
-				Columns: []model.Column{{Name: "col", Type: fmt.Sprintf("NUMERIC(%d, %d)", p, s)}},
+				Columns: []model.Column{{Name: model.PGIdentifier("col"), Type: fmt.Sprintf("NUMERIC(%d, %d)", p, s)}},
 			})
 			require.NoError(t, err)
 
@@ -139,13 +139,13 @@ func Test_NegativeScale(t *testing.T) {
 				t.Context(),
 				contract.AcceptRequest{
 					Dataset: model.DatasetSchema{
-						TableName:         model.TableName{Schema: "public", Table: "test_negative_scale"},
+						TableName:         model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_negative_scale")},
 						Columns:           nil,
 						UniqueConstraints: nil,
 					},
 					UserSettings: mo.None[config.Generator](),
 					//nolint:exhaustruct // ok
-					BaseType: mo.Some(model.TargetType{SourceName: "col", Type: model.Float, SourceType: "numeric"}),
+					BaseType: mo.Some(model.TargetType{SourceName: model.PGIdentifier("col"), Type: model.Float, SourceType: "numeric"}),
 				},
 			)
 			require.NoError(t, err)

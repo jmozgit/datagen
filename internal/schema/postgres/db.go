@@ -31,21 +31,21 @@ func (c *connect) Table(ctx context.Context, name model.TableName) (model.Table,
 
 	exists, err := c.doesTableExist(ctx, conn, name)
 	if err != nil {
-		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
+		return model.Table{}, fmt.Errorf("%w: table %s", err, name.Quoted())
 	}
 
 	if !exists {
-		return model.Table{}, fmt.Errorf("%w: table %s", schema.ErrEntityNotFound, name)
+		return model.Table{}, fmt.Errorf("%w: table %s", schema.ErrEntityNotFound, name.Quoted())
 	}
 
 	columns, err := c.selectTableColumns(ctx, conn, name)
 	if err != nil {
-		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
+		return model.Table{}, fmt.Errorf("%w: table %s", err, name.Quoted())
 	}
 
 	uniqueIndexes, err := c.selectUniqueConstraints(ctx, conn, name)
 	if err != nil {
-		return model.Table{}, fmt.Errorf("%w: table %s", err, name)
+		return model.Table{}, fmt.Errorf("%w: table %s", err, name.Quoted())
 	}
 
 	return model.Table{
@@ -71,7 +71,7 @@ func (c *connect) doesTableExist(
 	`
 
 	var exists bool
-	if err := conn.QueryRow(ctx, query, name.Schema.Unquoted(), name.Table.Unquoted()).Scan(&exists); err != nil {
+	if err := conn.QueryRow(ctx, query, name.Schema.AsArgument(), name.Table.AsArgument()).Scan(&exists); err != nil {
 		return false, fmt.Errorf("%w: does table exist", err)
 	}
 
@@ -104,13 +104,13 @@ func (c *connect) selectTableColumns(
 	}
 
 	var columns []Column
-	if err := pgxscan.Select(ctx, conn, &columns, query, name.Schema.Unquoted(), name.Table.Unquoted()); err != nil {
+	if err := pgxscan.Select(ctx, conn, &columns, query, name.Schema.AsArgument(), name.Table.AsArgument()); err != nil {
 		return nil, fmt.Errorf("%w: selectTableColumns", err)
 	}
 
 	return lo.Map(columns, func(c Column, _ int) model.Column {
 		return model.Column{
-			Name:       model.Identifier(pgx.Identifier([]string{c.ColumnName}).Sanitize()),
+			Name:       model.PGIdentifier(c.ColumnName),
 			IsNullable: c.IsNullable == "YES",
 			Type:       c.UdtName,
 			FixedSize:  c.TypeLen,
@@ -152,7 +152,7 @@ func (c *connect) selectUniqueConstraints(
 	}
 
 	var cols []Pair
-	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema.Unquoted(), name.Table.Unquoted()); err != nil {
+	if err := pgxscan.Select(ctx, conn, &cols, query, name.Schema.AsArgument(), name.Table.AsArgument()); err != nil {
 		return nil, fmt.Errorf("%w: selectUniqueConstraints", err)
 	}
 
@@ -162,7 +162,7 @@ func (c *connect) selectUniqueConstraints(
 
 	return lo.Map(groups, func(group []Pair, _ int) []model.Identifier {
 		return lo.Map(group, func(p Pair, _ int) model.Identifier {
-			return model.Identifier(pgx.Identifier([]string{p.ColumnName}).Sanitize())
+			return model.PGIdentifier(p.ColumnName)
 		})
 	}), nil
 }
@@ -196,8 +196,8 @@ func (c *connect) ResolveTableNames(ctx context.Context, name, schema string) ([
 
 	return lo.Map(rows, func(row Row, _ int) model.TableName {
 		return model.TableName{
-			Schema: model.Identifier(pgx.Identifier([]string{row.SchemaName}).Sanitize()),
-			Table:  model.Identifier(pgx.Identifier([]string{row.TableName}).Sanitize()),
+			Schema: model.PGIdentifier(row.SchemaName),
+			Table:  model.PGIdentifier(row.TableName),
 		}
 	}), nil
 }
@@ -216,13 +216,13 @@ func (c *connect) ResolveColumnNames(ctx context.Context, name model.TableName, 
 	err = pgxscan.Select(
 		ctx, conn, &rawColumns,
 		query,
-		name.Table.Unquoted(), name.Schema.Unquoted(), column,
+		name.Table.AsArgument(), name.Schema.AsArgument(), column,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	return lo.Map(rawColumns, func(row string, _ int) model.Identifier {
-		return model.Identifier(pgx.Identifier([]string{row}).Sanitize())
+		return model.PGIdentifier(row)
 	}), nil
 }

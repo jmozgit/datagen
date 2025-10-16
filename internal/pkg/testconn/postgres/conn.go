@@ -91,7 +91,7 @@ func (c *Conn) Raw() *pgx.Conn {
 
 func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...options.CreateTableOption) error {
 	if err := c.ensureUnexistence(ctx, table.Name); err != nil {
-		return fmt.Errorf("%w: ensure unexistence %s", err, table.Name)
+		return fmt.Errorf("%w: ensure unexistence %s", err, table.Name.Quoted())
 	}
 
 	params := options.CreateTableOptions{
@@ -111,9 +111,9 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...optio
 		c.saveSchema = true
 	}
 
-	query := fmt.Sprintf("create table %s (", table.Name.String())
+	query := fmt.Sprintf("create table %s (", table.Name.Quoted())
 	query += strings.Join(lo.Map(table.Columns, func(c model.Column, _ int) string {
-		return fmt.Sprintf("%s %s", c.Name, c.Type)
+		return fmt.Sprintf("%s %s", c.Name.Quoted(), c.Type)
 	}), ",")
 
 	if len(params.PKs) != 0 {
@@ -135,7 +135,7 @@ func (c *Conn) CreateTable(ctx context.Context, table model.Table, opts ...optio
 		for i := range params.PartPolicy.Cnt {
 			part := fmt.Sprintf(
 				"create table %s_part_%d partition of %s for values with (modulus %d, remainder %d)",
-				table.Name.String(), i, table.Name.String(), params.PartPolicy.Cnt, i,
+				table.Name.Table.AsArgument(), i, table.Name.Quoted(), params.PartPolicy.Cnt, i,
 			)
 
 			if _, err := c.conn.Exec(ctx, part); err != nil {
@@ -167,9 +167,9 @@ func (c *Conn) OnEachRow(
 	}
 
 	columns := lo.Map(table.Columns, func(c model.Column, _ int) string {
-		return string(c.Name)
+		return c.Name.Quoted()
 	})
-	query := "SELECT " + strings.Join(columns, ", ") + " FROM " + table.Name.String()
+	query := "SELECT " + strings.Join(columns, ", ") + " FROM " + table.Name.Quoted()
 
 	rows, err := c.conn.Query(ctx, query)
 	if err != nil {
@@ -230,7 +230,7 @@ func (c *Conn) SQLConnection() *config.SQLConnection {
 }
 
 func (c *Conn) ensureUnexistence(ctx context.Context, name model.TableName) error {
-	_, err := c.conn.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", name))
+	_, err := c.conn.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", name.Quoted()))
 	if err != nil {
 		return fmt.Errorf("%w: ensure unexistence", err)
 	}

@@ -48,7 +48,7 @@ func (p *Provider) getNumericTemplate(
 		scale *int
 	)
 
-	row := p.connect.QueryRow(ctx, query, tableName.Schema.Unquoted(), tableName.Table.Unquoted(), column.SourceName.Unquoted())
+	row := p.connect.QueryRow(ctx, query, tableName.Schema.AsArgument(), tableName.Table.AsArgument(), column.SourceName.AsArgument())
 	if err := row.Scan(&prec, &scale); err != nil {
 		return numericTemplate{}, fmt.Errorf("%w: %s", err, fnName)
 	}

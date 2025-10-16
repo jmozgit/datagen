@@ -1,11 +1,33 @@
 package model
 
-import "strings"
+import "github.com/jackc/pgx/v5"
 
-type Identifier string
+type Driver int
 
-func (i Identifier) Unquoted() string {
-	return strings.Trim(string(i), `"`)
+const (
+	DriverPostgresql Driver = iota
+)
+
+type Identifier struct {
+	drivder Driver
+	value   string
+}
+
+func PGIdentifier(val string) Identifier {
+	return Identifier{drivder: DriverPostgresql, value: val}
+}
+
+func (i Identifier) AsArgument() string {
+	return i.value
+}
+
+func (i Identifier) Quoted() string {
+	switch i.drivder {
+	case DriverPostgresql:
+		return pgx.Identifier([]string{i.value}).Sanitize()
+	default:
+		panic("unknown driver")
+	}
 }
 
 type DatasetSchema struct {

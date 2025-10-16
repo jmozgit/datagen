@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference/reader"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/generator/reference"
@@ -75,9 +74,9 @@ func (p *Provider) resolveReference(
 	err := p.connect.
 		QueryRow(
 			ctx, query,
-			ds.TableName.Schema.Unquoted(),
-			ds.TableName.Table.Unquoted(),
-			baseType.SourceName.Unquoted(),
+			ds.TableName.Schema.AsArgument(),
+			ds.TableName.Table.AsArgument(),
+			baseType.SourceName.AsArgument(),
 		).
 		Scan(&schema, &table, &column)
 	if err != nil {
@@ -90,10 +89,10 @@ func (p *Provider) resolveReference(
 
 	return referenceInfo{
 		table: model.TableName{
-			Schema: model.Identifier(pgx.Identifier([]string{schema}).Sanitize()),
-			Table:  model.Identifier(pgx.Identifier([]string{table}).Sanitize()),
+			Schema: model.PGIdentifier(schema),
+			Table:  model.PGIdentifier(table),
 		},
-		column: model.Identifier(pgx.Identifier([]string{column}).Sanitize()),
+		column: model.PGIdentifier(column),
 	}, nil
 }
 

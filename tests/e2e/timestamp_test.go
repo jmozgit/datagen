@@ -16,20 +16,18 @@ func Test_PGTimeTypes(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName("public", "test_pg_timestampts"),
-		Columns: []suite.Column{
-			suite.NewColumnRawType("ts", "timestamptz"),
-			suite.NewColumnRawType("ts1", "timestamp"),
-		},
-	}
+	table := baseSuite.NewTable("test_pg_timestampts", []suite.Column{
+		suite.NewColumnRawType("ts", "timestamptz"),
+		suite.NewColumnRawType("ts1", "timestamp"),
+	})
+
 	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(3),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  3,
 			LimitBytes: 0,
@@ -52,17 +50,18 @@ func Test_PGTimeTypes(t *testing.T) {
 
 func Test_TimestampFromColumnType(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name:    baseSuite.TableName(suite.ScemaDefault, "test_timestamp_column_type"),
-		Columns: []suite.Column{suite.NewColumn("col", suite.TypeTimestamp)},
-	}
+	table := baseSuite.NewTable(
+		"test_timestamp_column_type",
+		[]suite.Column{suite.NewColumn("col", suite.TypeTimestamp)},
+	)
+
 	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(1),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  4,
 			LimitBytes: 0,
@@ -86,15 +85,13 @@ func Test_TimestampFromColumnType(t *testing.T) {
 //nolint:funlen // ok for test
 func Test_TimestampFromUserSettings(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_timestamp_user_settings"),
-		Columns: []suite.Column{
+	table := baseSuite.NewTable("test_timestamp_user_settings",
+		[]suite.Column{
 			suite.NewColumn("time_default", suite.TypeTimestamp),
 			suite.NewColumn("time_always_now", suite.TypeTimestamp),
 			suite.NewColumn("time_from_to", suite.TypeTimestamp),
 			suite.NewColumn("time_from", suite.TypeTimestamp),
-		},
-	}
+		})
 	baseSuite.CreateTable(table)
 
 	matchInTimeRange := func(lhs, rhs, val time.Time) bool {
@@ -153,8 +150,8 @@ func Test_TimestampFromUserSettings(t *testing.T) {
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(6),
 		suite.WithTableTarget(config.Table{
-			Schema: string(table.Name.Schema),
-			Table:  string(table.Name.Table),
+			Schema: table.Schema,
+			Table:  table.Name,
 			Generators: []config.Generator{
 				//nolint:exhaustruct // it's oneof
 				{Column: "time_default", Type: config.GeneratorTypeTimestamp},

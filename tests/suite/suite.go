@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
@@ -106,13 +105,8 @@ func NewBaseSuite(t *testing.T) *BaseSuite {
 	}
 }
 
-func (b *BaseSuite) TableName(schema, name string) model.TableName {
-	return b.conn.ResolveTableName(
-		model.TableName{
-			Schema: model.Identifier(schema),
-			Table:  model.Identifier(name),
-		},
-	)
+func (b *BaseSuite) NewTable(name string, cols []Column) Table {
+	return b.conn.NewTable(name, cols)
 }
 
 func (b *BaseSuite) CreateTable(table Table, opts ...options.CreateTableOption) {

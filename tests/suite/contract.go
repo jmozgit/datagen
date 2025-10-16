@@ -14,7 +14,7 @@ import (
 var ErrUnknownTypeForDriver = errors.New("unknown err for driver")
 
 type connection interface {
-	ResolveTableName(name model.TableName) model.TableName
+	NewTable(name string, cols []Column) Table
 	SQLConnection() *config.SQLConnection
 	CreateTable(ctx context.Context, table Table, opts ...options.CreateTableOption) error
 	OnEachRow(ctx context.Context, name Table, fn func(row []any), opts ...options.OnEachRowOption) error
@@ -75,24 +75,42 @@ func NewColumn(name string, tp Type) Column {
 }
 
 type Table struct {
-	Name    model.TableName
+	Schema  string
+	Name    string
 	Columns []Column
 }
 
-func (c *TypeResolver) ResolveTableName(name model.TableName) model.TableName {
-	if string(name.Schema) == ScemaDefault {
-		switch c.connType {
-		case postgresqlConnection:
-			return model.TableName{
-				Schema: model.Identifier("public"),
-				Table:  name.Table,
-			}
-		default:
-			return name
-		}
+func (c *TypeResolver) defaultSchema() string {
+	switch c.connType {
+	case postgresqlConnection:
+		return "public"
+	default:
+		return ""
 	}
+}
 
-	return name
+func (c *TypeResolver) NewTable(name string, columns []Column) Table {
+	return Table{
+		Schema:  c.defaultSchema(),
+		Name:    name,
+		Columns: columns,
+	}
+}
+
+func (c *TypeResolver) ResolveTableName(schema, name string) model.TableName {
+	return model.TableName{
+		Schema: c.resolveIdentifier(schema),
+		Table:  c.resolveIdentifier(name),
+	}
+}
+
+func (c *TypeResolver) resolveIdentifier(id string) model.Identifier {
+	switch c.connType {
+	case postgresqlConnection:
+		return model.PGIdentifier(id)
+	default:
+		return model.Identifier{}
+	}
 }
 
 func (c *TypeResolver) mapColumns(columns []Column) ([]model.Column, error) {
@@ -100,7 +118,7 @@ func (c *TypeResolver) mapColumns(columns []Column) ([]model.Column, error) {
 	for _, col := range columns {
 		//nolint:exhaustruct // it's okay for now
 		mapped := model.Column{
-			Name: model.Identifier(col.Name),
+			Name: c.resolveIdentifier(col.Name),
 		}
 		if col.Type == TypeUseRaw {
 			mapped.Type = col.RawType
@@ -130,7 +148,7 @@ func (c *TypeResolver) CreateTable(ctx context.Context, table Table, opts ...opt
 	}
 
 	err = c.tempConnAdapter.CreateTable(ctx, model.Table{
-		Name:    c.ResolveTableName(table.Name),
+		Name:    c.ResolveTableName(table.Schema, table.Name),
 		Columns: columns,
 	}, opts...)
 	if err != nil {
@@ -147,7 +165,7 @@ func (c *TypeResolver) OnEachRow(ctx context.Context, table Table, fn func(row [
 	}
 
 	err = c.tempConnAdapter.OnEachRow(ctx, model.Table{
-		Name:    c.ResolveTableName(table.Name),
+		Name:    c.ResolveTableName(table.Schema, table.Name),
 		Columns: columns,
 	}, fn, opts...)
 	if err != nil {

@@ -63,21 +63,21 @@ func (i *Inspector) ColumnIdentifier(ctx context.Context, tableName model.TableN
 
 	columns, err := i.connect.ResolveColumnNames(ctx, tableName, column)
 	if err != nil {
-		return model.Identifier(""), fmt.Errorf("%w: %s", err, fnName)
+		return model.Identifier{}, fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	switch {
 	case len(columns) == 0:
-		return model.Identifier(""), fmt.Errorf(
+		return model.Identifier{}, fmt.Errorf(
 			"%w: %s schema: %s table: %s column: %s",
 			schema.ErrEntityNotFound, fnName,
-			tableName.Schema, tableName.Table, column,
+			tableName.Schema.AsArgument(), tableName.Table.AsArgument(), column,
 		)
 	case len(columns) > 1:
-		return model.Identifier(""), fmt.Errorf(
+		return model.Identifier{}, fmt.Errorf(
 			"%w: %s schema: %s table: %s column: %s",
 			schema.ErrTooManyColumnsMatched, fnName,
-			tableName.Schema, tableName.Table, column,
+			tableName.Schema.AsArgument(), tableName.Table.AsArgument(), column,
 		)
 	default:
 		return columns[0], nil

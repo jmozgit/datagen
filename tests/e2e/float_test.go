@@ -14,22 +14,19 @@ func Test_PostgresqlNumeric(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_pg_numeric"),
-		Columns: []suite.Column{
-			suite.NewColumnRawType("num1", "numeric(5, -3)"),
-			suite.NewColumnRawType("num2", "numeric"),
-			suite.NewColumnRawType("dec1", "decimal(2, 10)"),
-			suite.NewColumnRawType("dec2", "decimal"),
-		},
-	}
+	table := baseSuite.NewTable("test_pg_numeric", []suite.Column{
+		suite.NewColumnRawType("num1", "numeric(5, -3)"),
+		suite.NewColumnRawType("num2", "numeric"),
+		suite.NewColumnRawType("dec1", "decimal(2, 10)"),
+		suite.NewColumnRawType("dec2", "decimal"),
+	})
 	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(15),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  15,
 			LimitBytes: 0,
@@ -44,20 +41,17 @@ func Test_PostgresqlNumeric(t *testing.T) {
 
 func Test_FloatGeneratorFromType(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_float"),
-		Columns: []suite.Column{
-			suite.NewColumn("real", suite.TypeFloat4),
-			suite.NewColumn("double", suite.TypeFloat8),
-		},
-	}
+	table := baseSuite.NewTable("test_float", []suite.Column{
+		suite.NewColumn("real", suite.TypeFloat4),
+		suite.NewColumn("double", suite.TypeFloat8),
+	})
 	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(17),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  35,
 			LimitBytes: 0,

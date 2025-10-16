@@ -47,8 +47,8 @@ func Test_UnknownTable(t *testing.T) {
 
 	setup := newPgInspectorTestSetup(t, nil)
 	_, err := setup.connect.Table(t.Context(), model.TableName{
-		Schema: "public",
-		Table:  "unknown",
+		Schema: model.PGIdentifier("public"),
+		Table:  model.PGIdentifier("unknown"),
 	})
 	require.ErrorIs(t, err, schema.ErrEntityNotFound)
 }
@@ -58,8 +58,8 @@ func Test_NoColumns(t *testing.T) {
 
 	table := model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "no_columns",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("no_columns"),
 		},
 		Columns: []model.Column{},
 	}
@@ -75,13 +75,13 @@ func Test_PartitionParentTable(t *testing.T) {
 
 	table := model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "parent",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("parent"),
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: model.PGIdentifier("col1"), Type: "int8", IsNullable: false, FixedSize: 8},
+			{Name: model.PGIdentifier("col2"), Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: model.PGIdentifier("col3"), Type: "int8", IsNullable: true, FixedSize: 8},
 		},
 	}
 
@@ -100,13 +100,13 @@ func Test_PartitionChildTable(t *testing.T) {
 
 	table := model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "child",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("child"),
 		},
 		Columns: []model.Column{
-			{Name: "col1", Type: "int8", IsNullable: false, FixedSize: 8},
-			{Name: "col2", Type: "int8", IsNullable: true, FixedSize: 8},
-			{Name: "col3", Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: model.PGIdentifier("col1"), Type: "int8", IsNullable: false, FixedSize: 8},
+			{Name: model.PGIdentifier("col2"), Type: "int8", IsNullable: true, FixedSize: 8},
+			{Name: model.PGIdentifier("col3"), Type: "int8", IsNullable: true, FixedSize: 8},
 		},
 	}
 
@@ -116,8 +116,8 @@ func Test_PartitionChildTable(t *testing.T) {
 		options.WithHashPartitions(5, "col1"),
 	)
 	table.Name = model.TableName{
-		Schema: "public",
-		Table:  "child_part_0",
+		Schema: model.PGIdentifier("public"),
+		Table:  model.PGIdentifier("child_part_0"),
 	}
 	actual, err := setup.connect.Table(t.Context(), table.Name)
 	require.NoError(t, err)

@@ -13,21 +13,18 @@ import (
 
 func Test_MixedIntegersFormat(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_mixed_integers"),
-		Columns: []suite.Column{
-			suite.NewColumn("integer", suite.TypeInt4),
-			suite.NewColumn("serial", suite.TypeSerialInt4),
-		},
-	}
+	table := baseSuite.NewTable("test_mixed_integers", []suite.Column{
+		suite.NewColumn("integer", suite.TypeInt4),
+		suite.NewColumn("serial", suite.TypeSerialInt4),
+	})
 	baseSuite.CreateTable(table)
 
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(3),
 		//nolint:exhaustruct // ok
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  2,
 		}),
@@ -51,24 +48,21 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_all_integers"),
-		Columns: []suite.Column{
-			suite.NewColumnRawType("smallint", "smallint"),
-			suite.NewColumnRawType("integer", "integer"),
-			suite.NewColumnRawType("bigint", "bigint"),
-			suite.NewColumnRawType("int2", "int2"),
-			suite.NewColumnRawType("int4", "int4"),
-			suite.NewColumnRawType("int8", "int8"),
-		},
-	}
+	table := baseSuite.NewTable("test_all_integers", []suite.Column{
+		suite.NewColumnRawType("smallint", "smallint"),
+		suite.NewColumnRawType("integer", "integer"),
+		suite.NewColumnRawType("bigint", "bigint"),
+		suite.NewColumnRawType("int2", "int2"),
+		suite.NewColumnRawType("int4", "int4"),
+		suite.NewColumnRawType("int8", "int8"),
+	})
 	baseSuite.CreateTable(table)
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(7),
 		//nolint:exhaustruct // ok
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  39,
 		}),
@@ -92,22 +86,19 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_default_serial"),
-		Columns: []suite.Column{
-			suite.NewColumnRawType("smallserial", "smallserial"),
-			suite.NewColumnRawType("serial", "serial"),
-			suite.NewColumnRawType("bigserial", "bigserial"),
-		},
-	}
+	table := baseSuite.NewTable("test_default_serial", []suite.Column{
+		suite.NewColumnRawType("smallserial", "smallserial"),
+		suite.NewColumnRawType("serial", "serial"),
+		suite.NewColumnRawType("bigserial", "bigserial"),
+	})
 
 	baseSuite.CreateTable(table)
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(11),
 		//nolint:exhaustruct // ok
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			Generators: []config.Generator{},
 			LimitRows:  12,
 		}),
@@ -135,14 +126,12 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 
 func Test_SerialGeneratorFromConfig(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_serial"),
-		Columns: []suite.Column{
-			suite.NewColumn("smallserial", suite.TypeSerialInt2),
-			suite.NewColumn("serial", suite.TypeSerialInt4),
-			suite.NewColumn("bigserial", suite.TypeSerialInt8),
-		},
-	}
+	table := baseSuite.NewTable("test_serial", []suite.Column{
+		suite.NewColumn("smallserial", suite.TypeSerialInt2),
+		suite.NewColumn("serial", suite.TypeSerialInt4),
+		suite.NewColumn("bigserial", suite.TypeSerialInt8),
+	})
+
 	minValues := [3]int64{-10, 5, 0}
 
 	baseSuite.CreateTable(table, options.WithPreserve())
@@ -150,8 +139,8 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 		suite.WithBatchSize(13),
 		//nolint:exhaustruct // ok
 		suite.WithTableTarget(config.Table{
-			Schema: string(table.Name.Schema),
-			Table:  string(table.Name.Table),
+			Schema: table.Schema,
+			Table:  table.Name,
 			Generators: []config.Generator{
 				{
 					Column: "smallserial",
@@ -200,12 +189,10 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 	baseSuite := suite.NewBaseSuite(t)
 
-	table := suite.Table{
-		Name: baseSuite.TableName(suite.ScemaDefault, "test_integer_respect_constraints"),
-		Columns: []suite.Column{
+	table := baseSuite.NewTable("test_integer_respect_constraints",
+		[]suite.Column{
 			suite.NewColumn("gen_col", suite.TypeInt4),
-		},
-	}
+		})
 
 	baseSuite.CreateTable(table)
 
@@ -213,8 +200,8 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 		suite.WithBatchSize(1),
 		//nolint:exhaustruct // ok for tests
 		suite.WithTableTarget(config.Table{
-			Schema:    string(table.Name.Schema),
-			Table:     string(table.Name.Table),
+			Schema:    table.Schema,
+			Table:     table.Name,
 			LimitRows: 150,
 			Generators: []config.Generator{
 				{

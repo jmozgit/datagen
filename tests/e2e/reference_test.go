@@ -20,21 +20,15 @@ func newReferenceSuite(t *testing.T) referenceSuite {
 
 	bs := suite.NewBaseSuite(t)
 
-	baseTable := suite.Table{
-		Name: bs.TableName(suite.ScemaDefault, "base_table"),
-		Columns: []suite.Column{
-			suite.NewColumn("id", suite.TypeInt4),
-		},
-	}
+	baseTable := bs.NewTable("base_table", []suite.Column{
+		suite.NewColumn("id", suite.TypeInt4),
+	})
 	bs.CreateTable(baseTable, options.WithPKs([]string{"id"}))
 
-	childTable := suite.Table{
-		Name: bs.TableName(suite.ScemaDefault, "child_table"),
-		Columns: []suite.Column{
-			suite.NewColumn("id", suite.TypeSerialInt4),
-			suite.NewColumn("base_id", suite.TypeInt4),
-		},
-	}
+	childTable := bs.NewTable("child_table", []suite.Column{
+		suite.NewColumn("id", suite.TypeSerialInt4),
+		suite.NewColumn("base_id", suite.TypeInt4),
+	})
 	bs.CreateTable(
 		childTable,
 		options.WithPKs([]string{"id"}),
@@ -82,15 +76,15 @@ func Test_ReferenceSimultaneousGeneration(t *testing.T) {
 	refSuite.bs.SaveConfig(
 		suite.WithBatchSize(10),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(refSuite.baseTable.Name.Schema),
-			Table:      string(refSuite.baseTable.Name.Table),
+			Schema:     refSuite.baseTable.Schema,
+			Table:      refSuite.baseTable.Name,
 			LimitRows:  5,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),
 		}),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(refSuite.childTable.Name.Schema),
-			Table:      string(refSuite.childTable.Name.Table),
+			Schema:     refSuite.childTable.Schema,
+			Table:      refSuite.childTable.Name,
 			LimitRows:  33,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),
@@ -109,15 +103,15 @@ func Test_ReferenceParallelGeneration(t *testing.T) {
 	refSuite.bs.SaveConfig(
 		suite.WithBatchSize(17),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(refSuite.baseTable.Name.Schema),
-			Table:      string(refSuite.baseTable.Name.Table),
+			Schema:     refSuite.baseTable.Schema,
+			Table:      refSuite.baseTable.Name,
 			LimitRows:  100,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),
 		}),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(refSuite.childTable.Name.Schema),
-			Table:      string(refSuite.childTable.Name.Table),
+			Schema:     refSuite.childTable.Schema,
+			Table:      refSuite.childTable.Name,
 			LimitRows:  30,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),

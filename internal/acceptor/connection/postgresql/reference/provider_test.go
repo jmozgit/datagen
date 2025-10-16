@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/jackc/pgx/v5"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
@@ -24,8 +23,8 @@ type refSuite struct {
 
 func newTableName(schema, table string) model.TableName {
 	return model.TableName{
-		Schema: model.Identifier(pgx.Identifier([]string{schema}).Sanitize()),
-		Table:  model.Identifier(pgx.Identifier([]string{table}).Sanitize()),
+		Schema: model.PGIdentifier(schema),
+		Table:  model.PGIdentifier(table),
 	}
 }
 
@@ -35,9 +34,9 @@ func (r *refSuite) createBaseTable(t *testing.T) {
 	err := r.pgConn.CreateTable(
 		t.Context(),
 		model.Table{
-			Name: model.TableName{Schema: "public", Table: "base"},
+			Name: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("base")},
 			Columns: []model.Column{
-				{Name: "id", Type: "int"},
+				{Name: model.PGIdentifier("id"), Type: "int"},
 			},
 		},
 		options.WithPKs([]string{"id"}),
@@ -66,7 +65,7 @@ func (r *refSuite) getAcceptRequest() contract.AcceptRequest {
 		},
 		UserSettings: mo.None[config.Generator](),
 		BaseType: mo.Some(model.TargetType{
-			SourceName: model.Identifier(pgx.Identifier([]string{"base_id"}).Sanitize()),
+			SourceName: model.PGIdentifier("base_id"),
 			Type:       model.Reference,
 			SourceType: "int",
 			IsNullable: false,
@@ -104,7 +103,7 @@ func Test_HeapTable(t *testing.T) {
 			Name: newTableName("public", "child"),
 			Columns: []model.Column{
 				{
-					Name: model.Identifier(pgx.Identifier([]string{"base_id"}).Sanitize()),
+					Name: model.PGIdentifier("base_id"),
 					Type: "int references base(id)",
 				},
 			},
@@ -141,8 +140,8 @@ func Test_TableWithPK(t *testing.T) {
 		model.Table{
 			Name: newTableName("public", "child"),
 			Columns: []model.Column{
-				{Name: "id", Type: "int"},
-				{Name: "base_id", Type: "int references base(id)"},
+				{Name: model.PGIdentifier("id"), Type: "int"},
+				{Name: model.PGIdentifier("base_id"), Type: "int references base(id)"},
 			},
 		},
 		options.WithPKs([]string{"id"}),

@@ -12,8 +12,8 @@ type TableName struct {
 	Table  Identifier
 }
 
-func (t TableName) String() string {
-	return fmt.Sprintf("%s.%s", t.Schema, t.Table)
+func (t TableName) Quoted() string {
+	return fmt.Sprintf("%s.%s", t.Schema.Quoted(), t.Table.Quoted())
 }
 
 type Column struct {

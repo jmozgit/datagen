@@ -32,7 +32,7 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 	data := batch.Data
 
 	columns := lo.Map(schema.Columns, func(ct model.TargetType, _ int) string {
-		return ct.SourceName.Unquoted()
+		return ct.SourceName.AsArgument()
 	})
 
 	conn, err := d.pool.Acquire(ctx)
@@ -41,7 +41,7 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 	}
 	defer conn.Release()
 
-	tableName := pgx.Identifier{schema.TableName.Schema.Unquoted(), schema.TableName.Table.Unquoted()}
+	tableName := pgx.Identifier{schema.TableName.Schema.AsArgument(), schema.TableName.Table.AsArgument()}
 
 	return save(ctx, conn, tableName, columns, data)
 }

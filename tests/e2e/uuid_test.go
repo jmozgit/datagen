@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
@@ -19,12 +18,8 @@ func Test_UUID(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	baseSuite := suite.NewBaseSuite(t)
-	table := suite.Table{
-		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_uuids",
-		},
-		Columns: []suite.Column{
+	table := baseSuite.NewTable("test_uuids",
+		[]suite.Column{
 			suite.NewColumnRawType("v1", "text"),
 			suite.NewColumnRawType("v3", "text"),
 			suite.NewColumnRawType("v4", "text"),
@@ -32,8 +27,7 @@ func Test_UUID(t *testing.T) {
 			suite.NewColumnRawType("v6", "text"),
 			suite.NewColumnRawType("v7", "text"),
 			suite.NewColumnRawType("dflt", "uuid"),
-		},
-	}
+		})
 
 	generators := []config.Generator{
 		//nolint:exhaustruct // oneof
@@ -58,8 +52,8 @@ func Test_UUID(t *testing.T) {
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(3),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			LimitRows:  9,
 			LimitBytes: 0,
 			Generators: generators,

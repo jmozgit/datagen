@@ -60,12 +60,12 @@ func Test_DbSaveNoErrors(t *testing.T) {
 
 	setup := newSaveSetup(t, model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "test",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("test"),
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
-			{Name: "comment", Type: "text", IsNullable: false, FixedSize: -1},
+			{Name: model.PGIdentifier("id"), Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: model.PGIdentifier("comment"), Type: "text", IsNullable: false, FixedSize: -1},
 		},
 	})
 
@@ -78,16 +78,16 @@ func Test_DbSaveNoErrors(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: "public", Table: "test"},
+				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test")},
 				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
 					{
-						SourceName: "id",
+						SourceName: model.PGIdentifier("id"),
 						SourceType: "integer",
 					},
 					//nolint:exhaustruct // ok for tests
 					{
-						SourceName: "comment",
+						SourceName: model.PGIdentifier("comment"),
 						SourceType: "text",
 					},
 				},
@@ -108,11 +108,11 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 
 	setup := newSaveSetup(t, model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_with_pk",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("test_with_pk"),
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: model.PGIdentifier("id"), Type: "integer", IsNullable: false, FixedSize: 4},
 		},
 	}, options.WithPKs([]string{"id"}))
 
@@ -125,10 +125,10 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: "public", Table: "test_with_pk"},
+				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
 				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
-					{SourceName: "id", SourceType: "integer"},
+					{SourceName: model.PGIdentifier("id"), SourceType: "integer"},
 				},
 			},
 			Data: data,
@@ -147,11 +147,11 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 
 	setup := newSaveSetup(t, model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_with_pk",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("test_with_pk"),
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer", IsNullable: false, FixedSize: 4},
+			{Name: model.PGIdentifier("id"), Type: "integer", IsNullable: false, FixedSize: 4},
 		},
 	}, options.WithPKs([]string{"id"}))
 
@@ -164,11 +164,11 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: "public", Table: "test_with_pk"},
+				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
 				Columns: []model.TargetType{
 					//nolint:exhaustruct // ok for tests
 					{
-						SourceName: "id",
+						SourceName: model.PGIdentifier("id"),
 						SourceType: "integer",
 					},
 				},
@@ -189,11 +189,11 @@ func Test_ColumnConstraint(t *testing.T) {
 
 	setup := newSaveSetup(t, model.Table{
 		Name: model.TableName{
-			Schema: "public",
-			Table:  "test_with_check",
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("test_with_check"),
 		},
 		Columns: []model.Column{
-			{Name: "id", Type: "integer CHECK (id > 10)", IsNullable: false, FixedSize: 4},
+			{Name: model.PGIdentifier("id"), Type: "integer CHECK (id > 10)", IsNullable: false, FixedSize: 4},
 		},
 	})
 
@@ -206,11 +206,11 @@ func Test_ColumnConstraint(t *testing.T) {
 		t.Context(),
 		model.SaveBatch{
 			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: "public", Table: "test_with_check"},
+				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_check")},
 				Columns: []model.TargetType{
 					//nolint:exhaustruct // it's okay here
 					{
-						SourceName: "id",
+						SourceName: model.PGIdentifier("id"),
 						SourceType: "integer",
 					},
 				},

@@ -14,25 +14,22 @@ func Test_PostgresqlGeometry(t *testing.T) {
 
 	bs := suite.NewBaseSuite(t)
 
-	table := suite.Table{
-		Name: bs.TableName(suite.ScemaDefault, "geometry_table"),
-		Columns: []suite.Column{
-			suite.NewColumnRawType("box", "box"),
-			suite.NewColumnRawType("circle", "circle"),
-			suite.NewColumnRawType("line", "line"),
-			suite.NewColumnRawType("lseg", "lseg"),
-			suite.NewColumnRawType("path", "path"),
-			suite.NewColumnRawType("point", "point"),
-			suite.NewColumnRawType("polygon", "polygon"),
-		},
-	}
+	table := bs.NewTable("geometry_table", []suite.Column{
+		suite.NewColumnRawType("box", "box"),
+		suite.NewColumnRawType("circle", "circle"),
+		suite.NewColumnRawType("line", "line"),
+		suite.NewColumnRawType("lseg", "lseg"),
+		suite.NewColumnRawType("path", "path"),
+		suite.NewColumnRawType("point", "point"),
+		suite.NewColumnRawType("polygon", "polygon"),
+	})
 	bs.CreateTable(table, options.WithPreserve())
 
 	bs.SaveConfig(
 		suite.WithBatchSize(15),
 		suite.WithTableTarget(config.Table{
-			Schema:     string(table.Name.Schema),
-			Table:      string(table.Name.Table),
+			Schema:     table.Schema,
+			Table:      table.Name,
 			LimitRows:  100,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),

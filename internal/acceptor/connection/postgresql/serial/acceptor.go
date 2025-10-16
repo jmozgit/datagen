@@ -46,8 +46,8 @@ func (s *Provider) getSeqName(
 	var seqName sql.NullString
 	if err := s.conn.QueryRow(
 		ctx, query,
-		tableName.Schema.Unquoted(), tableName.Table.Unquoted(),
-		baseType.SourceName.Unquoted(),
+		tableName.Schema.AsArgument(), tableName.Table.AsArgument(),
+		baseType.SourceName.AsArgument(),
 	).Scan(&seqName); err != nil {
 		return "", fmt.Errorf("%w: %s", err, fnName)
 	}

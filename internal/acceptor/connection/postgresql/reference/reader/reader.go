@@ -60,6 +60,6 @@ func baseQuery(
 	// use index scan where it's possible
 	return fmt.Sprintf(
 		`SELECT %s FROM %s TABLESAMPLE BERNOULLI (33) LIMIT %d`,
-		col, table.String(), batchSize,
+		col.Quoted(), table.Quoted(), batchSize,
 	)
 }

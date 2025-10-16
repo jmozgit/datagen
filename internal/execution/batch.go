@@ -56,7 +56,7 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 		for i, gen := range task.Generators {
 			cell, err := gen.Gen(ctx)
 			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.Columns[i].SourceName)
+				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.Columns[i].SourceName.AsArgument())
 			}
 
 			batch[batchID][i] = cell
@@ -70,7 +70,7 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.TaskGenerators) 
 
 			saved, err := b.saver.Save(ctx, batch)
 			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName)
+				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName.Quoted())
 			}
 
 			b.refNotifier.OnSaved(batch)

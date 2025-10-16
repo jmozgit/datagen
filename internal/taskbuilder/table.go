@@ -96,7 +96,13 @@ func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generator
 
 			gen, err := registry.GetGenerator(ctx, req)
 			if err != nil {
-				return fmt.Errorf("%w: %s.%s %s", err, task.DatasetSchema.TableName, targetType.SourceName, fnName)
+				return fmt.Errorf(
+					"%w: %s.%s %s",
+					err,
+					task.DatasetSchema.TableName.Quoted(),
+					targetType.SourceName.AsArgument(),
+					fnName,
+				)
 			}
 
 			t.tasks[idx].Generators[genIdx] = gen
@@ -148,7 +154,7 @@ func topSort(
 		}
 
 		if inProgress[id] {
-			return fmt.Errorf("%w: %s %s", ErrCycledRefences, id, fnName)
+			return fmt.Errorf("%w: %s %s", ErrCycledRefences, id.Quoted(), fnName)
 		}
 
 		inProgress[id] = true
