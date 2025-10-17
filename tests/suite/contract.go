@@ -50,6 +50,8 @@ const (
 	TypeFloat4     Type = "float4"
 	TypeFloat8     Type = "float8"
 	TypeTimestamp  Type = "timestamp"
+	TypeBoolean    Type = "boolean"
+	TypeText       Type = "text"
 )
 
 type Column struct {

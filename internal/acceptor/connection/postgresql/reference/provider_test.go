@@ -108,7 +108,6 @@ func Test_HeapTable(t *testing.T) {
 				},
 			},
 		},
-		options.WithPreserve(),
 	)
 	require.NoError(t, err)
 

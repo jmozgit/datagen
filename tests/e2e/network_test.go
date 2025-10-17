@@ -8,28 +8,25 @@ import (
 	"github.com/viktorkomarov/datagen/tests/suite"
 )
 
-func Test_PostgresqlGeometry(t *testing.T) {
+func Test_PostgresqlNetwork(t *testing.T) {
 	suite.TestOnlyFor(t, "postgresql")
 
 	bs := suite.NewBaseSuite(t)
 
-	table := bs.NewTable("geometry_table", []suite.Column{
-		suite.NewColumnRawType("box", "box"),
-		suite.NewColumnRawType("circle", "circle"),
-		suite.NewColumnRawType("line", "line"),
-		suite.NewColumnRawType("lseg", "lseg"),
-		suite.NewColumnRawType("path", "path"),
-		suite.NewColumnRawType("point", "point"),
-		suite.NewColumnRawType("polygon", "polygon"),
+	table := bs.NewTable("network_table", []suite.Column{
+		suite.NewColumnRawType("inet", "inet"),
+		suite.NewColumnRawType("cidr", "cidr"),
+		suite.NewColumnRawType("macaddr", "macaddr"),
+		suite.NewColumnRawType("macaddr8", "macaddr8"),
 	})
 	bs.CreateTable(table)
 
 	bs.SaveConfig(
-		suite.WithBatchSize(15),
+		suite.WithBatchSize(17),
 		suite.WithTableTarget(config.Table{
 			Schema:     table.Schema,
 			Table:      table.Name,
-			LimitRows:  100,
+			LimitRows:  123,
 			LimitBytes: 0,
 			Generators: make([]config.Generator, 0),
 		}),
@@ -42,5 +39,5 @@ func Test_PostgresqlGeometry(t *testing.T) {
 	bs.OnEachRow(table, func(_ []any) {
 		cnt++
 	})
-	require.Equal(t, cnt, 100)
+	require.Equal(t, cnt, 123)
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 
 	"github.com/gofrs/uuid"
@@ -48,7 +47,7 @@ func Test_UUID(t *testing.T) {
 
 	versions := []byte{1, 3, 4, 5, 6, 7, 4}
 
-	baseSuite.CreateTable(table, options.WithPreserve())
+	baseSuite.CreateTable(table)
 	baseSuite.SaveConfig(
 		suite.WithBatchSize(3),
 		suite.WithTableTarget(config.Table{

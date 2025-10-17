@@ -11,4 +11,6 @@ var pgMappgingType = map[Type]string{
 	TypeFloat4:     "float",
 	TypeFloat8:     "double precision",
 	TypeTimestamp:  "timestamptz",
+	TypeBoolean:    "boolean",
+	TypeText:       "text",
 }
