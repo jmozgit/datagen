@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/viktorkomarov/datagen/internal/generator/ahead"
 	"github.com/viktorkomarov/datagen/internal/model"
 
 	golua "github.com/yuin/gopher-lua"
@@ -18,7 +19,7 @@ type scriptExecutor struct {
 }
 
 func NewScriptExecutor(path string) model.Generator {
-	return &scriptExecutor{path: path, state: golua.NewState()}
+	return ahead.NewGenerator(&scriptExecutor{path: path, state: golua.NewState()})
 }
 
 func (s *scriptExecutor) Gen(_ context.Context) (any, error) {
