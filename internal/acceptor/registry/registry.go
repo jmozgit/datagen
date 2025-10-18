@@ -17,7 +17,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 )
 
-type Registry struct {
+type Acceptors struct {
 	refRegistry *refresolver.Service
 	providers   []contract.GeneratorProvider
 }
@@ -27,7 +27,7 @@ func PrepareAcceptors(
 	cfg config.Config,
 	refRegistry *refresolver.Service,
 	closerReg *closer.Registry,
-) (*Registry, error) {
+) (*Acceptors, error) {
 	generators := append(
 		user.DefaultProviderGenerators(),
 		commontype.DefaultProviderGenerators()...,
@@ -50,13 +50,13 @@ func PrepareAcceptors(
 	default:
 	}
 
-	return &Registry{
+	return &Acceptors{
 		refRegistry: refRegistry,
 		providers:   generators,
 	}, nil
 }
 
-func (r *Registry) GetGenerator(
+func (r *Acceptors) GetGenerator(
 	ctx context.Context,
 	req contract.AcceptRequest,
 ) (model.Generator, error) {

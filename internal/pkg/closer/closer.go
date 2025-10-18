@@ -19,7 +19,7 @@ func (c *Registry) Add(closer Closer) {
 	c.closers = append(c.closers, closer)
 }
 
-func (c *Registry) Close(ctx context.Context) error {
+func (c *Registry) CloseAll(ctx context.Context) error {
 	errs := make([]error, 0)
 	for _, closer := range c.closers {
 		err := closer.Close(ctx)
