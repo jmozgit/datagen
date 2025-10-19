@@ -9,7 +9,7 @@ import (
 )
 
 type TableSizer struct {
-	oid     int32
+	oid     uint32
 	connect db.Connect
 }
 
@@ -23,8 +23,8 @@ func NewTableSizer(ctx context.Context, connect db.Connect, table model.TableNam
 		t.table_name = $2
 	`
 
-	var oid int32
-	if err := connect.QueryRow(ctx, query, table.Schema, table.Table).Scan(&oid); err != nil {
+	var oid uint32
+	if err := connect.QueryRow(ctx, query, table.Schema.AsArgument(), table.Table.AsArgument()).Scan(&oid); err != nil {
 		return nil, fmt.Errorf("%w: new table sizer", err)
 	}
 
