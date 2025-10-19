@@ -55,7 +55,7 @@ func (w noError) Close() {}
 func Test_ManagerExecuteStopByCtx(t *testing.T) {
 	t.Parallel()
 
-	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
+	forwardToGeneratorFunc := func(ctx context.Context, task model.Task) error {
 		_, err := task.Generators[0].Gen(ctx)
 
 		return err
@@ -65,7 +65,7 @@ func Test_ManagerExecuteStopByCtx(t *testing.T) {
 
 	executionStarted := make(chan struct{})
 	executionFinished := make(chan struct{})
-	tasks := []model.TaskGenerators{
+	tasks := []model.Task{
 		//nolint:exhaustruct // ok for tests
 		{Generators: []model.Generator{notifyWhenStart{executionStarted}}},
 		//nolint:exhaustruct // ok for tests
@@ -97,7 +97,7 @@ var errJob = errors.New("job error")
 func Test_ManagerExecuteStopByJobError(t *testing.T) {
 	t.Parallel()
 
-	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
+	forwardToGeneratorFunc := func(ctx context.Context, task model.Task) error {
 		_, err := task.Generators[0].Gen(ctx)
 		if err != nil {
 			return fmt.Errorf("%w: forward", err)
@@ -109,7 +109,7 @@ func Test_ManagerExecuteStopByJobError(t *testing.T) {
 	mng := workmanager.New(2, forwardToGeneratorFunc)
 
 	executionFinished := make(chan struct{})
-	tasks := []model.TaskGenerators{
+	tasks := []model.Task{
 		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
 		//nolint:exhaustruct // it's okay here
@@ -135,7 +135,7 @@ func Test_ManagerExecuteStopByJobError(t *testing.T) {
 func Test_ManagerExecuteNoError(t *testing.T) {
 	t.Parallel()
 
-	forwardToGeneratorFunc := func(ctx context.Context, task model.TaskGenerators) error {
+	forwardToGeneratorFunc := func(ctx context.Context, task model.Task) error {
 		_, err := task.Generators[0].Gen(ctx)
 		if err != nil {
 			return fmt.Errorf("%w: forward", err)
@@ -147,7 +147,7 @@ func Test_ManagerExecuteNoError(t *testing.T) {
 	mng := workmanager.New(2, forwardToGeneratorFunc)
 
 	executionFinished := make(chan struct{})
-	tasks := []model.TaskGenerators{
+	tasks := []model.Task{
 		//nolint:exhaustruct // it's okay here
 		{Generators: []model.Generator{noError{}}},
 		//nolint:exhaustruct // it's okay here

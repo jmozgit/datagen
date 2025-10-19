@@ -36,7 +36,6 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 
 	report := model.SaveReport{
 		RowsSaved:           0,
-		BytesSaved:          0,
 		ConstraintViolation: 0,
 	}
 	batches := [][][]any{batch.Data}
@@ -80,7 +79,6 @@ func (d *DB) copy(
 
 	return model.SaveReport{
 		ConstraintViolation: 0,
-		BytesSaved:          0,
 		RowsSaved:           int(rows),
 	}, nil
 }
@@ -101,7 +99,6 @@ func (d *DB) insert(
 	data [][]any,
 ) (model.SaveReport, error) {
 	collected := model.SaveReport{
-		BytesSaved:          0,
 		RowsSaved:           0,
 		ConstraintViolation: 0,
 	}

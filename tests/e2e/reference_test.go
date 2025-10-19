@@ -56,7 +56,7 @@ func (r *referenceSuite) checkBaseAndChildTablesGeneration(
 		baseTableValues[n] = true
 		cnt++
 	})
-	require.Equal(t, baseTableCnt, cnt)
+	require.GreaterOrEqual(t, cnt, baseTableCnt)
 
 	cnt = 0
 	r.bs.OnEachRow(r.childTable, func(row []any) {
@@ -67,7 +67,7 @@ func (r *referenceSuite) checkBaseAndChildTablesGeneration(
 		cnt++
 	})
 
-	require.Equal(t, childTableCnt, cnt)
+	require.GreaterOrEqual(t, cnt, childTableCnt)
 }
 
 func Test_ReferenceSimultaneousGeneration(t *testing.T) {

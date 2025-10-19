@@ -99,7 +99,6 @@ func Test_DbSaveNoErrors(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 0,
 		RowsSaved:           len(data),
-		BytesSaved:          0,
 	}, saved)
 }
 
@@ -138,7 +137,6 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 13,
 		RowsSaved:           13,
-		BytesSaved:          0,
 	}, saved)
 }
 
@@ -180,7 +178,6 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 25,
 		RowsSaved:           1,
-		BytesSaved:          0,
 	}, saved)
 }
 
@@ -222,6 +219,5 @@ func Test_ColumnConstraint(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 11,
 		RowsSaved:           9,
-		BytesSaved:          0,
 	}, saved)
 }

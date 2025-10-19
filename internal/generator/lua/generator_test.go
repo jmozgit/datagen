@@ -7,7 +7,7 @@ import (
 )
 
 func Test_HappyPath(t *testing.T) {
-	gen := NewScriptExecutor("testscripts/random.lua")
+	gen := NewScriptExecutor("testscripts/20digits.lua")
 
 	val, err := gen.Gen(t.Context())
 	require.NoError(t, err)

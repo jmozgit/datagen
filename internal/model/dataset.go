@@ -36,9 +36,14 @@ type DatasetSchema struct {
 	UniqueConstraints [][]Identifier
 }
 
-type TaskGenerators struct {
-	Task
-	Generators []Generator
+type Stopper interface {
+	ContinueAllowed(report SaveReport) (bool, error)
+}
+
+type Task struct {
+	DatasetSchema DatasetSchema
+	Generators    []Generator
+	Stopper       Stopper
 }
 
 type SaveBatch struct {

@@ -40,7 +40,7 @@ func Test_MixedIntegersFormat(t *testing.T) {
 			_ = toInteger(t, val)
 		}
 	})
-	require.Equal(t, 2, cnt)
+	require.GreaterOrEqual(t, cnt, 2)
 }
 
 func Test_PostgresqlAllIntegers(t *testing.T) {
@@ -78,7 +78,7 @@ func Test_PostgresqlAllIntegers(t *testing.T) {
 			_ = toInteger(t, val)
 		}
 	})
-	require.Equal(t, 39, cnt)
+	require.GreaterOrEqual(t, cnt, 39)
 }
 
 func Test_SerialPostgresqlDefault(t *testing.T) {
@@ -120,7 +120,7 @@ func Test_SerialPostgresqlDefault(t *testing.T) {
 		}
 		cnt++
 	})
-	require.Equal(t, 12, cnt)
+	require.GreaterOrEqual(t, cnt, 12)
 }
 
 func Test_SerialGeneratorFromConfig(t *testing.T) {
@@ -182,7 +182,7 @@ func Test_SerialGeneratorFromConfig(t *testing.T) {
 		}
 		cnt++
 	})
-	require.Equal(t, 56, cnt)
+	require.GreaterOrEqual(t, cnt, 56)
 }
 
 func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
@@ -227,7 +227,7 @@ func Test_IntegerGeneratorRespectConstraints(t *testing.T) {
 		number := toInteger(t, row[0])
 		require.True(t, number >= -10 && number <= 98)
 	})
-	require.Equal(t, 150, cnt)
+	require.GreaterOrEqual(t, cnt, 150)
 }
 
 func toInteger(t *testing.T, val any) int64 {

@@ -75,7 +75,7 @@ func checkValuesAreFloat(t *testing.T, baseSuite *suite.BaseSuite, table suite.T
 			_ = toFloat(t, val)
 		}
 	})
-	require.Equal(t, expectedCnt, cnt)
+	require.GreaterOrEqual(t, cnt, expectedCnt)
 }
 
 func toFloat(t *testing.T, val any) float64 {

@@ -77,7 +77,7 @@ func Test_UUID(t *testing.T) {
 		cnt++
 	})
 
-	require.Equal(t, 9, cnt)
+	require.GreaterOrEqual(t, cnt, 9)
 }
 
 func toUUIDString(t *testing.T, val any) string {

@@ -6,34 +6,52 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/viktorkomarov/datagen/internal/limit/rows"
+	"github.com/viktorkomarov/datagen/internal/limit/size"
+	"github.com/viktorkomarov/datagen/internal/limit/size/postgres"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/pkg/db"
+	pgxadapter "github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
-var ErrCycledRefences = errors.New("cycled refernces are not allowed")
+var (
+	ErrCycledRefences              = errors.New("cycled refernces are not allowed")
+	ErrMisleadingLimits            = errors.New("both limit_rows and limit_bytes cannot be set")
+	ErrUnsupportedLimitSizerDriver = errors.New("unsupported limit sizer driver")
+)
 
 type tableTaskBuilder struct {
-	targets        []config.Table
-	tasks          []model.TaskGenerators
+	tasks []model.Task
+
+	lazyCommonPool db.Connect
+	cfg            config.Config
+	registry       generatorRegistry
 	refresolver    *refresolver.Service
 	schemaProvider model.SchemaProvider
 }
 
 func newTableTaskBuilder(
+	cfg config.Config,
 	schemaProvider model.SchemaProvider,
+	registry generatorRegistry,
 	refresolver *refresolver.Service,
 ) tableTaskBuilder {
 	return tableTaskBuilder{
-		targets:        make([]config.Table, 0),
-		tasks:          make([]model.TaskGenerators, 0),
+		cfg:            cfg,
+		tasks:          make([]model.Task, 0),
 		refresolver:    refresolver,
+		registry:       registry,
 		schemaProvider: schemaProvider,
+		lazyCommonPool: nil,
 	}
 }
 
@@ -50,74 +68,121 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	task := model.TaskGenerators{
-		Task: model.Task{
-			DatasetSchema: schema,
-			Limit: model.TaskProgress{
-				Rows:  target.LimitRows,
-				Bytes: uint64(target.LimitBytes),
-			},
-		},
-		Generators: make([]model.Generator, len(schema.Columns)),
+	if target.LimitRows != 0 && target.LimitBytes != 0 {
+		return fmt.Errorf("%w: %s", ErrMisleadingLimits, fnName)
 	}
-	t.targets = append(t.targets, *target)
-	t.tasks = append(t.tasks, task)
+
+	var stopper model.Stopper
+	if target.LimitRows != 0 {
+		stopper = rows.NewStopper(int64(target.LimitRows))
+	}
+	if target.LimitBytes != 0 {
+		duration := time.Second * 3
+		if t.cfg.Options.CheckSizeDuration != 0 {
+			duration = t.cfg.Options.CheckSizeDuration
+		}
+
+		sizer, err := t.getTableSizer(ctx, schema.TableName)
+		if err != nil {
+			return fmt.Errorf("%w: %s", err, fnName)
+		}
+
+		stopper = size.NewStopper(ctx, sizer, schemaAwareID, int64(target.LimitBytes), duration)
+	}
+
+	gens, err := t.schemaGenerators(ctx, schema, target, t.registry)
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	t.tasks = append(t.tasks, model.Task{
+		DatasetSchema: schema,
+		Stopper:       stopper,
+		Generators:    gens,
+	})
 
 	return nil
 }
 
-func (t *tableTaskBuilder) setGenerators(ctx context.Context, registry generatorRegistry) error {
-	const fnName = "set generators"
+func (t *tableTaskBuilder) schemaGenerators(
+	ctx context.Context,
+	dataset model.DatasetSchema,
+	target *config.Table,
+	registry generatorRegistry,
+) ([]model.Generator, error) {
+	const fnName = "schema generators"
 
-	for idx, target := range t.targets {
-		task := t.tasks[idx]
-		userSettingsByID := make(map[model.Identifier]config.Generator)
-		for _, settings := range target.Generators {
-			id, err := t.schemaProvider.ColumnIdentifier(ctx, task.DatasetSchema.TableName, settings.Column)
-			if err != nil {
-				return fmt.Errorf("%w: %s", err, fnName)
-			}
-
-			userSettingsByID[id] = settings
+	userSettingsByID := make(map[model.Identifier]config.Generator)
+	for _, settings := range target.Generators {
+		id, err := t.schemaProvider.ColumnIdentifier(ctx, dataset.TableName, settings.Column)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
 
-		for genIdx, targetType := range task.DatasetSchema.Columns {
-			userSettings := mo.None[config.Generator]()
-			if set, ok := userSettingsByID[targetType.SourceName]; ok {
-				delete(userSettingsByID, targetType.SourceName)
-				userSettings = mo.Some(set)
-			}
-
-			req := contract.AcceptRequest{
-				Dataset:      task.DatasetSchema,
-				UserSettings: userSettings,
-				BaseType:     mo.Some(targetType),
-			}
-
-			gen, err := registry.GetGenerator(ctx, req)
-			if err != nil {
-				return fmt.Errorf(
-					"%w: %s.%s %s",
-					err,
-					task.DatasetSchema.TableName.Quoted(),
-					targetType.SourceName.AsArgument(),
-					fnName,
-				)
-			}
-
-			t.tasks[idx].Generators[genIdx] = gen
-		}
-
-		if len(userSettingsByID) > 0 {
-			return fmt.Errorf("unknown user config %s", fnName)
-		}
+		userSettingsByID[id] = settings
 	}
 
-	return nil
+	generators := make([]model.Generator, 0, len(dataset.Columns))
+	for _, targetType := range dataset.Columns {
+		userSettings := mo.None[config.Generator]()
+		if set, ok := userSettingsByID[targetType.SourceName]; ok {
+			delete(userSettingsByID, targetType.SourceName)
+			userSettings = mo.Some(set)
+		}
+
+		req := contract.AcceptRequest{
+			Dataset:      dataset,
+			UserSettings: userSettings,
+			BaseType:     mo.Some(targetType),
+		}
+
+		gen, err := registry.GetGenerator(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%w: %s.%s %s",
+				err,
+				dataset.TableName.Quoted(),
+				targetType.SourceName.AsArgument(),
+				fnName,
+			)
+		}
+
+		generators = append(generators, gen)
+	}
+
+	if len(userSettingsByID) > 0 {
+		return nil, fmt.Errorf("unknown user config %s", fnName)
+	}
+
+	return generators, nil
 }
 
-func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
-	byID := lo.SliceToMap(t.tasks, func(t model.TaskGenerators) (model.TableName, model.TaskGenerators) {
+func (t *tableTaskBuilder) getTableSizer(ctx context.Context, table model.TableName) (size.TableSizer, error) {
+	const fnName = "get table sizer"
+
+	switch t.cfg.Connection.Type {
+	case config.PostgresqlConnection:
+		if t.lazyCommonPool == nil {
+			pool, err := pgxpool.New(ctx, t.cfg.Connection.ConnString())
+			if err != nil {
+				return nil, fmt.Errorf("%w: %s", err, fnName)
+			}
+			t.lazyCommonPool = pgxadapter.NewAdapterPool(pool)
+		}
+
+		sizer, err := postgres.NewTableSizer(ctx, t.lazyCommonPool, table)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
+		}
+
+		return sizer, nil
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedLimitSizerDriver, fnName)
+	}
+}
+
+func (t *tableTaskBuilder) sortTasks() ([]model.Task, error) {
+	byID := lo.SliceToMap(t.tasks, func(t model.Task) (model.TableName, model.Task) {
 		return t.DatasetSchema.TableName, t
 	})
 
@@ -128,7 +193,7 @@ func (t *tableTaskBuilder) sortTasks() ([]model.TaskGenerators, error) {
 		return nil, fmt.Errorf("%w: sort tasks", err)
 	}
 
-	return lo.FilterMap(sortedIDs, func(t model.TableName, _ int) (model.TaskGenerators, bool) {
+	return lo.FilterMap(sortedIDs, func(t model.TableName, _ int) (model.Task, bool) {
 		gen, ok := byID[t]
 
 		return gen, ok

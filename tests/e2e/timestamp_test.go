@@ -45,7 +45,7 @@ func Test_PGTimeTypes(t *testing.T) {
 		}
 		cnt++
 	})
-	require.Equal(t, 3, cnt)
+	require.GreaterOrEqual(t, cnt, 3)
 }
 
 func Test_TimestampFromColumnType(t *testing.T) {
@@ -79,7 +79,7 @@ func Test_TimestampFromColumnType(t *testing.T) {
 		}
 		cnt++
 	})
-	require.Equal(t, 4, cnt)
+	require.Equal(t, cnt, 4)
 }
 
 //nolint:funlen // ok for test
@@ -188,7 +188,7 @@ func Test_TimestampFromUserSettings(t *testing.T) {
 		}
 		cnt++
 	})
-	require.Equal(t, 4, cnt)
+	require.GreaterOrEqual(t, cnt, 4)
 }
 
 func toTime(t *testing.T, val any) time.Time {

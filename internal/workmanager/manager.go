@@ -8,7 +8,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
-type Job func(ctx context.Context, task model.TaskGenerators) error
+type Job func(ctx context.Context, task model.Task) error
 
 type Manager struct {
 	workerCnt int
@@ -24,12 +24,12 @@ func New(workerCnt int, job Job) *Manager {
 
 func (m *Manager) Execute(
 	ctx context.Context,
-	tasks []model.TaskGenerators,
+	tasks []model.Task,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	taskCh := make(chan model.TaskGenerators)
+	taskCh := make(chan model.Task)
 	closeTaskCh := func() { close(taskCh) }
 
 	errCh := make(chan error)
@@ -66,7 +66,7 @@ func (m *Manager) Execute(
 
 func (m *Manager) startWorkers(
 	ctx context.Context,
-	taskCh <-chan model.TaskGenerators,
+	taskCh <-chan model.Task,
 	errCh chan<- error,
 ) *sync.WaitGroup {
 	var wg sync.WaitGroup
@@ -85,7 +85,7 @@ func (m *Manager) startWorkers(
 
 func (m *Manager) work(
 	ctx context.Context,
-	tasks <-chan model.TaskGenerators,
+	tasks <-chan model.Task,
 	errCh chan<- error,
 ) {
 	const fnName = "work"

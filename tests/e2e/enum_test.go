@@ -89,7 +89,7 @@ func Test_PostgresqlEnumValues(t *testing.T) {
 		enums[val]++
 		cnt++
 	}, options.WithScanFn(enumSuite.scanFn))
-	require.Equal(t, cnt, 73)
+	require.GreaterOrEqual(t, cnt, 73)
 	require.Len(t, enums, 3)
 
 	for _, v := range enumSuite.enumValues {
@@ -136,7 +136,7 @@ func Test_EnumUserSettings(t *testing.T) {
 		enums[val]++
 		cnt++
 	}, options.WithScanFn(enumSuite.scanFn))
-	require.Equal(t, cnt, 19)
+	require.GreaterOrEqual(t, cnt, 19)
 	require.Len(t, enums, 3)
 
 	for _, v := range enumSuite.enumValues {

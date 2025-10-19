@@ -43,7 +43,7 @@ func Build(
 	cfg config.Config,
 	registry generatorRegistry,
 	refSvc *refresolver.Service,
-) ([]model.TaskGenerators, error) {
+) ([]model.Task, error) {
 	const fnName = "taskbuilder: build"
 
 	schemaProvider, err := makeSchemaProvider(cfg)
@@ -51,7 +51,7 @@ func Build(
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	ttb := newTableTaskBuilder(schemaProvider, refSvc)
+	ttb := newTableTaskBuilder(cfg, schemaProvider, registry, refSvc)
 	for _, task := range cfg.Targets {
 		table := task.Table
 		if table == nil {
@@ -61,10 +61,6 @@ func Build(
 		if err := ttb.addTableTask(ctx, table); err != nil {
 			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
-	}
-
-	if err := ttb.setGenerators(ctx, registry); err != nil {
-		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
 	return ttb.sortTasks()

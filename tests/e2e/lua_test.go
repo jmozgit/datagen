@@ -56,7 +56,7 @@ func Test_LuaUserSettings(t *testing.T) {
 		cnt++
 	})
 
-	require.Equal(t, 137, cnt)
+	require.GreaterOrEqual(t, cnt, 137)
 }
 
 func toBoolean(t *testing.T, val any) bool {

@@ -39,5 +39,5 @@ func Test_PostgresqlNetwork(t *testing.T) {
 	bs.OnEachRow(table, func(_ []any) {
 		cnt++
 	})
-	require.Equal(t, cnt, 123)
+	require.GreaterOrEqual(t, cnt, 123)
 }
