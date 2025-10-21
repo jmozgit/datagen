@@ -13,3 +13,14 @@ func LowerCaseString(n int) string {
 
 	return string(b)
 }
+
+var letters = append(letterRunes, []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_!@#$%^&*()><:")...)
+
+func String(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.IntN(len(letters))] //nolint:gosec // no problem here
+	}
+
+	return string(b)
+}

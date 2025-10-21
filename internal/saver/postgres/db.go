@@ -49,7 +49,6 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 				return model.SaveReport{}, fmt.Errorf("%w: save", err)
 			}
 			report = report.Add(saved)
-
 			continue
 		}
 
@@ -60,6 +59,8 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 		case IsConstraintViolatesErr(err):
 			mid := len(curBatch) / 2
 			batches = append(batches, curBatch[:mid], curBatch[mid:])
+		case err != nil:
+			return model.SaveReport{}, fmt.Errorf("%w: save", err)
 		}
 	}
 

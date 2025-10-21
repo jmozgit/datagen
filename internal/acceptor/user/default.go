@@ -5,6 +5,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/user/float"
 	"github.com/viktorkomarov/datagen/internal/acceptor/user/integer"
 	"github.com/viktorkomarov/datagen/internal/acceptor/user/lua"
+	"github.com/viktorkomarov/datagen/internal/acceptor/user/text"
 	"github.com/viktorkomarov/datagen/internal/acceptor/user/time"
 	"github.com/viktorkomarov/datagen/internal/acceptor/user/uuid"
 )
@@ -16,5 +17,6 @@ func DefaultProviderGenerators() []contract.GeneratorProvider {
 		time.NewProvider(),
 		uuid.NewProvider(),
 		lua.NewProvider(),
+		text.NewProvider(),
 	}
 }

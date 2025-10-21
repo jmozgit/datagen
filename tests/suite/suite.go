@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
@@ -59,6 +60,12 @@ func WithTableTarget(table config.Table) ConfigOption {
 func WithBatchSize(batchSize int) ConfigOption {
 	return func(cfg *config.Config) {
 		cfg.Options.BatchSize = batchSize
+	}
+}
+
+func WithCheckTableSize(dur time.Duration) ConfigOption {
+	return func(cfg *config.Config) {
+		cfg.Options.CheckSizeDuration = dur
 	}
 }
 

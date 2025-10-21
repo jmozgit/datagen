@@ -29,7 +29,7 @@ var pgRegistryTypes = map[string]model.CommonType{
 	"int2": model.Integer, "int4": model.Integer, "int8": model.Integer,
 	"numeric": model.Float, "float4": model.Float, "float8": model.Float,
 	"timestamp": model.Timestamp, "timestamptz": model.Timestamp, "date": model.Date,
-	"text": model.Text,
+	"text": model.Text, "varchar": model.Text, "bpchar": model.Text,
 	"uuid": model.UUID,
 }
 

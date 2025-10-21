@@ -8,6 +8,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
 	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/serial"
+	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/text"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
@@ -25,5 +26,6 @@ func DefaultProviderGenerators(
 		reference.NewProvider(conn, refResolver),
 		geometry.NewProvider(),
 		network.NewProvider(),
+		text.NewProvider(conn),
 	}
 }

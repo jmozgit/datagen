@@ -9,4 +9,5 @@ const (
 	GeneratorTypeUUID            GeneratorType = "uuid"
 	GeneratorTypeLua             GeneratorType = "lua"
 	GeneratorTypeProbabilityList GeneratorType = "list_probability"
+	GeneratorTypeText            GeneratorType = "text"
 )

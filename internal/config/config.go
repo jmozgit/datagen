@@ -60,6 +60,7 @@ type Generator struct {
 	UUID            *UUID            `yaml:"uuid"`
 	Lua             *Lua             `yaml:"lua"`
 	ListProbability *ListProbability `yaml:"list_probability"`
+	Text            *Text            `yaml:"text"`
 }
 
 type Integer struct {
@@ -90,4 +91,9 @@ type Lua struct {
 type ListProbability struct {
 	Values       []any `yaml:"values"`
 	Distribution []int `yaml:"distribution"`
+}
+
+type Text struct {
+	CharLenFrom int `yaml:"char_to_from"`
+	CharLenTo   int `yaml:"char_len_to"`
 }

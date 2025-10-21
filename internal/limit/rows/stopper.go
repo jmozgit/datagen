@@ -1,6 +1,8 @@
 package rows
 
-import "github.com/viktorkomarov/datagen/internal/model"
+import (
+	"github.com/viktorkomarov/datagen/internal/model"
+)
 
 type Stopper struct {
 	rows int64
