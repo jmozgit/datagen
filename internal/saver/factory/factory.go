@@ -13,7 +13,7 @@ import (
 var ErrUnknownConnectionType = errors.New("unknown connection type")
 
 type Saver interface {
-	Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport, error)
+	Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch, error)
 }
 
 func GetSaver(ctx context.Context, cfg config.Config) (Saver, error) {

@@ -64,9 +64,9 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName.Quoted())
 			}
 
-			b.refNotifier.OnSaved(batch)
+			b.refNotifier.OnSaved(saved.Batch)
 
-			cntn, err := task.Stopper.ContinueAllowed(saved)
+			cntn, err := task.Stopper.ContinueAllowed(saved.Stat)
 			if err != nil {
 				return fmt.Errorf("%w: execute", err)
 			}

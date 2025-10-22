@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/saver/common"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,7 +28,7 @@ func New(ctx context.Context, connStr string) (*DB, error) {
 	return &DB{pool: pool}, nil
 }
 
-func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport, error) {
+func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch, error) {
 	schema := batch.Schema
 	tableName := pgx.Identifier{schema.TableName.Schema.AsArgument(), schema.TableName.Table.AsArgument()}
 	columns := lo.Map(schema.Columns, func(ct model.TargetType, _ int) string {
@@ -38,33 +39,37 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SaveReport,
 		RowsSaved:           0,
 		ConstraintViolation: 0,
 	}
-	batches := [][][]any{batch.Data}
-	for len(batches) > 0 {
-		curBatch := batches[0]
-		batches = batches[1:]
 
-		if len(curBatch) < copyThresholdRowSize {
+	parts := []common.DataPartitionerMut{common.NewDataPartionerMut(batch.Data)}
+	for len(parts) > 0 {
+		curBatch := parts[0]
+		parts = parts[1:]
+
+		if curBatch.Len() < copyThresholdRowSize {
 			saved, err := d.insert(ctx, tableName, columns, curBatch)
 			if err != nil {
-				return model.SaveReport{}, fmt.Errorf("%w: save", err)
+				return model.SavedBatch{}, fmt.Errorf("%w: save", err)
 			}
 			report = report.Add(saved)
 			continue
 		}
 
-		saved, err := d.copy(ctx, tableName, columns, curBatch)
+		saved, err := d.copy(ctx, tableName, columns, curBatch.Data())
 		switch {
 		case err == nil:
 			report = report.Add(saved)
 		case IsConstraintViolatesErr(err):
-			mid := len(curBatch) / 2
-			batches = append(batches, curBatch[:mid], curBatch[mid:])
-		case err != nil:
-			return model.SaveReport{}, fmt.Errorf("%w: save", err)
+			before, after := curBatch.Split()
+			parts = append(parts, before, after)
+		default:
+			return model.SavedBatch{}, fmt.Errorf("%w: save", err)
 		}
 	}
 
-	return report, nil
+	return model.SavedBatch{
+		Stat:  report,
+		Batch: batch,
+	}, nil
 }
 
 func (d *DB) copy(
@@ -97,7 +102,7 @@ func (d *DB) insert(
 	ctx context.Context,
 	table pgx.Identifier,
 	columns []string,
-	data [][]any,
+	partioner common.DataPartitionerMut,
 ) (model.SaveReport, error) {
 	collected := model.SaveReport{
 		RowsSaved:           0,
@@ -105,12 +110,14 @@ func (d *DB) insert(
 	}
 
 	query := insertQuery(table, columns)
-	for _, row := range data {
+
+	data := partioner.Data()
+	for i, row := range data {
 		_, err := d.pool.Exec(ctx, query, row...)
 		if err != nil {
 			if IsConstraintViolatesErr(err) {
 				collected.ConstraintViolation++
-
+				partioner.MakeInvalid(i)
 				continue
 			}
 

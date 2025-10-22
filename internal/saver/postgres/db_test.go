@@ -99,7 +99,14 @@ func Test_DbSaveNoErrors(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 0,
 		RowsSaved:           len(data),
-	}, saved)
+	}, saved.Stat)
+	cntInvalid := 0
+	for _, d := range saved.Batch.Data {
+		if d == nil {
+			cntInvalid++
+		}
+	}
+	require.Equal(t, 0, cntInvalid)
 }
 
 func Test_DbSaveManyDuplicates(t *testing.T) {
@@ -137,7 +144,14 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 13,
 		RowsSaved:           13,
-	}, saved)
+	}, saved.Stat)
+	cntInvalid := 0
+	for _, d := range saved.Batch.Data {
+		if d == nil {
+			cntInvalid++
+		}
+	}
+	require.Equal(t, 13, cntInvalid)
 }
 
 func Test_OnlyOneUniqueRow(t *testing.T) {
@@ -178,7 +192,14 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 25,
 		RowsSaved:           1,
-	}, saved)
+	}, saved.Stat)
+	cntInvalid := 0
+	for _, d := range saved.Batch.Data {
+		if d == nil {
+			cntInvalid++
+		}
+	}
+	require.Equal(t, 25, cntInvalid)
 }
 
 func Test_ColumnConstraint(t *testing.T) {
@@ -219,5 +240,13 @@ func Test_ColumnConstraint(t *testing.T) {
 	require.Equal(t, model.SaveReport{
 		ConstraintViolation: 11,
 		RowsSaved:           9,
-	}, saved)
+	}, saved.Stat)
+
+	cntInvalid := 0
+	for _, d := range saved.Batch.Data {
+		if d == nil {
+			cntInvalid++
+		}
+	}
+	require.Equal(t, 11, cntInvalid)
 }

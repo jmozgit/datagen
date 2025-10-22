@@ -50,3 +50,8 @@ type SaveBatch struct {
 	Schema DatasetSchema
 	Data   [][]any
 }
+
+type SavedBatch struct {
+	Stat  SaveReport
+	Batch SaveBatch
+}

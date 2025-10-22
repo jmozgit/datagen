@@ -93,6 +93,10 @@ func (b *BufferedValues) onTargetSavedValues(
 	}
 
 	for _, row := range batch.Data {
+		if row == nil {
+			continue
+		}
+
 		select {
 		case b.next <- row[idx]:
 		default:
