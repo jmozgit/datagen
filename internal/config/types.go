@@ -10,4 +10,5 @@ const (
 	GeneratorTypeLua             GeneratorType = "lua"
 	GeneratorTypeProbabilityList GeneratorType = "list_probability"
 	GeneratorTypeText            GeneratorType = "text"
+	GeneratorTypeLO              GeneratorType = "lo"
 )

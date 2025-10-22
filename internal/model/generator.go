@@ -20,6 +20,9 @@ type Generator interface {
 	Close()
 }
 
+type LOGenerator interface {
+}
+
 type ChooseCallback func()
 
 type AcceptanceDecision struct {

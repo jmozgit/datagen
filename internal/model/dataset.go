@@ -1,6 +1,11 @@
 package model
 
-import "github.com/jackc/pgx/v5"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+)
 
 type Driver int
 
@@ -46,12 +51,40 @@ type Task struct {
 	Stopper       Stopper
 }
 
+var (
+	DiscardedRow []any = nil
+)
+
 type SaveBatch struct {
-	Schema DatasetSchema
-	Data   [][]any
+	Schema      DatasetSchema
+	Data        [][]any
+	SavingHints *SavingHints
 }
 
 type SavedBatch struct {
 	Stat  SaveReport
 	Batch SaveBatch
+}
+
+var (
+	ErrMissingKey    = errors.New("key is missing")
+	ErrIncorrectType = errors.New("type is incorrect")
+)
+
+type SavingHints struct {
+	hints map[string]any
+}
+
+func (s *SavingHints) GetString(key string) (string, error) {
+	raw, ok := s.hints[key]
+	if !ok {
+		return "", fmt.Errorf("%w: %s", ErrMissingKey, key)
+	}
+
+	str, ok := raw.(string)
+	if !ok {
+		return "", fmt.Errorf("%w: expected string, not %T", ErrMissingKey, raw)
+	}
+
+	return str, nil
 }

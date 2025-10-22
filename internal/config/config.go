@@ -61,6 +61,7 @@ type Generator struct {
 	Lua             *Lua             `yaml:"lua"`
 	ListProbability *ListProbability `yaml:"list_probability"`
 	Text            *Text            `yaml:"text"`
+	LO              *LO              `yaml:"lo"`
 }
 
 type Integer struct {
@@ -96,4 +97,9 @@ type ListProbability struct {
 type Text struct {
 	CharLenFrom int `yaml:"char_to_from"`
 	CharLenTo   int `yaml:"char_len_to"`
+}
+
+type LO struct {
+	Size  units.Base2Bytes `yaml:"size"`
+	Range units.Base2Bytes `yaml:"range"`
 }

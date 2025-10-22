@@ -13,7 +13,6 @@ import (
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/closer"
-	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 )
 
@@ -44,7 +43,7 @@ func PrepareAcceptors(
 		generators = append(
 			generators,
 			postgresql.DefaultProviderGenerators(
-				pgx.NewAdapterPool(pool),
+				pool,
 				refRegistry,
 			)...)
 	default:
