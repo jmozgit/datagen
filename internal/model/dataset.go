@@ -75,6 +75,16 @@ type SavingHints struct {
 	hints map[string]any
 }
 
+func NewSavingHints() *SavingHints {
+	return &SavingHints{
+		hints: make(map[string]any),
+	}
+}
+
+func (s *SavingHints) AddString(key string, value string) {
+	s.hints[key] = value
+}
+
 func (s *SavingHints) GetString(key string) (string, error) {
 	raw, ok := s.hints[key]
 	if !ok {

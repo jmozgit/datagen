@@ -55,8 +55,9 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 
 		if batchID+1 == len(batch) {
 			batch := model.SaveBatch{
-				Schema: task.DatasetSchema,
-				Data:   batch[:batchID+1],
+				Schema:      task.DatasetSchema,
+				Data:        batch[:batchID+1],
+				SavingHints: b.saver.PrepareHints(ctx, task.DatasetSchema, task.Generators),
 			}
 
 			saved, err := b.saver.Save(ctx, batch)

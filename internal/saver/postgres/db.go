@@ -28,6 +28,17 @@ func New(ctx context.Context, connStr string) (*DB, error) {
 	return &DB{pool: pool}, nil
 }
 
+func (d *DB) PrepareHints(ctx context.Context, schema model.DatasetSchema, generators []model.Generator) *model.SavingHints {
+	tableName := pgx.Identifier{schema.TableName.Schema.AsArgument(), schema.TableName.Table.AsArgument()}
+	columns := lo.Map(schema.Columns, func(ct model.TargetType, _ int) string {
+		return ct.SourceName.AsArgument()
+	})
+	hints := model.NewSavingHints()
+	hints.AddString("insert_query_hint", insertQuery(tableName, columns))
+
+	return hints
+}
+
 func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch, error) {
 	schema := batch.Schema
 	tableName := pgx.Identifier{schema.TableName.Schema.AsArgument(), schema.TableName.Table.AsArgument()}
@@ -40,13 +51,11 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch,
 		ConstraintViolation: 0,
 	}
 
-	// insQuery, err := batch.SavingHints.GetString("insert_query_hint")
-	// if err != nil {
-	// 	//	return model.SavedBatch{}, fmt.Errorf("%w: save", err)
-	// 	insQuery = insertQuery(tableName, columns)
-	// }
+	insQuery, err := batch.SavingHints.GetString("insert_query_hint")
+	if err != nil {
+		return model.SavedBatch{}, fmt.Errorf("%w: save", err)
+	}
 
-	insQuery := insertQuery(tableName, columns)
 	parts := []common.DataPartitionerMut{common.NewDataPartionerMut(batch.Data)}
 	for len(parts) > 0 {
 		curBatch := parts[0]
