@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/saver/common"
@@ -39,18 +40,20 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch,
 		ConstraintViolation: 0,
 	}
 
-	insertQuery, err := batch.SavingHints.GetString("insert_query_hint")
-	if err != nil {
-		return model.SavedBatch{}, fmt.Errorf("%w: save", err)
-	}
+	// insQuery, err := batch.SavingHints.GetString("insert_query_hint")
+	// if err != nil {
+	// 	//	return model.SavedBatch{}, fmt.Errorf("%w: save", err)
+	// 	insQuery = insertQuery(tableName, columns)
+	// }
 
+	insQuery := insertQuery(tableName, columns)
 	parts := []common.DataPartitionerMut{common.NewDataPartionerMut(batch.Data)}
 	for len(parts) > 0 {
 		curBatch := parts[0]
 		parts = parts[1:]
 
 		if curBatch.Len() < copyThresholdRowSize {
-			saved, err := d.insert(ctx, insertQuery, curBatch)
+			saved, err := d.insert(ctx, insQuery, curBatch)
 			if err != nil {
 				return model.SavedBatch{}, fmt.Errorf("%w: save", err)
 			}
@@ -91,6 +94,14 @@ func (d *DB) copy(
 		ConstraintViolation: 0,
 		RowsSaved:           int(rows),
 	}, nil
+}
+
+func insertQuery(table pgx.Identifier, columns []string) string {
+	values := strings.Join(lo.Map(columns, func(_ string, idx int) string {
+		return fmt.Sprintf("$%d", idx+1)
+	}), ",")
+
+	return "INSERT INTO " + table.Sanitize() + fmt.Sprintf(" (%s) VALUES (%s)", strings.Join(columns, ","), values)
 }
 
 func (d *DB) insert(

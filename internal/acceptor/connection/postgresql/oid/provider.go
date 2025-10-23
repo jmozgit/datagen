@@ -32,7 +32,7 @@ func (s Provider) Accept(
 	}
 
 	defaultSize := units.MB * 5
-	rangeValue := units.KB * 250
+	rangeValue := units.MetricBytes(0)
 
 	userSettings, userOk := req.UserSettings.Get()
 	if userOk && userSettings.LO != nil {

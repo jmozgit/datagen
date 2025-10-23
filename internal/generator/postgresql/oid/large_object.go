@@ -35,8 +35,12 @@ func (g *ApproximatelySizedGenerator) Gen(ctx context.Context) (any, error) {
 	if sign == 0 {
 		sign = -1
 	}
+	rng := g.changeRangeAbs
+	if g.changeRangeAbs > 0 {
+		rng = mathrand.Int64N(g.changeRangeAbs)
+	}
 
-	oid, err := g.createAndFillOID(ctx, g.sizedBytes+int64(sign)*mathrand.Int64N(g.changeRangeAbs))
+	oid, err := g.createAndFillOID(ctx, g.sizedBytes+int64(sign)*rng)
 	if err != nil {
 		return nil, fmt.Errorf("%w: gen", err)
 	}

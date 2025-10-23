@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
 	"github.com/viktorkomarov/datagen/tests/suite"
 )
 
@@ -26,7 +25,7 @@ func Test_LimitByTableSize(t *testing.T) {
 			suite.NewColumn("created_at", suite.TypeTimestamp),
 			suite.NewColumnRawType("uuid", "uuid"),
 		})
-	bs.CreateTable(table, options.WithPreserve())
+	bs.CreateTable(table)
 
 	threshold := units.KiB * 350
 	bs.SaveConfig(
