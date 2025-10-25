@@ -58,6 +58,7 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 				Schema:      task.DatasetSchema,
 				Data:        batch[:batchID+1],
 				SavingHints: b.saver.PrepareHints(ctx, task.DatasetSchema, task.Generators),
+				Invalid:     make([]bool, b.cnt),
 			}
 
 			saved, err := b.saver.Save(ctx, batch)

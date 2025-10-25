@@ -51,14 +51,26 @@ type Task struct {
 	Stopper       Stopper
 }
 
-var (
-	DiscardedRow []any = nil
-)
-
 type SaveBatch struct {
 	Schema      DatasetSchema
 	Data        [][]any
 	SavingHints *SavingHints
+
+	Invalid []bool
+}
+
+func (s *SaveBatch) MakeInvalid(idx int) {
+	s.Invalid[idx] = true
+}
+
+func (s *SaveBatch) IsValid(idx int) bool {
+	return !s.Invalid[idx]
+}
+
+func (s *SaveBatch) Reset() {
+	for i := range s.Invalid {
+		s.Invalid[i] = false
+	}
 }
 
 type SavedBatch struct {

@@ -58,11 +58,11 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch,
 
 	parts := []common.DataPartitionerMut{common.NewDataPartionerMut(batch.Data)}
 	for len(parts) > 0 {
-		curBatch := parts[0]
+		curPart := parts[0]
 		parts = parts[1:]
 
-		if curBatch.Len() < copyThresholdRowSize {
-			saved, err := d.insert(ctx, insQuery, curBatch)
+		if curPart.Len() < copyThresholdRowSize {
+			saved, err := d.insert(ctx, insQuery, batch, curPart)
 			if err != nil {
 				return model.SavedBatch{}, fmt.Errorf("%w: save", err)
 			}
@@ -70,12 +70,12 @@ func (d *DB) Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch,
 			continue
 		}
 
-		saved, err := d.copy(ctx, tableName, columns, curBatch.Data())
+		saved, err := d.copy(ctx, tableName, columns, curPart.Data())
 		switch {
 		case err == nil:
 			report = report.Add(saved)
 		case IsConstraintViolatesErr(err):
-			before, after := curBatch.Split()
+			before, after := curPart.Split()
 			parts = append(parts, before, after)
 		default:
 			return model.SavedBatch{}, fmt.Errorf("%w: save", err)
@@ -116,6 +116,7 @@ func insertQuery(table pgx.Identifier, columns []string) string {
 func (d *DB) insert(
 	ctx context.Context,
 	query string,
+	batch model.SaveBatch,
 	partioner common.DataPartitionerMut,
 ) (model.SaveReport, error) {
 	collected := model.SaveReport{
@@ -129,7 +130,7 @@ func (d *DB) insert(
 		if err != nil {
 			if IsConstraintViolatesErr(err) {
 				collected.ConstraintViolation++
-				partioner.MakeInvalid(i)
+				batch.MakeInvalid(partioner.RealIndex(i))
 				continue
 			}
 

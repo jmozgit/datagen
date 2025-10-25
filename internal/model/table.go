@@ -1,11 +1,8 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 )
-
-var ErrIncorrectTableName = errors.New("table name format schema.table")
 
 type TableName struct {
 	Schema Identifier

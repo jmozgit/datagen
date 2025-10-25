@@ -8,6 +8,8 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
+var Sink any
+
 type BufferedValues struct {
 	columnReader model.ColumnValueReader
 	refTable     model.TableName
@@ -92,8 +94,8 @@ func (b *BufferedValues) onTargetSavedValues(
 		}
 	}
 
-	for _, row := range batch.Data {
-		if row == nil {
+	for i, row := range batch.Data {
+		if !batch.IsValid(i) {
 			continue
 		}
 

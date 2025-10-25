@@ -1,7 +1,5 @@
 package common
 
-import "github.com/viktorkomarov/datagen/internal/model"
-
 type DataPartitionerMut struct {
 	data     [][]any
 	from, to int
@@ -31,8 +29,8 @@ func (b DataPartitionerMut) Data() [][]any {
 	return b.data[b.from:b.to]
 }
 
-func (b DataPartitionerMut) MakeInvalid(idx int) {
-	b.data[b.from+idx] = model.DiscardedRow
+func (b DataPartitionerMut) RealIndex(idx int) int {
+	return b.from + idx
 }
 
 func (b DataPartitionerMut) AllData() [][]any {
