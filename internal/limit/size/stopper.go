@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/c2h5oh/datasize"
+	"github.com/viktorkomarov/datagen/internal/limit"
 	"github.com/viktorkomarov/datagen/internal/model"
 )
 
@@ -13,13 +15,17 @@ type TableSizer interface {
 }
 
 type Stopper struct {
-	limit int64
-	sizer TableSizer
+	limit     int64
+	sizer     TableSizer
+	errCnt    int
+	tableName string
+	initSize  int64
+	collector limit.Collector
 
-	initSize int64
 	mu       sync.Mutex
-	stop     bool
+	curSize  int64
 	err      error
+	lastSize int64
 }
 
 func NewStopper(
@@ -27,15 +33,20 @@ func NewStopper(
 	sizer TableSizer,
 	table model.TableName,
 	limit int64,
+	collector limit.Collector,
 	fetchDuration time.Duration,
 ) *Stopper {
 	stopper := &Stopper{
-		limit:    limit,
-		sizer:    sizer,
-		initSize: -1,
-		mu:       sync.Mutex{},
-		stop:     false,
-		err:      nil,
+		limit:     limit,
+		sizer:     sizer,
+		initSize:  -1,
+		lastSize:  0,
+		errCnt:    0,
+		collector: collector,
+		tableName: table.String(),
+		mu:        sync.Mutex{},
+		curSize:   0,
+		err:       nil,
 	}
 
 	go stopper.run(ctx, fetchDuration)
@@ -43,11 +54,20 @@ func NewStopper(
 	return stopper
 }
 
-func (s *Stopper) ContinueAllowed(_ model.SaveReport) (bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *Stopper) ContinueAllowed(ctx context.Context, report model.SaveReport) (bool, error) {
+	s.errCnt += report.ConstraintViolation
 
-	stop, err := s.stop, s.err
+	s.mu.Lock()
+	stop, err := s.curSize >= s.limit, s.err
+	progress := model.ProgressState{
+		Table:                s.tableName,
+		RowsCollected:        0,
+		SizeCollected:        datasize.ByteSize(s.curSize),
+		ViolationConstraints: int64(s.errCnt),
+	}
+	s.mu.Unlock()
+
+	s.collector.Collect(ctx, progress)
 
 	return !stop, err
 }
@@ -58,9 +78,9 @@ func (s *Stopper) setError(err error) {
 	s.mu.Unlock()
 }
 
-func (s *Stopper) setStop(stop bool) {
+func (s *Stopper) setCurSize(curSize int64) {
 	s.mu.Lock()
-	s.stop = stop
+	s.curSize = curSize
 	s.mu.Unlock()
 }
 
@@ -79,10 +99,11 @@ func (s *Stopper) run(ctx context.Context, fetchDuration time.Duration) {
 
 				return
 			}
+			s.lastSize = curSize
 			if s.initSize == -1 {
 				s.initSize = curSize
 			} else {
-				s.setStop(curSize-s.initSize > s.limit)
+				s.setCurSize(curSize - s.initSize)
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/viktorkomarov/datagen/internal/progress"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 	"github.com/viktorkomarov/datagen/internal/schema/postgres"
 )
@@ -43,6 +44,7 @@ func Build(
 	cfg config.Config,
 	registry generatorRegistry,
 	refSvc *refresolver.Service,
+	collector *progress.Controller,
 ) ([]model.Task, error) {
 	const fnName = "taskbuilder: build"
 
@@ -51,7 +53,7 @@ func Build(
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	ttb := newTableTaskBuilder(cfg, schemaProvider, registry, refSvc)
+	ttb := newTableTaskBuilder(cfg, collector, schemaProvider, registry, refSvc)
 	for _, task := range cfg.Targets {
 		table := task.Table
 		if table == nil {

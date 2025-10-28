@@ -1,9 +1,11 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -41,14 +43,23 @@ type DatasetSchema struct {
 	UniqueConstraints [][]Identifier
 }
 
+type Limit struct {
+	Rows int64
+	Size datasize.ByteSize
+}
+
 type Stopper interface {
-	ContinueAllowed(report SaveReport) (bool, error)
+	ContinueAllowed(context.Context, SaveReport) (bool, error)
 }
 
 type Task struct {
 	DatasetSchema DatasetSchema
 	Generators    []Generator
 	Stopper       Stopper
+}
+
+func (t *Task) TableName() string {
+	return t.DatasetSchema.TableName.String()
 }
 
 type SaveBatch struct {

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
 	"github.com/viktorkomarov/datagen/internal/config"
@@ -17,6 +18,7 @@ import (
 	"github.com/viktorkomarov/datagen/internal/model"
 	"github.com/viktorkomarov/datagen/internal/pkg/db"
 	pgxadapter "github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
+	"github.com/viktorkomarov/datagen/internal/progress"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 
 	"github.com/samber/lo"
@@ -32,6 +34,7 @@ var (
 type tableTaskBuilder struct {
 	tasks []model.Task
 
+	collector      *progress.Controller
 	lazyCommonPool db.Connect
 	cfg            config.Config
 	registry       generatorRegistry
@@ -41,6 +44,7 @@ type tableTaskBuilder struct {
 
 func newTableTaskBuilder(
 	cfg config.Config,
+	collector *progress.Controller,
 	schemaProvider model.SchemaProvider,
 	registry generatorRegistry,
 	refresolver *refresolver.Service,
@@ -52,6 +56,7 @@ func newTableTaskBuilder(
 		registry:       registry,
 		schemaProvider: schemaProvider,
 		lazyCommonPool: nil,
+		collector:      collector,
 	}
 }
 
@@ -74,7 +79,11 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 
 	var stopper model.Stopper
 	if target.LimitRows != 0 {
-		stopper = rows.NewStopper(int64(target.LimitRows))
+		stopper = rows.NewStopper(
+			int64(target.LimitRows),
+			schemaAwareID.String(),
+			t.collector,
+		)
 	}
 	if target.LimitBytes != 0 {
 		duration := time.Second * 3
@@ -87,8 +96,17 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 			return fmt.Errorf("%w: %s", err, fnName)
 		}
 
-		stopper = size.NewStopper(ctx, sizer, schemaAwareID, int64(target.LimitBytes), duration)
+		stopper = size.NewStopper(
+			ctx, sizer, schemaAwareID, int64(target.LimitBytes),
+			t.collector, duration,
+		)
 	}
+
+	t.collector.RegisterTask(
+		schemaAwareID.String(),
+		int64(target.LimitRows),
+		datasize.ByteSize(target.LimitBytes),
+	)
 
 	gens, err := t.schemaGenerators(ctx, schema, target, t.registry)
 	if err != nil {

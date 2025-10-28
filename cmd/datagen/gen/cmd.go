@@ -2,7 +2,9 @@ package gen
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"runtime"
 	"time"
 
@@ -10,21 +12,23 @@ import (
 	"github.com/viktorkomarov/datagen/internal/config"
 	"github.com/viktorkomarov/datagen/internal/execution"
 	"github.com/viktorkomarov/datagen/internal/pkg/closer"
+	"github.com/viktorkomarov/datagen/internal/progress"
+	"github.com/viktorkomarov/datagen/internal/progress/terminal"
 	"github.com/viktorkomarov/datagen/internal/refresolver"
 	"github.com/viktorkomarov/datagen/internal/saver/factory"
-	"github.com/viktorkomarov/datagen/internal/workmanager"
 
 	"github.com/spf13/cobra"
 )
 
 type cmd struct {
-	cfg         config.Config
-	closer      *closer.Registry
-	refSvc      *refresolver.Service
-	acceptors   *registry.Acceptors
-	saver       factory.Saver
-	executor    *execution.BatchExecutor
-	workmanager *workmanager.Manager
+	flags              flags
+	cfg                config.Config
+	closer             *closer.Registry
+	refSvc             *refresolver.Service
+	acceptors          *registry.Acceptors
+	saver              factory.Saver
+	taskExecutor       *execution.BatchExecutor
+	progressController *progress.Controller
 }
 
 type flags struct {
@@ -48,7 +52,17 @@ func New() *cobra.Command {
 
 			return nil
 		},
-		RunE: cmd.exec,
+		RunE: func(cobraCmd *cobra.Command, args []string) error {
+			if err := cmd.exec(cobraCmd, args); err != nil {
+				if errors.Is(err, context.Canceled) {
+					return nil
+				}
+
+				return nil
+			}
+
+			return nil
+		},
 		PostRunE: func(_ *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
@@ -66,7 +80,7 @@ func (c *cmd) init(ctx context.Context, flags flags) error {
 	const fnName = "init"
 
 	var err error
-
+	c.flags = flags
 	c.cfg, err = config.Load(flags.path)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
@@ -81,8 +95,12 @@ func (c *cmd) init(ctx context.Context, flags flags) error {
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
-	c.executor = execution.NewBatchExecutor(c.saver, c.refSvc, c.cfg.Options.BatchSize)
-	c.workmanager = workmanager.New(flags.workCnt, c.executor.Execute)
+	c.taskExecutor = execution.NewBatchExecutor(c.saver, c.refSvc, c.cfg.Options.BatchSize)
+	terminal := terminal.New(os.Stdout)
+	c.progressController = progress.NewController(terminal, flags.workCnt)
+	c.closer.Add(closer.Fn(c.progressController.Close))
+
+	go c.progressController.Run(ctx)
 
 	return nil
 }

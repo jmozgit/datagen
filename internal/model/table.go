@@ -9,6 +9,10 @@ type TableName struct {
 	Table  Identifier
 }
 
+func (t TableName) String() string {
+	return fmt.Sprintf("%s.%s", t.Schema.AsArgument(), t.Table.AsArgument())
+}
+
 func (t TableName) Quoted() string {
 	return fmt.Sprintf("%s.%s", t.Schema.Quoted(), t.Table.Quoted())
 }
