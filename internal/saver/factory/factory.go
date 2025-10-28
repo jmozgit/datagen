@@ -13,7 +13,7 @@ import (
 var ErrUnknownConnectionType = errors.New("unknown connection type")
 
 type Saver interface {
-	PrepareHints(ctx context.Context, schema model.DatasetSchema, generators []model.Generator) *model.SavingHints
+	PrepareHints(ctx context.Context, schema model.DatasetSchema) *model.SavingHints
 	Save(ctx context.Context, batch model.SaveBatch) (model.SavedBatch, error)
 }
 

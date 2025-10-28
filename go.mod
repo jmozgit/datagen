@@ -4,6 +4,7 @@ go 1.24.6
 
 require (
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
+	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-faker/faker/v4 v4.7.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -19,7 +20,6 @@ require (
 )
 
 require (
-	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

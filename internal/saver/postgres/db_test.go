@@ -74,26 +74,32 @@ func Test_DbSaveNoErrors(t *testing.T) {
 		data[i] = []any{i, xrand.LowerCaseString(10)}
 	}
 
+	schema := model.DatasetSchema{
+		TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test")},
+		Columns: []model.TargetType{
+			//nolint:exhaustruct // ok for tests
+			{
+				SourceName: model.PGIdentifier("id"),
+				SourceType: "integer",
+			},
+			//nolint:exhaustruct // ok for tests
+			{
+				SourceName: model.PGIdentifier("comment"),
+				SourceType: "text",
+			},
+		},
+	}
+
+	batch := model.SaveBatch{
+		SavingHints: setup.connect.PrepareHints(t.Context(), schema),
+		Schema:      schema,
+		Data:        data,
+		Invalid:     make([]bool, len(data)),
+	}
+
 	saved, err := setup.connect.Save(
 		t.Context(),
-		model.SaveBatch{
-			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test")},
-				Columns: []model.TargetType{
-					//nolint:exhaustruct // ok for tests
-					{
-						SourceName: model.PGIdentifier("id"),
-						SourceType: "integer",
-					},
-					//nolint:exhaustruct // ok for tests
-					{
-						SourceName: model.PGIdentifier("comment"),
-						SourceType: "text",
-					},
-				},
-			},
-			Data: data,
-		},
+		batch,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -101,8 +107,8 @@ func Test_DbSaveNoErrors(t *testing.T) {
 		RowsSaved:           len(data),
 	}, saved.Stat)
 	cntInvalid := 0
-	for _, d := range saved.Batch.Data {
-		if d == nil {
+	for _, d := range batch.Invalid {
+		if d {
 			cntInvalid++
 		}
 	}
@@ -127,18 +133,23 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 		data = append(data, []any{i}, []any{i})
 	}
 
-	saved, err := setup.connect.Save(
-		t.Context(),
-		model.SaveBatch{
-			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
-				Columns: []model.TargetType{
-					//nolint:exhaustruct // ok for tests
-					{SourceName: model.PGIdentifier("id"), SourceType: "integer"},
-				},
-			},
-			Data: data,
+	schema := model.DatasetSchema{
+		TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
+		Columns: []model.TargetType{
+			//nolint:exhaustruct // ok for tests
+			{SourceName: model.PGIdentifier("id"), SourceType: "integer"},
 		},
+	}
+
+	batch := model.SaveBatch{
+		SavingHints: setup.connect.PrepareHints(t.Context(), schema),
+		Schema:      schema,
+		Data:        data,
+		Invalid:     make([]bool, len(data)),
+	}
+
+	saved, err := setup.connect.Save(
+		t.Context(), batch,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -146,8 +157,8 @@ func Test_DbSaveManyDuplicates(t *testing.T) {
 		RowsSaved:           13,
 	}, saved.Stat)
 	cntInvalid := 0
-	for _, d := range saved.Batch.Data {
-		if d == nil {
+	for _, d := range batch.Invalid {
+		if d {
 			cntInvalid++
 		}
 	}
@@ -172,21 +183,25 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 		data = append(data, []any{10})
 	}
 
-	saved, err := setup.connect.Save(
-		t.Context(),
-		model.SaveBatch{
-			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
-				Columns: []model.TargetType{
-					//nolint:exhaustruct // ok for tests
-					{
-						SourceName: model.PGIdentifier("id"),
-						SourceType: "integer",
-					},
-				},
+	schema := model.DatasetSchema{
+		TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
+		Columns: []model.TargetType{
+			//nolint:exhaustruct // ok for tests
+			{
+				SourceName: model.PGIdentifier("id"),
+				SourceType: "integer",
 			},
-			Data: data,
 		},
+	}
+	batch := model.SaveBatch{
+		SavingHints: setup.connect.PrepareHints(t.Context(), schema),
+		Schema:      schema,
+		Data:        data,
+		Invalid:     make([]bool, len(data)),
+	}
+
+	saved, err := setup.connect.Save(
+		t.Context(), batch,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -194,8 +209,8 @@ func Test_OnlyOneUniqueRow(t *testing.T) {
 		RowsSaved:           1,
 	}, saved.Stat)
 	cntInvalid := 0
-	for _, d := range saved.Batch.Data {
-		if d == nil {
+	for _, d := range batch.Invalid {
+		if d {
 			cntInvalid++
 		}
 	}
@@ -220,21 +235,26 @@ func Test_ColumnConstraint(t *testing.T) {
 		data = append(data, []any{i})
 	}
 
-	saved, err := setup.connect.Save(
-		t.Context(),
-		model.SaveBatch{
-			Schema: model.DatasetSchema{
-				TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_check")},
-				Columns: []model.TargetType{
-					//nolint:exhaustruct // it's okay here
-					{
-						SourceName: model.PGIdentifier("id"),
-						SourceType: "integer",
-					},
-				},
+	schema := model.DatasetSchema{
+		TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_check")},
+		Columns: []model.TargetType{
+			//nolint:exhaustruct // it's okay here
+			{
+				SourceName: model.PGIdentifier("id"),
+				SourceType: "integer",
 			},
-			Data: data,
 		},
+	}
+
+	batch := model.SaveBatch{
+		SavingHints: setup.connect.PrepareHints(t.Context(), schema),
+		Schema:      schema,
+		Invalid:     make([]bool, len(data)),
+		Data:        data,
+	}
+
+	saved, err := setup.connect.Save(
+		t.Context(), batch,
 	)
 	require.NoError(t, err)
 	require.Equal(t, model.SaveReport{
@@ -243,8 +263,8 @@ func Test_ColumnConstraint(t *testing.T) {
 	}, saved.Stat)
 
 	cntInvalid := 0
-	for _, d := range saved.Batch.Data {
-		if d == nil {
+	for _, d := range batch.Invalid {
+		if d {
 			cntInvalid++
 		}
 	}

@@ -28,7 +28,7 @@ func New(ctx context.Context, connStr string) (*DB, error) {
 	return &DB{pool: pool}, nil
 }
 
-func (d *DB) PrepareHints(ctx context.Context, schema model.DatasetSchema, generators []model.Generator) *model.SavingHints {
+func (d *DB) PrepareHints(ctx context.Context, schema model.DatasetSchema) *model.SavingHints {
 	tableName := pgx.Identifier{schema.TableName.Schema.AsArgument(), schema.TableName.Table.AsArgument()}
 	columns := lo.Map(schema.Columns, func(ct model.TargetType, _ int) string {
 		return ct.SourceName.AsArgument()
