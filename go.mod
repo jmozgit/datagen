@@ -3,7 +3,6 @@ module github.com/jmozgit/datagen
 go 1.24.6
 
 require (
-	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-faker/faker/v4 v4.7.0

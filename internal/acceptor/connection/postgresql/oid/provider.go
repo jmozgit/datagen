@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alecthomas/units"
+	"github.com/c2h5oh/datasize"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 	"github.com/jmozgit/datagen/internal/generator/ahead"
@@ -31,16 +31,16 @@ func (s Provider) Accept(
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: oid", contract.ErrGeneratorDeclined)
 	}
 
-	defaultSize := units.MB * 5
-	rangeValue := units.MetricBytes(0)
+	defaultSize := datasize.MB * 5
+	rangeValue := datasize.ByteSize(0)
 
 	userSettings, userOk := req.UserSettings.Get()
 	if userOk && userSettings.LO != nil {
 		if userSettings.LO.Size != 0 {
-			defaultSize = units.MetricBytes(userSettings.LO.Size)
+			defaultSize = userSettings.LO.Size
 		}
 		if userSettings.LO.Range != 0 {
-			rangeValue = units.MetricBytes(userSettings.LO.Range)
+			rangeValue = userSettings.LO.Range
 		}
 	}
 

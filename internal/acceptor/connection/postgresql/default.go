@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/bytea"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/enum"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/geometry"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/interval"
@@ -32,5 +33,6 @@ func DefaultProviderGenerators(
 		network.NewProvider(),
 		text.NewProvider(conn),
 		oid.NewProvider(pool),
+		bytea.NewProvider(),
 	}
 }

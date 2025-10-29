@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alecthomas/units"
+	"github.com/c2h5oh/datasize"
 	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/pkg/db"
 	"github.com/jmozgit/datagen/tests/suite"
@@ -27,7 +27,7 @@ func Test_LimitByTableSize(t *testing.T) {
 		})
 	bs.CreateTable(table)
 
-	threshold := units.KiB * 350
+	threshold := datasize.KB * 350
 	bs.SaveConfig(
 		suite.WithBatchSize(100),
 		suite.WithCheckTableSize(time.Millisecond*250),

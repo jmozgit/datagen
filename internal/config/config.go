@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alecthomas/units"
+	"github.com/c2h5oh/datasize"
 )
 
 type ConnectionType string
@@ -44,11 +44,11 @@ type Options struct {
 }
 
 type Table struct {
-	Schema     string           `yaml:"schema"`
-	Table      string           `yaml:"table"`
-	LimitRows  uint64           `yaml:"limitRows"`
-	LimitBytes units.Base2Bytes `yaml:"limitBytes"`
-	Generators []Generator      `yaml:"generators"`
+	Schema     string            `yaml:"schema"`
+	Table      string            `yaml:"table"`
+	LimitRows  uint64            `yaml:"limitRows"`
+	LimitBytes datasize.ByteSize `yaml:"limitBytes"`
+	Generators []Generator       `yaml:"generators"`
 }
 
 type Generator struct {
@@ -62,6 +62,7 @@ type Generator struct {
 	ListProbability *ListProbability `yaml:"list_probability"`
 	Text            *Text            `yaml:"text"`
 	LO              *LO              `yaml:"lo"`
+	Bytea           *LO              `yaml:"bytea"`
 }
 
 type Integer struct {
@@ -100,6 +101,6 @@ type Text struct {
 }
 
 type LO struct {
-	Size  units.Base2Bytes `yaml:"size"`
-	Range units.Base2Bytes `yaml:"range"`
+	Size  datasize.ByteSize `yaml:"size"`
+	Range datasize.ByteSize `yaml:"range"`
 }

@@ -11,4 +11,5 @@ const (
 	GeneratorTypeProbabilityList GeneratorType = "list_probability"
 	GeneratorTypeText            GeneratorType = "text"
 	GeneratorTypeLO              GeneratorType = "lo"
+	GeneratorTypeBytea           GeneratorType = "bytea"
 )

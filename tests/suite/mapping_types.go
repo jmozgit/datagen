@@ -13,4 +13,5 @@ var pgMappgingType = map[Type]string{
 	TypeTimestamp:  "timestamptz",
 	TypeBoolean:    "boolean",
 	TypeText:       "text",
+	TypeBytea:      "bytea",
 }

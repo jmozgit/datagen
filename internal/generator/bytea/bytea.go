@@ -6,22 +6,31 @@ import (
 	"fmt"
 	"math/rand/v2"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/jmozgit/datagen/internal/model"
 )
 
 type aroundByteaGenerator struct {
-	size    int
-	maxDiff int
+	size    datasize.ByteSize
+	maxDiff datasize.ByteSize
 }
 
-func NewAroundByteaGenerator(size, maxDiff int) model.Generator {
-	return aroundByteaGenerator{size: size}
+func NewAroundByteaGenerator(size, maxDiff datasize.ByteSize) model.Generator {
+	return aroundByteaGenerator{size: size, maxDiff: maxDiff}
 }
 
 func (a aroundByteaGenerator) Gen(_ context.Context) (any, error) {
-	size := a.size - a.maxDiff + rand.IntN(2*a.maxDiff)
+	sign := int64(rand.Int() % 2)
+	if sign == 0 {
+		sign = -1
+	}
 
-	buff := make([]byte, size)
+	diff := int64(a.maxDiff)
+	if a.maxDiff != 0 {
+		diff = sign * rand.Int64N(int64(a.maxDiff))
+	}
+
+	buff := make([]byte, int(a.size)+int(diff))
 
 	_, err := crand.Read(buff)
 	if err != nil {

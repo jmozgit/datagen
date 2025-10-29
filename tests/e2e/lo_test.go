@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/alecthomas/units"
+	"github.com/c2h5oh/datasize"
 	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/pkg/db"
 	"github.com/jmozgit/datagen/tests/suite"
@@ -36,8 +36,8 @@ func Test_PostgresqlOID(t *testing.T) {
 					Column: "blob",
 					Type:   config.GeneratorTypeLO,
 					LO: &config.LO{
-						Size:  units.Base2Bytes(units.KB) * 10,
-						Range: units.Base2Bytes(units.KB) * 1,
+						Size:  datasize.KB * 10,
+						Range: datasize.KB * 1,
 					},
 				},
 			},
@@ -67,7 +67,7 @@ func Test_PostgresqlOID(t *testing.T) {
 				return err
 			}
 
-			assert.True(t, int64(units.Base2Bytes(units.KB)*10-units.Base2Bytes(units.KB)*1) <= sum && sum <= int64(units.Base2Bytes(units.KB)*10+units.Base2Bytes(units.KB)*1))
+			assert.True(t, int64(datasize.KB*10-datasize.KB*1) <= sum && sum <= int64(datasize.KB*10+datasize.KB*1))
 
 			return nil
 		})
@@ -98,7 +98,7 @@ func Test_PostgresqlOID2Gb(t *testing.T) {
 					Column: "blob",
 					Type:   config.GeneratorTypeLO,
 					LO: &config.LO{
-						Size: units.Base2Bytes(units.GB) * 1,
+						Size: datasize.GB * 1,
 					},
 				},
 			},
@@ -128,7 +128,7 @@ func Test_PostgresqlOID2Gb(t *testing.T) {
 				return err
 			}
 
-			assert.Equal(t, int64(units.Base2Bytes(units.GB)), sum)
+			assert.Equal(t, int64(datasize.GB), sum)
 
 			return nil
 		})

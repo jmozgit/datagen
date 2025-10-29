@@ -52,6 +52,7 @@ const (
 	TypeTimestamp  Type = "timestamp"
 	TypeBoolean    Type = "boolean"
 	TypeText       Type = "text"
+	TypeBytea      Type = "bytea"
 )
 
 type Column struct {
