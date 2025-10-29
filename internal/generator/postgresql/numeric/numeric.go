@@ -5,8 +5,8 @@ import (
 	"math"
 	"math/rand/v2"
 
+	"github.com/jmozgit/datagen/internal/model"
 	"github.com/shopspring/decimal"
-	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 type pgNumericGenerator struct {

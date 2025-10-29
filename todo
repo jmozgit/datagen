@@ -1,3 +1,2 @@
 1. add pg_largeobjects when calculating table size
 2. add option than contorls duplicates during generation to config. It might be desiriable to have duplicates
-3. rename project to jmozgit

@@ -179,11 +179,11 @@ formatters:
     gci:
       sections:
         - standard
-        - prefix(github.com/viktorkomarov/datagen)
+        - prefix(github.com/jmozgit/datagen)
         - default
       custom-order: true
     gofumpt:
-      module-path: github.com/viktorkomarov/datagen
+      module-path: github.com/jmozgit/datagen
   exclusions:
     generated: lax
     paths:

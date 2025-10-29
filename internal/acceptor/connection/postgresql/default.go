@@ -2,18 +2,18 @@ package postgresql
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/enum"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/geometry"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/interval"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/network"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/oid"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/serial"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/text"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/enum"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/geometry"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/interval"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/network"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/numeric"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/oid"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/reference"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/serial"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/text"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
+	"github.com/jmozgit/datagen/internal/refresolver"
 )
 
 func DefaultProviderGenerators(

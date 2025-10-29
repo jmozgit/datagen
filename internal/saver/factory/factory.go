@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/saver/postgres"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/saver/postgres"
 )
 
 var ErrUnknownConnectionType = errors.New("unknown connection type")

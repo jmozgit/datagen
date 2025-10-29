@@ -6,7 +6,7 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/viktorkomarov/datagen/internal/progress"
+	"github.com/jmozgit/datagen/internal/progress"
 )
 
 type Terminal struct {

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/progress"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
-	"github.com/viktorkomarov/datagen/internal/schema/postgres"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/progress"
+	"github.com/jmozgit/datagen/internal/refresolver"
+	"github.com/jmozgit/datagen/internal/schema/postgres"
 )
 
 var (

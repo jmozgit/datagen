@@ -1,13 +1,13 @@
 package commontype
 
 import (
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/date"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/float"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/integer"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/text"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/time"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype/uuid"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/date"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/float"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/integer"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/text"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/time"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/uuid"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
 )
 
 func DefaultProviderGenerators() []contract.GeneratorProvider {

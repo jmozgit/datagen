@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator/uuid"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/generator/uuid"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Provider struct{}

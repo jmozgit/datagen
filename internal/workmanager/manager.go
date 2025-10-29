@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Job func(ctx context.Context, task model.Task) error

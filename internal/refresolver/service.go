@@ -1,7 +1,7 @@
 package refresolver
 
 import (
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Service struct {

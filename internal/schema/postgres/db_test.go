@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
-	"github.com/viktorkomarov/datagen/internal/schema"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	testpg "github.com/jmozgit/datagen/internal/pkg/testconn/postgres"
+	"github.com/jmozgit/datagen/internal/schema"
 
 	"github.com/stretchr/testify/require"
 )

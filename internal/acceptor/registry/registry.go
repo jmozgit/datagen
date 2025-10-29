@@ -6,14 +6,14 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/viktorkomarov/datagen/internal/acceptor/commontype"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/closer"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
+	"github.com/jmozgit/datagen/internal/acceptor/commontype"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/acceptor/user"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/closer"
+	"github.com/jmozgit/datagen/internal/refresolver"
 )
 
 type Acceptors struct {

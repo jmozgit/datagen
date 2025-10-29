@@ -3,7 +3,7 @@ package model
 import (
 	"context"
 
-	"github.com/viktorkomarov/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/config"
 )
 
 type SchemaProvider interface {

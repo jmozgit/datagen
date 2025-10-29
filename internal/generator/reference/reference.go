@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 var Sink any

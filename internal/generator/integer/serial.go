@@ -3,7 +3,7 @@ package integer
 import (
 	"context"
 
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type serialGenerator struct {

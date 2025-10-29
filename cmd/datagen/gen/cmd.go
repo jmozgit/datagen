@@ -8,14 +8,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/viktorkomarov/datagen/internal/acceptor/registry"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/execution"
-	"github.com/viktorkomarov/datagen/internal/pkg/closer"
-	"github.com/viktorkomarov/datagen/internal/progress"
-	"github.com/viktorkomarov/datagen/internal/progress/terminal"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
-	"github.com/viktorkomarov/datagen/internal/saver/factory"
+	"github.com/jmozgit/datagen/internal/acceptor/registry"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/execution"
+	"github.com/jmozgit/datagen/internal/pkg/closer"
+	"github.com/jmozgit/datagen/internal/progress"
+	"github.com/jmozgit/datagen/internal/progress/terminal"
+	"github.com/jmozgit/datagen/internal/refresolver"
+	"github.com/jmozgit/datagen/internal/saver/factory"
 
 	"github.com/spf13/cobra"
 )

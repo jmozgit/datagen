@@ -3,7 +3,7 @@ package limit
 import (
 	"context"
 
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Collector interface {

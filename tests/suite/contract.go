@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
 )
 
 var ErrUnknownTypeForDriver = errors.New("unknown err for driver")

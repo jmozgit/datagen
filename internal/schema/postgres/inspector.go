@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/schema"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/schema"
 
 	"github.com/jackc/pgx/v5"
 )

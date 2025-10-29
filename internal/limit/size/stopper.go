@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/c2h5oh/datasize"
-	"github.com/viktorkomarov/datagen/internal/limit"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/limit"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type TableSizer interface {

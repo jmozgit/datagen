@@ -1,13 +1,13 @@
 package user
 
 import (
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/float"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/integer"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/lua"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/text"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/time"
-	"github.com/viktorkomarov/datagen/internal/acceptor/user/uuid"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/acceptor/user/float"
+	"github.com/jmozgit/datagen/internal/acceptor/user/integer"
+	"github.com/jmozgit/datagen/internal/acceptor/user/lua"
+	"github.com/jmozgit/datagen/internal/acceptor/user/text"
+	"github.com/jmozgit/datagen/internal/acceptor/user/time"
+	"github.com/jmozgit/datagen/internal/acceptor/user/uuid"
 )
 
 func DefaultProviderGenerators() []contract.GeneratorProvider {

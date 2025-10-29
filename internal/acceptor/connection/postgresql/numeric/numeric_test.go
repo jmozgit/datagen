@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/numeric"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
-	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/numeric"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
+	testpg "github.com/jmozgit/datagen/internal/pkg/testconn/postgres"
 
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/require"

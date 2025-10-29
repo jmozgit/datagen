@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/db"
 )
 
 type Connection struct {

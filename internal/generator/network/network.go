@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 var ErrUnknownNetworkType = errors.New("unknown network type")

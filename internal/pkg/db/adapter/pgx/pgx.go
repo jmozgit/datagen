@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/internal/pkg/db"
 )
 
 type adapterConn struct {

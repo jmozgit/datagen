@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	pgxadapter "github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/db"
+	pgxadapter "github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/internal/pkg/xrand"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/samber/lo"

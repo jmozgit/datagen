@@ -3,8 +3,8 @@ package e2e_test
 import (
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/tests/suite"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/tests/suite"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"

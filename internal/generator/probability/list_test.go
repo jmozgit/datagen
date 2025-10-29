@@ -3,8 +3,8 @@ package probability_test
 import (
 	"testing"
 
+	"github.com/jmozgit/datagen/internal/generator/probability"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/generator/probability"
 )
 
 func Test_ListProbabilityGenerator(t *testing.T) {

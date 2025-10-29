@@ -3,7 +3,7 @@ package terminal
 import (
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/progress"
+	"github.com/jmozgit/datagen/internal/progress"
 )
 
 type table struct {

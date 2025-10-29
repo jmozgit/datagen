@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/saver/factory"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/saver/factory"
 )
 
 type refNotifier interface {

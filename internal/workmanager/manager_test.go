@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/workmanager"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/workmanager"
 
 	"github.com/stretchr/testify/require"
 )

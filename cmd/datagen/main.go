@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/viktorkomarov/datagen/cmd/datagen/command"
+	"github.com/jmozgit/datagen/cmd/datagen/command"
 )
 
 func main() {

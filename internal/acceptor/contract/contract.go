@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
 	"github.com/samber/mo"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 type GeneratorProvider interface {

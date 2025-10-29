@@ -6,10 +6,10 @@ import (
 
 	"github.com/alecthomas/units"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator/ahead"
-	"github.com/viktorkomarov/datagen/internal/generator/postgresql/oid"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/generator/ahead"
+	"github.com/jmozgit/datagen/internal/generator/postgresql/oid"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Provider struct {

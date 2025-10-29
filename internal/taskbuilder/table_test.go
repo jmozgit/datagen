@@ -3,8 +3,8 @@ package taskbuilder
 import (
 	"testing"
 
+	"github.com/jmozgit/datagen/internal/model"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 func Test_topSort(t *testing.T) {

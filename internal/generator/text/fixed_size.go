@@ -4,8 +4,8 @@ import (
 	"context"
 	mathrand "math/rand/v2"
 
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/xrand"
 )
 
 type inRangeSizeGenerator struct {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 var ErrInvalidDistValues = errors.New("invalid dist or values")

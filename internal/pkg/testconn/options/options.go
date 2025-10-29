@@ -1,6 +1,6 @@
 package options
 
-import "github.com/viktorkomarov/datagen/internal/pkg/db"
+import "github.com/jmozgit/datagen/internal/pkg/db"
 
 type PartPolicy struct {
 	Method string

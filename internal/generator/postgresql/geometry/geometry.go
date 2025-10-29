@@ -8,7 +8,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 var ErrUnknownGeometryType = errors.New("unknown geometry type")

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/tests/suite"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/tests/suite"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

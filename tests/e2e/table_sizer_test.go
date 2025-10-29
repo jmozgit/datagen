@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/alecthomas/units"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/tests/suite"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/tests/suite"
 )
 
 func Test_LimitByTableSize(t *testing.T) {

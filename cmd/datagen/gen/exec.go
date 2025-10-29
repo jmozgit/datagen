@@ -3,8 +3,8 @@ package gen
 import (
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/taskbuilder"
-	"github.com/viktorkomarov/datagen/internal/workmanager"
+	"github.com/jmozgit/datagen/internal/taskbuilder"
+	"github.com/jmozgit/datagen/internal/workmanager"
 
 	"github.com/spf13/cobra"
 )

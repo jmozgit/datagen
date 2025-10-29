@@ -1,4 +1,4 @@
-module github.com/viktorkomarov/datagen
+module github.com/jmozgit/datagen
 
 go 1.24.6
 

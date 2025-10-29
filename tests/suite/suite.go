@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/postgres"
 
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"

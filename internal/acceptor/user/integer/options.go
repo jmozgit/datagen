@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
 	"github.com/samber/mo"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
 )
 
 type options struct {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/generator/timestamp"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/generator/timestamp"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Provider struct{}

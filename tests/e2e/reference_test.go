@@ -3,10 +3,10 @@ package e2e_test
 import (
 	"testing"
 
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/tests/suite"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	"github.com/viktorkomarov/datagen/tests/suite"
 )
 
 type referenceSuite struct {

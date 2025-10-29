@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/pkg/db"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/tests/suite"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/pkg/db"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	"github.com/viktorkomarov/datagen/tests/suite"
 )
 
 type pgEnumSuite struct {

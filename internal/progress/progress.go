@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/c2h5oh/datasize"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/model"
 )
 
 type State struct {

@@ -4,12 +4,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	testpg "github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
-	"github.com/viktorkomarov/datagen/internal/pkg/xrand"
-	"github.com/viktorkomarov/datagen/internal/saver/postgres"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	testpg "github.com/jmozgit/datagen/internal/pkg/testconn/postgres"
+	"github.com/jmozgit/datagen/internal/pkg/xrand"
+	"github.com/jmozgit/datagen/internal/saver/postgres"
 
 	"github.com/stretchr/testify/require"
 )

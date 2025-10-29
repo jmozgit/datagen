@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/viktorkomarov/datagen/internal/generator/ahead"
-	"github.com/viktorkomarov/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/generator/ahead"
+	"github.com/jmozgit/datagen/internal/model"
 
 	golua "github.com/yuin/gopher-lua"
 )

@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/viktorkomarov/datagen/cmd/datagen/gen"
+	"github.com/jmozgit/datagen/cmd/datagen/gen"
 
 	"github.com/spf13/cobra"
 )

@@ -5,16 +5,16 @@ import (
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/reference"
+	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/config"
+	"github.com/jmozgit/datagen/internal/model"
+	pgadapter "github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
+	"github.com/jmozgit/datagen/internal/pkg/testconn/postgres"
+	"github.com/jmozgit/datagen/internal/refresolver"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/require"
-	"github.com/viktorkomarov/datagen/internal/acceptor/connection/postgresql/reference"
-	"github.com/viktorkomarov/datagen/internal/acceptor/contract"
-	"github.com/viktorkomarov/datagen/internal/config"
-	"github.com/viktorkomarov/datagen/internal/model"
-	pgadapter "github.com/viktorkomarov/datagen/internal/pkg/db/adapter/pgx"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/options"
-	"github.com/viktorkomarov/datagen/internal/pkg/testconn/postgres"
-	"github.com/viktorkomarov/datagen/internal/refresolver"
 )
 
 type refSuite struct {
