@@ -11,7 +11,13 @@ const (
 	Date
 	UUID
 	Reference
+	Array
 )
+
+type ArrayInfo struct {
+	ElemType   CommonType
+	SourceType string
+}
 
 type TargetType struct {
 	SourceName Identifier
@@ -19,6 +25,7 @@ type TargetType struct {
 	SourceType string
 	IsNullable bool
 	FixedSize  int
+	ArrayElem  ArrayInfo
 }
 
 type Subscription func(batch SaveBatch)

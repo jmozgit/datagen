@@ -1,6 +1,7 @@
 package commontype
 
 import (
+	"github.com/jmozgit/datagen/internal/acceptor/commontype/array"
 	"github.com/jmozgit/datagen/internal/acceptor/commontype/date"
 	"github.com/jmozgit/datagen/internal/acceptor/commontype/float"
 	"github.com/jmozgit/datagen/internal/acceptor/commontype/integer"
@@ -10,7 +11,9 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 )
 
-func DefaultProviderGenerators() []contract.GeneratorProvider {
+func DefaultProviderGenerators(
+	registry contract.GeneratorRegistry,
+) []contract.GeneratorProvider {
 	return []contract.GeneratorProvider{
 		float.NewProvider(),
 		integer.NewProvider(),
@@ -18,5 +21,6 @@ func DefaultProviderGenerators() []contract.GeneratorProvider {
 		uuid.NewProvider(),
 		date.NewProvider(),
 		text.NewProvider(),
+		array.NewProvider(registry),
 	}
 }

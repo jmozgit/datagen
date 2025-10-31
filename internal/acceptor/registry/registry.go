@@ -27,9 +27,11 @@ func PrepareAcceptors(
 	refRegistry *refresolver.Service,
 	closerReg *closer.Registry,
 ) (*Acceptors, error) {
+	self := &Acceptors{}
+
 	generators := append(
 		user.DefaultProviderGenerators(),
-		commontype.DefaultProviderGenerators()...,
+		commontype.DefaultProviderGenerators(self)...,
 	)
 
 	switch cfg.Connection.Type {
@@ -49,10 +51,10 @@ func PrepareAcceptors(
 	default:
 	}
 
-	return &Acceptors{
-		refRegistry: refRegistry,
-		providers:   generators,
-	}, nil
+	self.refRegistry = refRegistry
+	self.providers = generators
+
+	return self, nil
 }
 
 func (r *Acceptors) GetGenerator(
@@ -82,8 +84,6 @@ func (r *Acceptors) GetGenerator(
 		model.AcceptanceReasonReference,
 		model.AcceptanceReasonDriverAwareness,
 		model.AcceptanceReasonColumnType,
-		model.AcceptanceReasonDomain,
-		model.AcceptanceReasonColumnNameSuggestion,
 	}
 
 	for _, reason := range priority {

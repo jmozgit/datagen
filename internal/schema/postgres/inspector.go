@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/model"
@@ -31,6 +32,15 @@ var pgRegistryTypes = map[string]model.CommonType{
 	"timestamp": model.Timestamp, "timestamptz": model.Timestamp, "date": model.Date,
 	"text": model.Text, "varchar": model.Text, "bpchar": model.Text,
 	"uuid": model.UUID,
+}
+
+func getTypeOrDefault(_tp string) model.CommonType {
+	tp, ok := pgRegistryTypes[_tp]
+	if !ok {
+		return model.DriverSpecified
+	}
+
+	return tp
 }
 
 func (i *Inspector) TableIdentifier(ctx context.Context, table *config.Table) (model.TableName, error) {
@@ -94,9 +104,19 @@ func (i *Inspector) Table(ctx context.Context, name model.TableName) (model.Data
 
 	dataTypes := make([]model.TargetType, len(table.Columns))
 	for i, col := range table.Columns {
+		var arrInfo model.ArrayInfo
+
 		tp, ok := pgRegistryTypes[col.Type]
 		if !ok {
-			tp = model.DriverSpecified
+			if strings.HasPrefix(col.Type, "_") {
+				tp = model.Array
+				arrInfo = model.ArrayInfo{
+					ElemType:   getTypeOrDefault(col.Type[1:]),
+					SourceType: col.Type[1:],
+				}
+			} else {
+				tp = model.DriverSpecified
+			}
 		}
 
 		dataTypes[i] = model.TargetType{
@@ -105,6 +125,7 @@ func (i *Inspector) Table(ctx context.Context, name model.TableName) (model.Data
 			Type:       tp,
 			IsNullable: col.IsNullable,
 			FixedSize:  col.FixedSize,
+			ArrayElem:  arrInfo,
 		}
 	}
 

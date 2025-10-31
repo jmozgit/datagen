@@ -22,6 +22,10 @@ var (
 	ErrTooManyGeneratorsAvailable = errors.New("too many generator available")
 )
 
+type GeneratorRegistry interface {
+	GetGenerator(context.Context, AcceptRequest) (model.Generator, error)
+}
+
 type AcceptRequest struct {
 	Dataset      model.DatasetSchema
 	UserSettings mo.Option[config.Generator]

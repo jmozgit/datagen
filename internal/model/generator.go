@@ -11,8 +11,6 @@ const (
 	AcceptanceReasonDriverAwareness
 	AcceptanceReasonReference
 	AcceptanceUserSettings
-	AcceptanceReasonDomain
-	AcceptanceReasonColumnNameSuggestion
 )
 
 type Generator interface {
