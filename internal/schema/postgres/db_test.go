@@ -1,6 +1,7 @@
 package postgres //nolint:testpackage // add to make progress
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -82,6 +83,11 @@ func Test_PartitionParentTable(t *testing.T) {
 			{Name: model.PGIdentifier("col1"), Type: "int8", IsNullable: false, FixedSize: 8},
 			{Name: model.PGIdentifier("col2"), Type: "int8", IsNullable: true, FixedSize: 8},
 			{Name: model.PGIdentifier("col3"), Type: "int8", IsNullable: true, FixedSize: 8},
+			{
+				Name: model.PGIdentifier("col4"), Type: "_int4",
+				IsNullable: true, FixedSize: -1,
+				ElemSizeByte: sql.NullInt64{Valid: true, Int64: 4},
+			},
 		},
 	}
 

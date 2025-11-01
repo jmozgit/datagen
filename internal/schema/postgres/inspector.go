@@ -110,9 +110,15 @@ func (i *Inspector) Table(ctx context.Context, name model.TableName) (model.Data
 		if !ok {
 			if strings.HasPrefix(col.Type, "_") {
 				tp = model.Array
+				elemSize := int64(-1)
+				if col.ElemSizeByte.Valid {
+					elemSize = col.ElemSizeByte.Int64
+				}
+
 				arrInfo = model.ArrayInfo{
 					ElemType:   getTypeOrDefault(col.Type[1:]),
 					SourceType: col.Type[1:],
+					ElemSize:   elemSize,
 				}
 			} else {
 				tp = model.DriverSpecified

@@ -40,19 +40,21 @@ const (
 type Type string
 
 const (
-	TypeUseRaw     Type = ""
-	TypeInt2       Type = "int2"
-	TypeInt4       Type = "int4"
-	TypeInt8       Type = "int8"
-	TypeSerialInt2 Type = "serial2"
-	TypeSerialInt4 Type = "serial4"
-	TypeSerialInt8 Type = "serial8"
-	TypeFloat4     Type = "float4"
-	TypeFloat8     Type = "float8"
-	TypeTimestamp  Type = "timestamp"
-	TypeBoolean    Type = "boolean"
-	TypeText       Type = "text"
-	TypeBytea      Type = "bytea"
+	TypeUseRaw      Type = ""
+	TypeInt2        Type = "int2"
+	TypeInt4        Type = "int4"
+	TypeInt8        Type = "int8"
+	TypeSerialInt2  Type = "serial2"
+	TypeSerialInt4  Type = "serial4"
+	TypeSerialInt8  Type = "serial8"
+	TypeFloat4      Type = "float4"
+	TypeFloat8      Type = "float8"
+	TypeTimestamp   Type = "timestamp"
+	TypeBoolean     Type = "boolean"
+	TypeText        Type = "text"
+	TypeBytea       Type = "bytea"
+	TypeArrayInt    Type = "array_int"
+	TypeArrayString Type = "array_string"
 )
 
 type Column struct {

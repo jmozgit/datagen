@@ -28,15 +28,15 @@ func NewGenerator(
 func (g *Generator) Gen(ctx context.Context) (any, error) {
 	const fnName = "array: gen"
 
-	vals := make([][]any, g.rows)
-	for i := range vals {
-		vals[i] = make([]any, g.cols)
-	}
-
+	vals := make([]any, g.rows)
 	var err error
-	for i := range vals {
+	for i := range g.cols {
+		if g.rows > 1 {
+			vals[i] = make([]any, g.cols)
+		}
+
 		for j := range vals[i] {
-			vals[i][j], err = g.Gen(ctx)
+			vals[i][j], err = g.gen.Gen(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("%w: %s", err, fnName)
 			}

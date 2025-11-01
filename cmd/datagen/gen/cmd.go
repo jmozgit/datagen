@@ -58,7 +58,7 @@ func New() *cobra.Command {
 					return nil
 				}
 
-				return nil
+				return err
 			}
 
 			return nil

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -18,10 +19,11 @@ func (t TableName) Quoted() string {
 }
 
 type Column struct {
-	Name       Identifier
-	IsNullable bool
-	Type       string
-	FixedSize  int
+	Name         Identifier
+	IsNullable   bool
+	Type         string
+	FixedSize    int
+	ElemSizeByte sql.NullInt64
 }
 
 type Table struct {

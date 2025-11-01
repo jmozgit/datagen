@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/generator/array"
 	"github.com/jmozgit/datagen/internal/model"
 	"github.com/samber/mo"
@@ -21,6 +22,7 @@ func NewProvider(elemGens contract.GeneratorRegistry) *Provider {
 func changeTypes(baseType model.TargetType, array model.ArrayInfo) model.TargetType {
 	baseType.SourceType = array.SourceType
 	baseType.Type = array.ElemType
+	baseType.FixedSize = int(array.ElemSize)
 
 	return baseType
 }
@@ -36,6 +38,7 @@ func (p *Provider) Accept(
 		return model.AcceptanceDecision{}, fmt.Errorf("%w: %s", contract.ErrGeneratorDeclined, fnName)
 	}
 	req.BaseType = mo.Some(changeTypes(baseType, baseType.ArrayElem))
+	req.UserSettings = mo.None[config.Generator]()
 
 	gen, err := p.elemGens.GetGenerator(ctx, req)
 	if err != nil {

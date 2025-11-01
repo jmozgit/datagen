@@ -16,6 +16,7 @@ const (
 
 type ArrayInfo struct {
 	ElemType   CommonType
+	ElemSize   int64
 	SourceType string
 }
 

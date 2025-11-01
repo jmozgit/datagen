@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"maps"
 	"slices"
@@ -85,11 +86,13 @@ func (c *connect) selectTableColumns(
 ) ([]model.Column, error) {
 	const query = `
 		SELECT 
-			column_name, is_nullable, udt_name, typlen 
+			c.column_name, c.is_nullable, c.udt_name, t.typlen, elem.typlen AS element_size_bytes 
 		FROM 
-			information_schema.columns
-		INNER JOIN pg_type
-			ON information_schema.columns.udt_name = pg_type.typname
+			information_schema.columns c
+		LEFT JOIN pg_type t
+			ON c.udt_name = t.typname
+		LEFT JOIN pg_type elem 
+			ON elem.oid = t.typelem
 		WHERE
 			table_schema = $1 AND table_name = $2
 		ORDER BY
@@ -97,10 +100,11 @@ func (c *connect) selectTableColumns(
 	`
 
 	type Column struct {
-		ColumnName string `db:"column_name"`
-		IsNullable string `db:"is_nullable"`
-		UdtName    string `db:"udt_name"`
-		TypeLen    int    `db:"typlen"` //nolint:tagliatelle // ok here
+		ColumnName    string        `db:"column_name"`
+		IsNullable    string        `db:"is_nullable"`
+		UdtName       string        `db:"udt_name"`
+		TypeLen       int           `db:"typlen"` //nolint:tagliatelle // ok here
+		ElemSizeBytes sql.NullInt64 `db:"element_size_bytes"`
 	}
 
 	var columns []Column
@@ -110,10 +114,11 @@ func (c *connect) selectTableColumns(
 
 	return lo.Map(columns, func(c Column, _ int) model.Column {
 		return model.Column{
-			Name:       model.PGIdentifier(c.ColumnName),
-			IsNullable: c.IsNullable == "YES",
-			Type:       c.UdtName,
-			FixedSize:  c.TypeLen,
+			Name:         model.PGIdentifier(c.ColumnName),
+			IsNullable:   c.IsNullable == "YES",
+			Type:         c.UdtName,
+			FixedSize:    c.TypeLen,
+			ElemSizeByte: c.ElemSizeBytes,
 		}
 	}), nil
 }
