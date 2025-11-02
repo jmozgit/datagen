@@ -79,7 +79,7 @@ func toString(t *testing.T, val any) string {
 	case string:
 		return b
 	default:
-		require.Failf(t, "striing mismatched", "expected string type, not %T (%v)", val, val)
+		require.Failf(t, "string mismatched", "expected string type, not %T (%v)", val, val)
 	}
 
 	return ""

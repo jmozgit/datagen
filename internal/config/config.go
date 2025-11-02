@@ -63,6 +63,7 @@ type Generator struct {
 	Text            *Text            `yaml:"text"`
 	LO              *LO              `yaml:"lo"`
 	Bytea           *LO              `yaml:"bytea"`
+	Array           *Array           `yaml:"array"`
 }
 
 type Integer struct {
@@ -103,4 +104,10 @@ type Text struct {
 type LO struct {
 	Size  datasize.ByteSize `yaml:"size"`
 	Range datasize.ByteSize `yaml:"range"`
+}
+
+type Array struct {
+	Rows     uint       `yaml:"rows"`
+	Cols     uint       `yaml:"cols"`
+	ElemType *Generator `yaml:"elem_type"`
 }

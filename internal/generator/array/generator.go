@@ -28,19 +28,29 @@ func NewGenerator(
 func (g *Generator) Gen(ctx context.Context) (any, error) {
 	const fnName = "array: gen"
 
-	vals := make([]any, g.rows)
 	var err error
-	for i := range g.cols {
-		if g.rows > 1 {
-			vals[i] = make([]any, g.cols)
-		}
-
-		for j := range vals[i] {
-			vals[i][j], err = g.gen.Gen(ctx)
+	if g.rows == 1 {
+		vals := make([]any, g.cols)
+		for i := range vals {
+			vals[i], err = g.gen.Gen(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("%w: %s", err, fnName)
 			}
 		}
+
+		return vals, nil
+	}
+
+	vals := make([][]any, g.rows)
+	for i := range g.rows {
+		row := make([]any, g.cols)
+		for j := range g.cols {
+			row[j], err = g.gen.Gen(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("%w: %s", err, fnName)
+			}
+		}
+		vals[i] = row
 	}
 
 	return vals, nil

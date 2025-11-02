@@ -47,7 +47,7 @@ func (p *Provider) Accept(
 
 	return model.AcceptanceDecision{
 		Generator: array.NewGenerator(
-			1, 1, gen,
+			1, 3, gen,
 		),
 		AcceptedBy:     model.AcceptanceReasonColumnType,
 		ChooseCallback: nil,

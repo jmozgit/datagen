@@ -30,7 +30,7 @@ func PrepareAcceptors(
 	self := &Acceptors{}
 
 	generators := append(
-		user.DefaultProviderGenerators(),
+		user.DefaultProviderGenerators(self),
 		commontype.DefaultProviderGenerators(self)...,
 	)
 

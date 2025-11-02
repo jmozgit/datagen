@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
+	"github.com/jmozgit/datagen/internal/acceptor/user/array"
 	"github.com/jmozgit/datagen/internal/acceptor/user/bytea"
 	"github.com/jmozgit/datagen/internal/acceptor/user/float"
 	"github.com/jmozgit/datagen/internal/acceptor/user/integer"
@@ -11,7 +12,7 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/user/uuid"
 )
 
-func DefaultProviderGenerators() []contract.GeneratorProvider {
+func DefaultProviderGenerators(elemsGens contract.GeneratorRegistry) []contract.GeneratorProvider {
 	return []contract.GeneratorProvider{
 		integer.NewProvider(),
 		float.NewProvider(),
@@ -20,5 +21,6 @@ func DefaultProviderGenerators() []contract.GeneratorProvider {
 		lua.NewProvider(),
 		text.NewProvider(),
 		bytea.NewProvider(),
+		array.NewProvider(elemsGens),
 	}
 }

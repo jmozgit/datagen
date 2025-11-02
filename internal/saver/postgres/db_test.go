@@ -270,3 +270,57 @@ func Test_ColumnConstraint(t *testing.T) {
 	}
 	require.Equal(t, 11, cntInvalid)
 }
+
+func Test_StringOfString(t *testing.T) {
+	t.Parallel()
+
+	setup := newSaveSetup(t, model.Table{
+		Name: model.TableName{
+			Schema: model.PGIdentifier("public"),
+			Table:  model.PGIdentifier("test_with_pk"),
+		},
+		Columns: []model.Column{
+			{Name: model.PGIdentifier("www"), Type: "text[]", IsNullable: false, FixedSize: 4},
+		},
+	}, options.WithPreserve())
+
+	sliceOfSliceOfString := func() any {
+		str := make([][]any, 4)
+		for i := range str {
+			str[i] = make([]any, 4)
+		}
+		for i := range str {
+			for j := range str[i] {
+				str[i][j] = xrand.LowerCaseString(10)
+			}
+		}
+		return str
+	}
+
+	data := make([][]any, 10)
+	for i := range cap(data) {
+		data[i] = []any{sliceOfSliceOfString()}
+	}
+
+	schema := model.DatasetSchema{
+		TableName: model.TableName{Schema: model.PGIdentifier("public"), Table: model.PGIdentifier("test_with_pk")},
+		Columns: []model.TargetType{
+			//nolint:exhaustruct // ok for tests
+			{
+				SourceName: model.PGIdentifier("www"),
+				SourceType: "_text",
+			},
+		},
+	}
+	batch := model.SaveBatch{
+		SavingHints: setup.connect.PrepareHints(t.Context(), schema),
+		Schema:      schema,
+		Data:        data,
+		Invalid:     make([]bool, len(data)),
+	}
+
+	_, err := setup.connect.Save(
+		t.Context(), batch,
+	)
+	require.NoError(t, err)
+}

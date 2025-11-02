@@ -12,4 +12,5 @@ const (
 	GeneratorTypeText            GeneratorType = "text"
 	GeneratorTypeLO              GeneratorType = "lo"
 	GeneratorTypeBytea           GeneratorType = "bytea"
+	GeneratorTypeArray           GeneratorType = "array"
 )
