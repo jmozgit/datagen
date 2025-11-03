@@ -13,9 +13,9 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/limit/rows"
-	"github.com/jmozgit/datagen/internal/limit/size"
 	"github.com/jmozgit/datagen/internal/limit/size/postgres"
 	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/closer"
 	"github.com/jmozgit/datagen/internal/pkg/db"
 	pgxadapter "github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
 	"github.com/jmozgit/datagen/internal/progress"
@@ -40,6 +40,7 @@ type tableTaskBuilder struct {
 	registry       generatorRegistry
 	refresolver    *refresolver.Service
 	schemaProvider model.SchemaProvider
+	closer         *closer.Registry
 }
 
 func newTableTaskBuilder(
@@ -48,6 +49,7 @@ func newTableTaskBuilder(
 	schemaProvider model.SchemaProvider,
 	registry generatorRegistry,
 	refresolver *refresolver.Service,
+	closer *closer.Registry,
 ) tableTaskBuilder {
 	return tableTaskBuilder{
 		cfg:            cfg,
@@ -57,6 +59,7 @@ func newTableTaskBuilder(
 		schemaProvider: schemaProvider,
 		lazyCommonPool: nil,
 		collector:      collector,
+		closer:         closer,
 	}
 }
 
@@ -77,6 +80,18 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		return fmt.Errorf("%w: %s", ErrMisleadingLimits, fnName)
 	}
 
+	gens, err := t.schemaGenerators(ctx, schema, target, t.registry)
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, fnName)
+	}
+
+	// separateGens := make([]model.SeparateSizeGenerator, 0, len(gens))
+	// for i := range gens {
+	// 	if sepgen, ok := gens[i].(model.SeparateSizeGenerator); ok {
+	// 		separateGens = append(separateGens, sepgen)
+	// 	}
+	// }
+
 	var stopper model.Stopper
 	if target.LimitRows != 0 {
 		stopper = rows.NewStopper(
@@ -91,15 +106,16 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 			duration = t.cfg.Options.CheckSizeDuration
 		}
 
-		sizer, err := t.getTableSizer(ctx, schema.TableName)
+		sizer, err := t.startSizerStopper(
+			ctx, uint64(target.LimitBytes),
+			schema.TableName,
+			duration,
+		)
 		if err != nil {
 			return fmt.Errorf("%w: %s", err, fnName)
 		}
 
-		stopper = size.NewStopper(
-			ctx, sizer, schemaAwareID, int64(target.LimitBytes),
-			t.collector, duration,
-		)
+		stopper = sizer
 	}
 
 	t.collector.RegisterTask(
@@ -107,11 +123,6 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		int64(target.LimitRows),
 		datasize.ByteSize(target.LimitBytes),
 	)
-
-	gens, err := t.schemaGenerators(ctx, schema, target, t.registry)
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, fnName)
-	}
 
 	t.tasks = append(t.tasks, model.Task{
 		DatasetSchema: schema,
@@ -175,8 +186,13 @@ func (t *tableTaskBuilder) schemaGenerators(
 	return generators, nil
 }
 
-func (t *tableTaskBuilder) getTableSizer(ctx context.Context, table model.TableName) (size.TableSizer, error) {
-	const fnName = "get table sizer"
+func (t *tableTaskBuilder) startSizerStopper(
+	ctx context.Context,
+	limit uint64,
+	table model.TableName,
+	fetchDuration time.Duration,
+) (model.Stopper, error) {
+	const fnName = "start sizer stopper"
 
 	switch t.cfg.Connection.Type {
 	case config.PostgresqlConnection:
@@ -188,12 +204,18 @@ func (t *tableTaskBuilder) getTableSizer(ctx context.Context, table model.TableN
 			t.lazyCommonPool = pgxadapter.NewAdapterPool(pool)
 		}
 
-		sizer, err := postgres.NewTableSizer(ctx, t.lazyCommonPool, table)
+		stopper, err := postgres.NewStopper(
+			ctx, limit, t.lazyCommonPool,
+			table, nil,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", err, fnName)
 		}
+		t.closer.Add(closer.Fn(stopper.Close))
 
-		return sizer, nil
+		stopper.Run(ctx, fetchDuration)
+
+		return stopper, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedLimitSizerDriver, fnName)
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 	"github.com/jmozgit/datagen/internal/config"
 	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/closer"
 	"github.com/jmozgit/datagen/internal/progress"
 	"github.com/jmozgit/datagen/internal/refresolver"
 	"github.com/jmozgit/datagen/internal/schema/postgres"
@@ -45,6 +46,7 @@ func Build(
 	registry generatorRegistry,
 	refSvc *refresolver.Service,
 	collector *progress.Controller,
+	closer *closer.Registry,
 ) ([]model.Task, error) {
 	const fnName = "taskbuilder: build"
 
@@ -53,7 +55,7 @@ func Build(
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	ttb := newTableTaskBuilder(cfg, collector, schemaProvider, registry, refSvc)
+	ttb := newTableTaskBuilder(cfg, collector, schemaProvider, registry, refSvc, closer)
 	for _, task := range cfg.Targets {
 		table := task.Table
 		if table == nil {

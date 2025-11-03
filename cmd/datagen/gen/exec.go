@@ -14,7 +14,10 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 
 	ctx := cmd.Context()
 
-	tasks, err := taskbuilder.Build(ctx, c.cfg, c.acceptors, c.refSvc, c.progressController)
+	tasks, err := taskbuilder.Build(
+		ctx, c.cfg, c.acceptors,
+		c.refSvc, c.progressController, c.closer,
+	)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}

@@ -18,6 +18,15 @@ type Generator interface {
 	Close()
 }
 
+type LOGenerator interface {
+	IsLOGenerator()
+	Generator
+}
+
+type LOGenerated struct {
+	Size uint64
+}
+
 type ChooseCallback func()
 
 type AcceptanceDecision struct {

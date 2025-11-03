@@ -9,6 +9,7 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 	"github.com/jmozgit/datagen/internal/generator/ahead"
 	"github.com/jmozgit/datagen/internal/generator/postgresql/oid"
+	"github.com/jmozgit/datagen/internal/generator/separatesizer"
 	"github.com/jmozgit/datagen/internal/model"
 )
 
@@ -44,8 +45,12 @@ func (s Provider) Accept(
 		}
 	}
 
+	gen := oid.NewApproximatelySizedGenerator(s.pool, int64(defaultSize), int64(rangeValue))
+	column := baseType.SourceName
+	tbl := req.Dataset.TableName
+
 	return model.AcceptanceDecision{
-		Generator:      ahead.NewGenerator(oid.NewApproximatelySizedGenerator(s.pool, int64(defaultSize), int64(rangeValue))),
+		Generator:      separatesizer.NewGenerator(ahead.NewGenerator(gen), tbl, column),
 		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
 		ChooseCallback: nil,
 	}, nil

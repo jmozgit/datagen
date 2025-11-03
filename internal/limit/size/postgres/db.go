@@ -8,12 +8,12 @@ import (
 	"github.com/jmozgit/datagen/internal/pkg/db"
 )
 
-type TableSizer struct {
+type connector struct {
 	oid     uint32
 	connect db.Connect
 }
 
-func NewTableSizer(ctx context.Context, connect db.Connect, table model.TableName) (*TableSizer, error) {
+func newConnector(ctx context.Context, connect db.Connect, table model.TableName) (*connector, error) {
 	const query = `
 	SELECT c.oid
 		FROM pg_class c
@@ -28,13 +28,13 @@ func NewTableSizer(ctx context.Context, connect db.Connect, table model.TableNam
 		return nil, fmt.Errorf("%w: new table sizer", err)
 	}
 
-	return &TableSizer{connect: connect, oid: oid}, nil
+	return &connector{connect: connect, oid: oid}, nil
 }
 
-func (t *TableSizer) TableSize(ctx context.Context) (int64, error) {
+func (t *connector) TableSize(ctx context.Context) (uint64, error) {
 	const query = `select pg_table_size($1)`
 
-	var size int64
+	var size uint64
 	if err := t.connect.QueryRow(ctx, query, t.oid).Scan(&size); err != nil {
 		return 0, fmt.Errorf("%w: table size", err)
 	}
