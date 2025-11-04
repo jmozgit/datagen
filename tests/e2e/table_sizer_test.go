@@ -62,9 +62,6 @@ func Test_LimitByTableSizeWithLOObjects(t *testing.T) {
 
 	table := bs.NewTable("size_lo",
 		[]suite.Column{
-			suite.NewColumn("comment", suite.TypeText),
-			suite.NewColumn("id", suite.TypeSerialInt4),
-			suite.NewColumn("created_at", suite.TypeTimestamp),
 			suite.NewColumnRawType("oid", "oid"),
 		})
 	bs.CreateTable(table)
