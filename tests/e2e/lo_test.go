@@ -137,8 +137,13 @@ func Test_DeleteLOIfNoProgress(t *testing.T) {
 		if err != nil {
 			return fmt.Errorf("%w: execute in func", err)
 		}
-
 		require.Equal(t, cnt, 0)
+
+		err = c.QueryRow(ctx, "SELECT count(*) FROM oid_test").Scan(&cnt)
+		if err != nil {
+			return fmt.Errorf("%w: execute in func", err)
+		}
+		require.Equal(t, cnt, 10)
 
 		return nil
 	})
