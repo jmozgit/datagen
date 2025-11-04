@@ -9,7 +9,7 @@ import (
 )
 
 type refNotifier interface {
-	OnSaved(batch model.SaveBatch)
+	OnProcessed(batch model.SaveBatch)
 }
 
 type BatchExecutor struct {
@@ -66,7 +66,7 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName.Quoted())
 			}
 
-			b.refNotifier.OnSaved(saved.Batch)
+			b.refNotifier.OnProcessed(saved.Batch)
 
 			cntn, err := task.Stopper.ContinueAllowed(ctx, saved.Stat)
 			if err != nil {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/chans"
 	"github.com/jmozgit/datagen/internal/pkg/db"
 )
 
@@ -16,7 +17,7 @@ type Stopper struct {
 	calculator *calculator
 	wait       sync.WaitGroup
 	cancelFn   context.CancelFunc
-	values     <-chan model.LOGenerated
+	values     <-chan []model.LOGenerated
 
 	mu        sync.Mutex
 	stickyErr error
@@ -27,7 +28,7 @@ func NewStopper(
 	limit uint64,
 	connect db.Connect,
 	tableName model.TableName,
-	loGenerated ...<-chan model.LOGenerated,
+	loGenerated ...<-chan []model.LOGenerated,
 ) (*Stopper, error) {
 	const fnName = "new stopper"
 
@@ -41,16 +42,13 @@ func NewStopper(
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	var values <-chan model.LOGenerated
-	if len(loGenerated) > 0 {
-		values = fanIn(loGenerated...)
-	}
+	neverClose := make(<-chan []model.LOGenerated)
 
 	return &Stopper{
 		limit:      limit,
 		connector:  connector,
 		wait:       sync.WaitGroup{},
-		values:     values,
+		values:     chans.FanIn(append(loGenerated, neverClose)...),
 		calculator: newCalculator(size),
 		cancelFn:   nil,
 	}, nil
@@ -103,35 +101,12 @@ func (s *Stopper) updateCalculator(
 			}
 
 			s.calculator.resetStaticSize(size)
-		case msg, ok := <-s.values:
-			if !ok {
-				s.values = nil // is it ok ??
+		case msg := <-s.values:
+			sum := uint64(0)
+			for _, s := range msg {
+				sum += s.Size
 			}
-			s.calculator.addDynamicSize(msg.Size)
+			s.calculator.addDynamicSize(sum)
 		}
 	}
-}
-
-func fanIn(values ...<-chan model.LOGenerated) <-chan model.LOGenerated {
-	out := make(chan model.LOGenerated)
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(values))
-	for _, val := range values {
-		go func(val <-chan model.LOGenerated) {
-			defer wg.Done()
-
-			for v := range val {
-				out <- v
-			}
-		}(val)
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-
-	return out
 }

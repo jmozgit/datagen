@@ -32,7 +32,7 @@ func DefaultProviderGenerators(
 		geometry.NewProvider(),
 		network.NewProvider(),
 		text.NewProvider(conn),
-		oid.NewProvider(pool),
+		oid.NewProvider(pool, refResolver),
 		bytea.NewProvider(),
 	}
 }

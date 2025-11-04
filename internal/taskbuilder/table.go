@@ -15,6 +15,7 @@ import (
 	"github.com/jmozgit/datagen/internal/limit/rows"
 	"github.com/jmozgit/datagen/internal/limit/size/postgres"
 	"github.com/jmozgit/datagen/internal/model"
+	"github.com/jmozgit/datagen/internal/pkg/chans"
 	"github.com/jmozgit/datagen/internal/pkg/closer"
 	"github.com/jmozgit/datagen/internal/pkg/db"
 	pgxadapter "github.com/jmozgit/datagen/internal/pkg/db/adapter/pgx"
@@ -85,12 +86,12 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	// separateGens := make([]model.SeparateSizeGenerator, 0, len(gens))
-	// for i := range gens {
-	// 	if sepgen, ok := gens[i].(model.SeparateSizeGenerator); ok {
-	// 		separateGens = append(separateGens, sepgen)
-	// 	}
-	// }
+	separateGens := make([]<-chan []model.LOGenerated, 0, len(gens))
+	for i := range gens {
+		if sepgen, ok := gens[i].(model.LOGenerator); ok {
+			separateGens = append(separateGens, sepgen.LOGeneratedChan())
+		}
+	}
 
 	var stopper model.Stopper
 	if target.LimitRows != 0 {
@@ -99,6 +100,7 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 			schemaAwareID.String(),
 			t.collector,
 		)
+		chans.Discards(separateGens...)
 	}
 	if target.LimitBytes != 0 {
 		duration := time.Second * 3
@@ -109,7 +111,7 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		sizer, err := t.startSizerStopper(
 			ctx, uint64(target.LimitBytes),
 			schema.TableName,
-			duration,
+			duration, separateGens,
 		)
 		if err != nil {
 			return fmt.Errorf("%w: %s", err, fnName)
@@ -191,6 +193,7 @@ func (t *tableTaskBuilder) startSizerStopper(
 	limit uint64,
 	table model.TableName,
 	fetchDuration time.Duration,
+	gens []<-chan []model.LOGenerated,
 ) (model.Stopper, error) {
 	const fnName = "start sizer stopper"
 
@@ -206,7 +209,7 @@ func (t *tableTaskBuilder) startSizerStopper(
 
 		stopper, err := postgres.NewStopper(
 			ctx, limit, t.lazyCommonPool,
-			table, nil,
+			table, gens...,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", err, fnName)

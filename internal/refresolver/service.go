@@ -18,14 +18,16 @@ func NewService() *Service {
 
 func (s *Service) Register(from, to model.TableName, subFn model.Subscription) {
 	s.subs[to] = append(s.subs[to], subFn)
-	s.deps[from] = append(s.deps[from], to)
+	if from != to {
+		s.deps[from] = append(s.deps[from], to)
+	}
 }
 
 func (s *Service) DepsOn() map[model.TableName][]model.TableName {
 	return s.deps
 }
 
-func (s *Service) OnSaved(batch model.SaveBatch) {
+func (s *Service) OnProcessed(batch model.SaveBatch) {
 	for _, subFn := range s.subs[batch.Schema.TableName] {
 		subFn(batch)
 	}

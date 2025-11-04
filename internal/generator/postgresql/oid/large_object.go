@@ -16,17 +16,28 @@ type ApproximatelySizedGenerator struct {
 	pool           *pgxpool.Pool
 	sizedBytes     int64
 	changeRangeAbs int64
+	resolver       model.ReferenceResolver
+	dispatcher     *sizeDispactcher
+	notify         chan []model.LOGenerated
 }
 
 func NewApproximatelySizedGenerator(
 	pool *pgxpool.Pool,
-	sizedBytes int64,
-	changeRangeAbs int64,
-) model.Generator {
-	return &ApproximatelySizedGenerator{
+	sizedBytes int64, changeRangeAbs int64,
+	resolver model.ReferenceResolver,
+	tableName model.TableName,
+	column model.Identifier,
+) (model.LOGenerator, func()) {
+	g := &ApproximatelySizedGenerator{
 		pool:           pool,
 		sizedBytes:     sizedBytes,
 		changeRangeAbs: changeRangeAbs,
+		resolver:       resolver,
+		notify:         make(chan []model.LOGenerated),
+	}
+	return g, func() {
+		g.dispatcher = newSizeDispatcher(pool, column, g.notify)
+		resolver.Register(tableName, tableName, g.dispatcher.OnSaved())
 	}
 }
 
@@ -49,6 +60,10 @@ func (g *ApproximatelySizedGenerator) Gen(ctx context.Context) (any, error) {
 }
 
 func (g *ApproximatelySizedGenerator) Close() {}
+
+func (g *ApproximatelySizedGenerator) LOGeneratedChan() <-chan []model.LOGenerated {
+	return g.notify
+}
 
 func (g *ApproximatelySizedGenerator) createAndFillOID(ctx context.Context, size int64) (oid uint32, outErr error) {
 	tx, err := g.pool.Begin(ctx)
@@ -79,6 +94,8 @@ func (g *ApproximatelySizedGenerator) createAndFillOID(ctx context.Context, size
 	if _, err := io.CopyN(obj, rand.Reader, size); err != nil {
 		return 0, fmt.Errorf("%w: create and fill oid", err)
 	}
+
+	g.dispatcher.oidGenerated(oid, uint64(size))
 
 	return oid, nil
 }

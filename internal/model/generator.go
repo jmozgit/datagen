@@ -19,7 +19,7 @@ type Generator interface {
 }
 
 type LOGenerator interface {
-	IsLOGenerator()
+	LOGeneratedChan() <-chan []LOGenerated
 	Generator
 }
 

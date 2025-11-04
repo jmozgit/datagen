@@ -9,17 +9,21 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
 	"github.com/jmozgit/datagen/internal/generator/ahead"
 	"github.com/jmozgit/datagen/internal/generator/postgresql/oid"
-	"github.com/jmozgit/datagen/internal/generator/separatesizer"
 	"github.com/jmozgit/datagen/internal/model"
 )
 
 type Provider struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
+	resolver model.ReferenceResolver
 }
 
-func NewProvider(pool *pgxpool.Pool) Provider {
+func NewProvider(
+	pool *pgxpool.Pool,
+	resolver model.ReferenceResolver,
+) Provider {
 	return Provider{
-		pool: pool,
+		pool:     pool,
+		resolver: resolver,
 	}
 }
 
@@ -45,14 +49,30 @@ func (s Provider) Accept(
 		}
 	}
 
-	gen := oid.NewApproximatelySizedGenerator(s.pool, int64(defaultSize), int64(rangeValue))
-	column := baseType.SourceName
-	tbl := req.Dataset.TableName
+	loGen, choose := oid.NewApproximatelySizedGenerator(
+		s.pool,
+		int64(defaultSize),
+		int64(rangeValue),
+		s.resolver, req.Dataset.TableName,
+		baseType.SourceName,
+	)
+	adapter := &loGenAdapter{
+		Generator: ahead.NewGenerator(loGen),
+		notify:    loGen.LOGeneratedChan(),
+	}
 
 	return model.AcceptanceDecision{
-		Generator:      separatesizer.NewGenerator(ahead.NewGenerator(gen), tbl, column),
+		Generator:      adapter,
 		AcceptedBy:     model.AcceptanceReasonDriverAwareness,
-		ChooseCallback: nil,
+		ChooseCallback: choose,
 	}, nil
+}
 
+type loGenAdapter struct {
+	model.Generator
+	notify <-chan []model.LOGenerated
+}
+
+func (l *loGenAdapter) LOGeneratedChan() <-chan []model.LOGenerated {
+	return l.notify
 }
