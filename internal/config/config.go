@@ -39,8 +39,9 @@ type Target struct {
 }
 
 type Options struct {
-	BatchSize         int           `yaml:"batchSize"`
-	CheckSizeDuration time.Duration `yaml:"check_size_duration"`
+	BatchSize          int           `yaml:"batchSize"`
+	CheckSizeDuration  time.Duration `yaml:"check_size_duration"`
+	NoProgressAttempts int           `yaml:"no_progress_attempts"`
 }
 
 type Table struct {

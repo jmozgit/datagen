@@ -88,5 +88,17 @@ func (g *Generator) Close() {
 	close(g.errCh)
 	close(g.next)
 	close(g.cancelPreparation)
+
+	select {
+	case val := <-g.next:
+		if d, ok := g.innerGen.(Destroer); ok {
+			d.Destroy(val)
+		}
+	default:
+	}
 	g.innerGen.Close()
+}
+
+type Destroer interface {
+	Destroy(val any)
 }

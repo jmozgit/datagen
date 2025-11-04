@@ -95,7 +95,11 @@ func (c *cmd) init(ctx context.Context, flags flags) error {
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
-	c.taskExecutor = execution.NewBatchExecutor(c.saver, c.refSvc, c.cfg.Options.BatchSize)
+	c.taskExecutor = execution.NewBatchExecutor(
+		c.saver, c.refSvc,
+		c.cfg.Options.BatchSize,
+		c.cfg.Options.NoProgressAttempts,
+	)
 	terminal := terminal.New(os.Stdout)
 	c.progressController = progress.NewController(terminal, flags.workCnt)
 	c.closer.Add(closer.Fn(c.progressController.Close))

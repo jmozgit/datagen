@@ -63,6 +63,12 @@ func WithBatchSize(batchSize int) ConfigOption {
 	}
 }
 
+func WithNoAttemptsProgress(attempts int) ConfigOption {
+	return func(cfg *config.Config) {
+		cfg.Options.NoProgressAttempts = attempts
+	}
+}
+
 func WithCheckTableSize(dur time.Duration) ConfigOption {
 	return func(cfg *config.Config) {
 		cfg.Options.CheckSizeDuration = dur

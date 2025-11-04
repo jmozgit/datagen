@@ -99,3 +99,12 @@ func (g *ApproximatelySizedGenerator) createAndFillOID(ctx context.Context, size
 
 	return oid, nil
 }
+
+func (g *ApproximatelySizedGenerator) Destroy(val any) {
+	oid, ok := val.(uint32)
+	if !ok {
+		return
+	}
+
+	g.dispatcher.oidInRowDiscared(context.Background(), oid)
+}
