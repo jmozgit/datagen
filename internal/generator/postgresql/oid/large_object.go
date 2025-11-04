@@ -59,7 +59,9 @@ func (g *ApproximatelySizedGenerator) Gen(ctx context.Context) (any, error) {
 	return oid, nil
 }
 
-func (g *ApproximatelySizedGenerator) Close() {}
+func (g *ApproximatelySizedGenerator) Close() {
+	close(g.notify)
+}
 
 func (g *ApproximatelySizedGenerator) LOGeneratedChan() <-chan []model.LOGenerated {
 	return g.notify

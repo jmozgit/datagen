@@ -12,12 +12,13 @@ import (
 )
 
 type Stopper struct {
-	limit      uint64
-	connector  *connector
-	calculator *calculator
-	wait       sync.WaitGroup
-	cancelFn   context.CancelFunc
-	values     <-chan []model.LOGenerated
+	limit        uint64
+	connector    *connector
+	calculator   *calculator
+	wait         sync.WaitGroup
+	cancelFn     context.CancelFunc
+	closeReading chan []model.LOGenerated
+	values       <-chan []model.LOGenerated
 
 	mu        sync.Mutex
 	stickyErr error
@@ -42,15 +43,16 @@ func NewStopper(
 		return nil, fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	neverClose := make(<-chan []model.LOGenerated)
+	closeReading := make(chan []model.LOGenerated)
 
 	return &Stopper{
-		limit:      limit,
-		connector:  connector,
-		wait:       sync.WaitGroup{},
-		values:     chans.FanIn(append(loGenerated, neverClose)...),
-		calculator: newCalculator(size),
-		cancelFn:   nil,
+		limit:        limit,
+		connector:    connector,
+		wait:         sync.WaitGroup{},
+		values:       chans.FanIn(append(loGenerated, closeReading)...),
+		closeReading: closeReading,
+		calculator:   newCalculator(size),
+		cancelFn:     nil,
 	}, nil
 }
 
@@ -78,6 +80,7 @@ func (s *Stopper) Run(ctx context.Context, fetchPeriod time.Duration) {
 func (s *Stopper) Close() {
 	s.cancelFn()
 	s.wait.Wait()
+	close(s.closeReading)
 }
 
 func (s *Stopper) updateCalculator(
