@@ -55,6 +55,7 @@ const (
 	TypeBytea       Type = "bytea"
 	TypeArrayInt    Type = "array_int"
 	TypeArrayString Type = "array_string"
+	TypeLO          Type = "lo"
 )
 
 type Column struct {

@@ -282,7 +282,7 @@ func Test_StringOfString(t *testing.T) {
 		Columns: []model.Column{
 			{Name: model.PGIdentifier("www"), Type: "text[]", IsNullable: false, FixedSize: 4},
 		},
-	}, options.WithPreserve())
+	})
 
 	sliceOfSliceOfString := func() any {
 		str := make([][]any, 4)

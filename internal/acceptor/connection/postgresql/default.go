@@ -1,6 +1,8 @@
 package postgresql
 
 import (
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/bytea"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/enum"
@@ -10,6 +12,7 @@ import (
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/numeric"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/oid"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/reference"
+	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/reuse"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/serial"
 	"github.com/jmozgit/datagen/internal/acceptor/connection/postgresql/text"
 	"github.com/jmozgit/datagen/internal/acceptor/contract"
@@ -20,8 +23,13 @@ import (
 func DefaultProviderGenerators(
 	pool *pgxpool.Pool,
 	refResolver *refresolver.Service,
-) []contract.GeneratorProvider {
+	setter contract.SetterOptionBasedGenerator,
+) ([]contract.GeneratorProvider, error) {
 	conn := pgx.NewAdapterPool(pool)
+
+	if err := setter.SetReuseValuesGeneratorProvider(reuse.NewProvider(conn)); err != nil {
+		return nil, fmt.Errorf("%w: postgresql default provider generator", err)
+	}
 
 	return []contract.GeneratorProvider{
 		numeric.NewProvider(conn),
@@ -34,5 +42,5 @@ func DefaultProviderGenerators(
 		text.NewProvider(conn),
 		oid.NewProvider(pool, refResolver),
 		bytea.NewProvider(),
-	}
+	}, nil
 }

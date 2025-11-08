@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/jmozgit/datagen/internal/config"
-	"github.com/jmozgit/datagen/internal/pkg/testconn/options"
 	"github.com/jmozgit/datagen/tests/suite"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +18,7 @@ func Test_PostgresqlText(t *testing.T) {
 		suite.NewColumnRawType("char_n", "char(39)"),
 		suite.NewColumnRawType("bpchar", "bpchar"),
 	})
-	bs.CreateTable(table, options.WithPreserve())
+	bs.CreateTable(table)
 
 	bs.SaveConfig(
 		suite.WithBatchSize(10),
@@ -58,7 +57,7 @@ func Test_UserSettingsText(t *testing.T) {
 		suite.NewColumn("fixed_text", suite.TypeText),
 		suite.NewColumn("range_text", suite.TypeText),
 	})
-	bs.CreateTable(table, options.WithPreserve())
+	bs.CreateTable(table)
 
 	bs.SaveConfig(
 		suite.WithBatchSize(59),

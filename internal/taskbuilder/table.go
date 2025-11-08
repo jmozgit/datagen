@@ -81,14 +81,14 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		return fmt.Errorf("%w: %s", ErrMisleadingLimits, fnName)
 	}
 
-	gens, err := t.schemaGenerators(ctx, schema, target, t.registry)
+	flows, err := t.schemaGenerators(ctx, schema, target, t.registry)
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)
 	}
 
-	separateGens := make([]<-chan []model.LOGenerated, 0, len(gens))
-	for i := range gens {
-		if sepgen, ok := gens[i].(model.LOGenerator); ok {
+	separateGens := make([]<-chan []model.LOGenerated, 0, len(flows))
+	for i := range flows {
+		if sepgen, ok := flows[i].Gen.(model.LOGenerator); ok {
 			separateGens = append(separateGens, sepgen.LOGeneratedChan())
 		}
 	}
@@ -126,6 +126,19 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		datasize.ByteSize(target.LimitBytes),
 	)
 
+	gens := make([]model.Generator, len(flows))
+	for i := range flows {
+		req := flows[i].Req
+		req.BaseGenerator = mo.Some(flows[i].Gen)
+
+		gen, err := t.registry.ApplyOptions(ctx, req)
+		if err != nil {
+			return fmt.Errorf("%w: %s", err, fnName)
+		}
+
+		gens[i] = gen
+	}
+
 	t.tasks = append(t.tasks, model.Task{
 		DatasetSchema: schema,
 		Stopper:       stopper,
@@ -135,12 +148,17 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 	return nil
 }
 
+type findGeneratorFlow struct {
+	Req contract.AcceptRequest
+	Gen model.Generator
+}
+
 func (t *tableTaskBuilder) schemaGenerators(
 	ctx context.Context,
 	dataset model.DatasetSchema,
 	target *config.Table,
 	registry generatorRegistry,
-) ([]model.Generator, error) {
+) ([]findGeneratorFlow, error) {
 	const fnName = "schema generators"
 
 	userSettingsByID := make(map[model.Identifier]config.Generator)
@@ -153,7 +171,7 @@ func (t *tableTaskBuilder) schemaGenerators(
 		userSettingsByID[id] = settings
 	}
 
-	generators := make([]model.Generator, 0, len(dataset.Columns))
+	generators := make([]findGeneratorFlow, 0, len(dataset.Columns))
 	for _, targetType := range dataset.Columns {
 		userSettings := mo.None[config.Generator]()
 		if set, ok := userSettingsByID[targetType.SourceName]; ok {
@@ -178,7 +196,7 @@ func (t *tableTaskBuilder) schemaGenerators(
 			)
 		}
 
-		generators = append(generators, gen)
+		generators = append(generators, findGeneratorFlow{Req: req, Gen: gen})
 	}
 
 	if len(userSettingsByID) > 0 {

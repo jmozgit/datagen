@@ -14,11 +14,15 @@ import (
 	"github.com/jmozgit/datagen/internal/model"
 	"github.com/jmozgit/datagen/internal/pkg/closer"
 	"github.com/jmozgit/datagen/internal/refresolver"
+	"github.com/samber/mo"
 )
 
 type Acceptors struct {
-	refRegistry *refresolver.Service
-	providers   []contract.GeneratorProvider
+	providers []contract.GeneratorProvider
+
+	// options based generator provider
+	withNullGeneratorProvider   contract.GeneratorProvider
+	reuseValueGeneratorProvider contract.GeneratorProvider
 }
 
 func PrepareAcceptors(
@@ -29,9 +33,14 @@ func PrepareAcceptors(
 ) (*Acceptors, error) {
 	self := &Acceptors{}
 
+	commonGens, err := commontype.DefaultProviderGenerators(self, self)
+	if err != nil {
+		return nil, fmt.Errorf("%w: prepare acceptors", err)
+	}
+
 	generators := append(
 		user.DefaultProviderGenerators(self),
-		commontype.DefaultProviderGenerators(self)...,
+		commonGens...,
 	)
 
 	switch cfg.Connection.Type {
@@ -42,19 +51,46 @@ func PrepareAcceptors(
 		}
 		closerReg.Add(closer.Fn(pool.Close))
 
-		generators = append(
-			generators,
-			postgresql.DefaultProviderGenerators(
-				pool,
-				refRegistry,
-			)...)
+		pgGens, err := postgresql.DefaultProviderGenerators(
+			pool, refRegistry, self,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("%w: prepare acceptors", err)
+		}
+
+		generators = append(generators, pgGens...)
 	default:
 	}
 
-	self.refRegistry = refRegistry
 	self.providers = generators
 
 	return self, nil
+}
+
+func (r *Acceptors) SetWithNullValuesGeneratorProvider(provider contract.GeneratorProvider) error {
+	if r.withNullGeneratorProvider != nil {
+		return fmt.Errorf(
+			"%w with null values provider by %T",
+			contract.ErrOptionGeneratorAlreadySet, r.withNullGeneratorProvider,
+		)
+	}
+
+	r.withNullGeneratorProvider = provider
+
+	return nil
+}
+
+func (r *Acceptors) SetReuseValuesGeneratorProvider(provider contract.GeneratorProvider) error {
+	if r.reuseValueGeneratorProvider != nil {
+		return fmt.Errorf(
+			"%w with reuse generator provider %T",
+			contract.ErrOptionGeneratorAlreadySet, r.reuseValueGeneratorProvider,
+		)
+	}
+
+	r.reuseValueGeneratorProvider = provider
+
+	return nil
 }
 
 func (r *Acceptors) GetGenerator(
@@ -102,4 +138,41 @@ func (r *Acceptors) GetGenerator(
 	}
 
 	return nil, fmt.Errorf("%w: %s", contract.ErrNoAvailableGenerators, fnName)
+}
+
+func (r *Acceptors) ApplyOptions(
+	ctx context.Context,
+	req contract.AcceptRequest,
+) (model.Generator, error) {
+	const fnName = "registry: apply options"
+
+	baseGen, ok := req.BaseGenerator.Get()
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", contract.ErrBaseGenIsRequired, fnName)
+	}
+
+	settings, ok := req.UserSettings.Get()
+	if !ok {
+		return baseGen, nil
+	}
+
+	if settings.ReuseFraction != 0 {
+		decision, err := r.reuseValueGeneratorProvider.Accept(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
+		}
+
+		req.BaseGenerator = mo.Some(decision.Generator)
+	}
+
+	if settings.NullFraction != 0 {
+		decision, err := r.withNullGeneratorProvider.Accept(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", err, fnName)
+		}
+
+		req.BaseGenerator = mo.Some(decision.Generator)
+	}
+
+	return req.BaseGenerator.MustGet(), nil
 }

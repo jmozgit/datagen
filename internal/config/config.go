@@ -40,8 +40,8 @@ type Target struct {
 
 type Options struct {
 	BatchSize          int           `yaml:"batchSize"`
-	CheckSizeDuration  time.Duration `yaml:"check_size_duration"`
-	NoProgressAttempts int           `yaml:"no_progress_attempts"`
+	CheckSizeDuration  time.Duration `yaml:"checkSizeDuration"`
+	NoProgressAttempts int           `yaml:"noProgressAttempts"`
 }
 
 type Table struct {
@@ -60,11 +60,13 @@ type Generator struct {
 	Timestamp       *Timestamp       `yaml:"timestamp"`
 	UUID            *UUID            `yaml:"uuid"`
 	Lua             *Lua             `yaml:"lua"`
-	ListProbability *ListProbability `yaml:"list_probability"`
+	ListProbability *ListProbability `yaml:"listProbability"`
 	Text            *Text            `yaml:"text"`
 	LO              *LO              `yaml:"lo"`
 	Bytea           *LO              `yaml:"bytea"`
 	Array           *Array           `yaml:"array"`
+	NullFraction    int              `yaml:"nullFraction"`
+	ReuseFraction   int              `yaml:"reuseFraction"`
 }
 
 type Integer struct {
@@ -98,8 +100,8 @@ type ListProbability struct {
 }
 
 type Text struct {
-	CharLenFrom int `yaml:"char_to_from"`
-	CharLenTo   int `yaml:"char_len_to"`
+	CharLenFrom int `yaml:"charToFrom"`
+	CharLenTo   int `yaml:"charLenTo"`
 }
 
 type LO struct {
@@ -110,5 +112,5 @@ type LO struct {
 type Array struct {
 	Rows     uint       `yaml:"rows"`
 	Cols     uint       `yaml:"cols"`
-	ElemType *Generator `yaml:"elem_type"`
+	ElemType *Generator `yaml:"elemType"`
 }

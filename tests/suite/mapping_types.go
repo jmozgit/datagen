@@ -16,4 +16,5 @@ var pgMappgingType = map[Type]string{
 	TypeBytea:       "bytea",
 	TypeArrayInt:    "int[]",
 	TypeArrayString: "text[]",
+	TypeLO:          "oid",
 }

@@ -151,6 +151,7 @@ func Test_TableWithPK(t *testing.T) {
 	provider := reference.NewProvider(adapter, refresolver.NewService())
 
 	gen, err := provider.Accept(t.Context(), testConn.getAcceptRequest())
+	require.NoError(t, err)
 
 	for i := 0; i < len(values)*3; i++ {
 		val, err := gen.Generator.Gen(t.Context())

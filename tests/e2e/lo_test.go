@@ -87,7 +87,7 @@ func Test_DeleteLOIfNoProgress(t *testing.T) {
 			suite.NewColumnRawType("blob", "oid"),
 		},
 	)
-	bs.CreateTable(table, options.WithPKs([]string{"id"}), options.WithPreserve())
+	bs.CreateTable(table, options.WithPKs([]string{"id"}))
 
 	bs.ExecuteInFunc(func(ctx context.Context, c db.Connect) error {
 		err := c.Execute(ctx, "INSERT INTO oid_test (id) SELECT * FROM generate_series(1, 10)")

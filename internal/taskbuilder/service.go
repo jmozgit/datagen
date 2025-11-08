@@ -24,6 +24,10 @@ type generatorRegistry interface {
 		ctx context.Context,
 		req contract.AcceptRequest,
 	) (model.Generator, error)
+	ApplyOptions(
+		ctx context.Context,
+		req contract.AcceptRequest,
+	) (model.Generator, error)
 }
 
 func makeSchemaProvider(cfg config.Config) (model.SchemaProvider, error) {
