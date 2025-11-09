@@ -1,6 +1,27 @@
 APP_NAME:=datagen
 BIN:=bin
 GOBIN:=$(shell pwd)/$(BIN)
+UNAMEM:=$(shell uname -m)
+UNAMES:=$(shell uname -s)
+
+ifeq ($(UNAMEM), x86_64)
+	ARCH ?= amd64
+else
+	ARCH ?= arm64
+endif
+
+
+ifeq ($(UNAMES), Linux)
+	OS ?= linux
+else ifeq ($(UNAMES), Darwin)
+	OS ?= darwin
+else ifeq ($(findstring MINGW,$(UNAMES)), MINGW)
+	OS ?= windows
+else ifeq ($(findstring CYGWIN,$(UNAMES)), CYGWIN)
+	OS ?= windows
+else
+	OS ?= unknown
+endif
 
 .env:
 	cp .env-template .env
@@ -8,6 +29,16 @@ GOBIN:=$(shell pwd)/$(BIN)
 test-env-var: .env
 	$(eval include .env)
 	$(eval export)
+
+docker-build:
+	@echo "Building Docker image..."
+	docker build -f docker/Dockerfile --build-arg OS=$(OS) --build-arg ARCH=$(ARCH) -t datagenimg .
+
+	@echo "Extracting binary..."
+	@id=$$(docker create datagenimg); \
+	echo "Container ID: $$id"; \
+	docker cp $$id:/app/datagen $(BIN)/datagen; \
+	docker rm -v $$id
 
 build:
 	go build -o $(BIN)/datagen cmd/datagen/main.go

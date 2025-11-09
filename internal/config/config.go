@@ -65,6 +65,7 @@ type Generator struct {
 	LO              *LO              `yaml:"lo"`
 	Bytea           *LO              `yaml:"bytea"`
 	Array           *Array           `yaml:"array"`
+	Plugin          *Plugin          `yaml:"plugin"`
 	NullFraction    int              `yaml:"nullFraction"`
 	ReuseFraction   int              `yaml:"reuseFraction"`
 }
@@ -113,4 +114,8 @@ type Array struct {
 	Rows     uint       `yaml:"rows"`
 	Cols     uint       `yaml:"cols"`
 	ElemType *Generator `yaml:"elemType"`
+}
+
+type Plugin struct {
+	Path string `yaml:"path"`
 }
