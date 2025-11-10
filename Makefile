@@ -3,13 +3,13 @@ BIN:=bin
 GOBIN:=$(shell pwd)/$(BIN)
 UNAMEM:=$(shell uname -m)
 UNAMES:=$(shell uname -s)
+BUILD_SCRIPT:=./scripts/build.sh
 
 ifeq ($(UNAMEM), x86_64)
 	ARCH ?= amd64
 else
 	ARCH ?= arm64
 endif
-
 
 ifeq ($(UNAMES), Linux)
 	OS ?= linux
@@ -30,20 +30,26 @@ test-env-var: .env
 	$(eval include .env)
 	$(eval export)
 
-docker-build:
-	@echo "Building Docker image..."
-	docker build -f docker/Dockerfile --build-arg OS=$(OS) --build-arg ARCH=$(ARCH) -t datagenimg .
-
-	@echo "Extracting binary..."
-	@id=$$(docker create datagenimg); \
-	echo "Container ID: $$id"; \
-	docker cp $$id:/app/datagen $(BIN)/datagen; \
-	docker rm -v $$id
-
 build:
-	go build -o $(BIN)/datagen cmd/datagen/main.go
+	${BUILD_SCRIPT} OS=${OS} \
+		ARCH=${ARCH} \
+		BUILDMODE="default" \
+		GO_BUILD_PATH="cmd/datagen/main.go" \
+		COPY_CONTEXT="." \
+		BIN_DST=${BIN}/${APP_NAME}
 
-e2e: test-env-var build
+build-plugin:
+	${BUILD_SCRIPT} OS=${OS} \
+		ARCH=${ARCH} \
+		BUILDMODE="plugin" \
+		GO_BUILD_PATH=${SO_PATH} \
+		COPY_CONTEXT="." \
+		BIN_DST=${DST}
+
+e2e-plugins:
+	$(MAKE) build-plugin SO_PATH="tests/e2e/plugins/json/json.go" DST="tests/e2e/plugins/json/json.so"
+
+e2e: test-env-var build e2e-plugins
 	TEST_DATAGEN_CONNECTION_TYPE=postgresql go test -timeout 5m -count 1 -v -cover ./tests/...
 
 test: test-env-var

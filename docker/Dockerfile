@@ -2,10 +2,14 @@ FROM golang:1.24-alpine AS builder
 
 ARG OS
 ARG ARCH
+ARG BUILDMODE
+ARG NAME
+ARG GO_BUILD_PATH
+ARG COPY_CONTEXT
 
 WORKDIR /app
 
-COPY . .
+COPY ${COPY_CONTEXT} .
 
-RUN GOOS=${OS} GOARCH=${ARCH} go build -o datagen ./cmd/datagen/main.go
+RUN GOOS=${OS} GOARCH=${ARCH} go build -buildmode=${BUILDMODE} -o ${NAME} ${GO_BUILD_PATH}
 
