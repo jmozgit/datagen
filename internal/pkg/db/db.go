@@ -16,6 +16,7 @@ type Rows interface {
 }
 
 type Connect interface {
+	Close(ctx context.Context) error
 	QueryRow(ctx context.Context, sql string, args ...any) Row
 	Query(ctx context.Context, sql string, args ...any) (Rows, error)
 	Execute(ctx context.Context, sql string, args ...any) error

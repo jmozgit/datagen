@@ -104,8 +104,6 @@ func (c *cmd) init(ctx context.Context, flags flags) error {
 	c.progressController = progress.NewController(terminal, flags.workCnt)
 	c.closer.Add(closer.Fn(c.progressController.Close))
 
-	go c.progressController.Run(ctx)
-
 	return nil
 }
 

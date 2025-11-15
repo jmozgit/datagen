@@ -3,6 +3,7 @@ package progress
 import (
 	"context"
 	"maps"
+	"sync"
 	"time"
 
 	"github.com/c2h5oh/datasize"
@@ -35,6 +36,8 @@ type Controller struct {
 	tables map[string]State
 	drawer StateDrawer
 	states chan model.ProgressState
+	wg     sync.WaitGroup
+	cancel chan struct{}
 }
 
 func NewController(drawer StateDrawer, taskCnt int) *Controller {
@@ -42,6 +45,8 @@ func NewController(drawer StateDrawer, taskCnt int) *Controller {
 		tables: make(map[string]State),
 		drawer: drawer,
 		states: make(chan model.ProgressState, taskCnt),
+		wg:     sync.WaitGroup{},
+		cancel: make(chan struct{}, 1),
 	}
 }
 
@@ -64,21 +69,26 @@ func (c *Controller) Collect(ctx context.Context, progress model.ProgressState) 
 }
 
 func (c *Controller) Close() {
+	c.cancel <- struct{}{}
+	c.wg.Wait()
 	close(c.states)
+	close(c.cancel)
 }
 
 func (c *Controller) Run(ctx context.Context) {
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 
+	c.wg.Add(1)
+	defer c.wg.Done()
+
 	for {
 		select {
+		case <-c.cancel:
+			c.flush(context.WithoutCancel(ctx), withLastFlush())
+			return
 		case <-ctx.Done():
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancel()
-
-			c.flush(ctx, withLastFlush())
-
+			c.flush(context.WithoutCancel(ctx), withLastFlush())
 			return
 		case state := <-c.states:
 			collected := c.tables[state.Table]

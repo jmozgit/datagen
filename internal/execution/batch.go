@@ -43,7 +43,6 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 		}
 	}()
 
-	batchID := 0
 	batch := make([][]any, b.batchSize)
 	for i := range batch {
 		batch[i] = make([]any, len(task.Generators))
@@ -51,50 +50,53 @@ func (b *BatchExecutor) Execute(ctx context.Context, task model.Task) error {
 
 	noProgressLoop := 0
 	for {
-		for i, gen := range task.Generators {
-			cell, err := gen.Gen(ctx)
-			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.Columns[i].SourceName.AsArgument())
-			}
+		nextTicket, err := task.Limiter.NextTicket(ctx, int64(b.batchSize))
+		if err != nil {
+			return fmt.Errorf("%w: execute", err)
+		}
+		rows := nextTicket.AllowedRows
 
-			batch[batchID][i] = cell
+		if rows == 0 {
+			return nil
 		}
 
-		if batchID+1 == len(batch) {
-			batch := model.SaveBatch{
-				Schema:      task.DatasetSchema,
-				Data:        batch[:batchID+1],
-				SavingHints: b.saver.PrepareHints(ctx, task.DatasetSchema),
-				Invalid:     make([]bool, b.batchSize),
-			}
+		batchID := 0
+		for rows > int64(0) {
+			for i, gen := range task.Generators {
+				cell, err := gen.Gen(ctx)
+				if err != nil {
+					return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.Columns[i].SourceName.AsArgument())
+				}
 
-			saved, err := b.saver.Save(ctx, batch)
-			if err != nil {
-				return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName.Quoted())
+				batch[batchID][i] = cell
 			}
-
-			b.refNotifier.OnProcessed(saved.Batch)
-
-			cntn, err := task.Stopper.ContinueAllowed(ctx, saved.Stat)
-			if err != nil {
-				return fmt.Errorf("%w: execute", err)
-			}
-
-			if !cntn {
-				return nil
-			}
-
-			if saved.Stat.RowsSaved == 0 {
-				noProgressLoop++
-			} else {
-				noProgressLoop = 0
-			}
-
-			if b.noProgressAttempts != 0 && b.noProgressAttempts == noProgressLoop {
-				return fmt.Errorf("%w: execute", ErrNoProgressHappens)
-			}
+			rows--
+			batchID++
 		}
 
-		batchID = (batchID + 1) % len(batch)
+		batch := model.SaveBatch{
+			Schema:      task.DatasetSchema,
+			Data:        batch[:batchID],
+			SavingHints: b.saver.PrepareHints(ctx, task.DatasetSchema),
+			Invalid:     make([]bool, b.batchSize),
+		}
+
+		saved, err := b.saver.Save(ctx, batch)
+		if err != nil {
+			return fmt.Errorf("%w: execute %s", err, task.DatasetSchema.TableName.Quoted())
+		}
+		b.refNotifier.OnProcessed(saved.Batch)
+
+		if saved.Stat.RowsSaved == 0 {
+			noProgressLoop++
+		} else {
+			noProgressLoop = 0
+		}
+
+		if b.noProgressAttempts != 0 && b.noProgressAttempts == noProgressLoop {
+			return fmt.Errorf("%w: execute", ErrNoProgressHappens)
+		}
+
+		task.Limiter.Collect(ctx, saved.Stat)
 	}
 }

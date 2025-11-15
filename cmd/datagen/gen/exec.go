@@ -26,6 +26,7 @@ func (c *cmd) exec(cmd *cobra.Command, _ []string) error {
 		min(len(tasks), c.flags.workCnt),
 		c.taskExecutor.Execute,
 	)
+	go c.progressController.Run(ctx)
 
 	if err := wm.Execute(ctx, tasks); err != nil {
 		return fmt.Errorf("%w: %s", err, fnName)

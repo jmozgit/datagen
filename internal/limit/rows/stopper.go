@@ -26,7 +26,13 @@ func NewStopper(rows int64, tableName string, collector limit.Collector) *Stoppe
 	}
 }
 
-func (s *Stopper) ContinueAllowed(ctx context.Context, report model.SaveReport) (bool, error) {
+func (s *Stopper) NextTicket(ctx context.Context, batchSize int64) (model.Ticket, error) {
+	return model.Ticket{
+		AllowedRows: min(max(0, s.rows-s.collected), batchSize),
+	}, nil
+}
+
+func (s *Stopper) Collect(ctx context.Context, report model.SaveReport) {
 	s.collected += int64(report.RowsSaved)
 	s.errCounter += report.ConstraintViolation
 
@@ -36,6 +42,4 @@ func (s *Stopper) ContinueAllowed(ctx context.Context, report model.SaveReport) 
 		SizeCollected:        datasize.ByteSize(0),
 		ViolationConstraints: int64(s.errCounter),
 	})
-
-	return s.collected < s.rows, nil
 }

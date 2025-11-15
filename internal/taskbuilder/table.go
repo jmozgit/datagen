@@ -93,7 +93,7 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 		}
 	}
 
-	var stopper model.Stopper
+	var stopper model.Limiter
 	if target.LimitRows != 0 {
 		stopper = rows.NewStopper(
 			int64(target.LimitRows),
@@ -141,7 +141,7 @@ func (t *tableTaskBuilder) addTableTask(ctx context.Context, target *config.Tabl
 
 	t.tasks = append(t.tasks, model.Task{
 		DatasetSchema: schema,
-		Stopper:       stopper,
+		Limiter:       stopper,
 		Generators:    gens,
 	})
 
@@ -212,7 +212,7 @@ func (t *tableTaskBuilder) startSizerStopper(
 	table model.TableName,
 	fetchDuration time.Duration,
 	gens []<-chan []model.LOGenerated,
-) (model.Stopper, error) {
+) (model.Limiter, error) {
 	const fnName = "start sizer stopper"
 
 	switch t.cfg.Connection.Type {
@@ -227,7 +227,7 @@ func (t *tableTaskBuilder) startSizerStopper(
 
 		stopper, err := postgres.NewStopper(
 			ctx, limit, t.lazyCommonPool,
-			table, gens...,
+			table, t.collector, gens...,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", err, fnName)

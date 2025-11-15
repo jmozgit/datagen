@@ -33,6 +33,10 @@ func (a adapterConn) Execute(ctx context.Context, sql string, args ...any) error
 	return err
 }
 
+func (a adapterConn) Close(ctx context.Context) error {
+	return a.Close(ctx)
+}
+
 type adapterPool struct {
 	pool *pgxpool.Pool
 }
@@ -56,4 +60,10 @@ func (a adapterPool) Execute(ctx context.Context, sql string, args ...any) error
 	_, err := a.pool.Exec(ctx, sql, args...)
 
 	return err
+}
+
+func (a adapterPool) Close(ctx context.Context) error {
+	a.pool.Close()
+
+	return nil
 }

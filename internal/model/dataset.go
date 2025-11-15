@@ -48,14 +48,19 @@ type Limit struct {
 	Size datasize.ByteSize
 }
 
-type Stopper interface {
-	ContinueAllowed(context.Context, SaveReport) (bool, error)
+type Ticket struct {
+	AllowedRows int64
+}
+
+type Limiter interface {
+	NextTicket(context.Context, int64) (Ticket, error)
+	Collect(context.Context, SaveReport)
 }
 
 type Task struct {
 	DatasetSchema DatasetSchema
 	Generators    []Generator
-	Stopper       Stopper
+	Limiter       Limiter
 }
 
 func (t *Task) TableName() string {
